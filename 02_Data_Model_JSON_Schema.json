@@ -1,0 +1,411 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "土地評估報告 JSON Schema",
+  "type": "object",
+  "required": [
+    "project_meta",
+    "basic_info",
+    "legal_volume",
+    "site_conditions",
+    "environment",
+    "school_and_village",
+    "comparables",
+    "pricing_forecast",
+    "product_recommendation",
+    "summary_evaluation",
+    "sources_and_verification"
+  ],
+  "properties": {
+    "project_meta": {
+      "type": "object",
+      "properties": {
+        "report_title": {
+          "type": "string",
+          "default": "海悅廣告　土地評估分析表"
+        },
+        "version": {
+          "type": "string"
+        },
+        "created_at": {
+          "type": "string"
+        },
+        "output_filename_rule": {
+          "type": "string"
+        }
+      }
+    },
+    "basic_info": {
+      "type": "object",
+      "properties": {
+        "client": {
+          "type": "string"
+        },
+        "research_date": {
+          "type": "string"
+        },
+        "site_location": {
+          "type": "string"
+        },
+        "land_lots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "city": {
+                "type": "string"
+              },
+              "district": {
+                "type": "string"
+              },
+              "section": {
+                "type": "string"
+              },
+              "subsection": {
+                "type": "string"
+              },
+              "lot_number": {
+                "type": "string"
+              },
+              "note": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "land_price": {
+          "type": "string"
+        },
+        "research_status": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "legal_volume": {
+      "type": "object",
+      "properties": {
+        "zoning": {
+          "type": "string"
+        },
+        "zoning_basis": {
+          "type": "string"
+        },
+        "land_area_details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "lot_number": {
+                "type": "string"
+              },
+              "area_sqm": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "area_ping": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "calculation": {
+                "type": "string"
+              },
+              "verification_status": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "total_area_sqm": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "total_area_ping": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "coverage_ratio": {
+          "type": "string"
+        },
+        "floor_area_ratio": {
+          "type": "string"
+        },
+        "buildable_area_sqm": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "legal_floor_area_sqm": {
+          "type": [
+            "number",
+            "string"
+          ]
+        },
+        "road_access_type": {
+          "type": "string"
+        },
+        "road_access_description": {
+          "type": "string"
+        }
+      }
+    },
+    "site_conditions": {
+      "type": "object",
+      "properties": {
+        "orientation_logic": {
+          "type": "string"
+        },
+        "directions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "direction": {
+                "type": "string"
+              },
+              "condition_type": {
+                "type": "string"
+              },
+              "road_name": {
+                "type": "string"
+              },
+              "road_width": {
+                "type": "string"
+              },
+              "adjacent_building_type": {
+                "type": "string"
+              },
+              "adjacent_floors": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "sales_impact": {
+                "type": "string"
+              },
+              "verification_status": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "environment": {
+      "type": "object",
+      "properties": {
+        "traffic": {
+          "type": "string"
+        },
+        "living_functions": {
+          "type": "string"
+        },
+        "public_facilities": {
+          "type": "string"
+        },
+        "life_circle_positioning": {
+          "type": "string"
+        },
+        "sales_positioning_impact": {
+          "type": "string"
+        }
+      }
+    },
+    "school_and_village": {
+      "type": "object",
+      "properties": {
+        "village": {
+          "type": "string"
+        },
+        "elementary_school": {
+          "type": "string"
+        },
+        "junior_high_school": {
+          "type": "string"
+        },
+        "school_note": {
+          "type": "string"
+        },
+        "verification_note": {
+          "type": "string"
+        }
+      }
+    },
+    "comparables": {
+      "type": "object",
+      "properties": {
+        "selection_logic": {
+          "type": "string"
+        },
+        "cases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "case_name": {
+                "type": "string"
+              },
+              "case_type": {
+                "type": "string"
+              },
+              "distance": {
+                "type": "string"
+              },
+              "life_circle": {
+                "type": "string"
+              },
+              "product_plan": {
+                "type": "string"
+              },
+              "transaction_period": {
+                "type": "string"
+              },
+              "transaction_count": {
+                "type": [
+                  "number",
+                  "string"
+                ]
+              },
+              "average_price_per_ping": {
+                "type": "string"
+              },
+              "parking_price": {
+                "type": "string"
+              },
+              "reference_value": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "notes": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "market_limitations": {
+          "type": "string"
+        }
+      }
+    },
+    "pricing_forecast": {
+      "type": "object",
+      "properties": {
+        "new_project_price_band": {
+          "type": "string"
+        },
+        "resale_price_band": {
+          "type": "string"
+        },
+        "price_ceiling": {
+          "type": "string"
+        },
+        "safe_sales_band": {
+          "type": "string"
+        },
+        "suggested_list_price": {
+          "type": "string"
+        },
+        "target_transaction_price": {
+          "type": "string"
+        },
+        "first_wave_transaction_band": {
+          "type": "string"
+        },
+        "premium_unit_price_space": {
+          "type": "string"
+        },
+        "not_recommended_main_price_band": {
+          "type": "string"
+        },
+        "parking_price_suggestion": {
+          "type": "string"
+        },
+        "pricing_rationale": {
+          "type": "string"
+        }
+      }
+    },
+    "product_recommendation": {
+      "type": "object",
+      "properties": {
+        "two_bedroom": {
+          "type": "string"
+        },
+        "three_bedroom": {
+          "type": "string"
+        },
+        "four_bedroom": {
+          "type": "string"
+        },
+        "not_recommended_products": {
+          "type": "string"
+        },
+        "planning_rationale": {
+          "type": "string"
+        }
+      }
+    },
+    "summary_evaluation": {
+      "type": "object",
+      "properties": {
+        "strengths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "weaknesses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "initial_conclusion": {
+          "type": "string"
+        },
+        "next_steps": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "sources_and_verification": {
+      "type": "object",
+      "properties": {
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "items_to_verify": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "risk_notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
