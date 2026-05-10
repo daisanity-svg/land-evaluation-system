@@ -39,6 +39,7 @@ export default function Page() {
         <div>
           <h1 className="app-title">海悅廣告｜土地評估系統</h1>
           <p className="app-subtitle">JSON 匯入、欄位編輯、一頁式土地評估報告與 PDF 輸出</p>
+          <p className="muted">v2026-05-10-json-mapping-fix</p>
         </div>
         <div className="toolbar">
           <button className="btn" onClick={loadSample}>載入範例 JSON</button>
