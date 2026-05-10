@@ -1,9 +1,9 @@
 'use client';
 
 const safe = (value) => {
-  if (Array.isArray(value)) return value.join('\n');
+  if (Array.isArray(value)) return value.map((item) => safe(item)).join('\n');
   if (value === undefined || value === null || value === '') return '待複核';
-  return String(value);
+  return String(value).replace(/\\n/g, '\n');
 };
 
 const landLots = (lots = []) => lots.map((l) => `${safe(l.city)}${safe(l.district)}${safe(l.section)}${l.subsection || ''} ${safe(l.lot_number)}地號`).join('\n');
