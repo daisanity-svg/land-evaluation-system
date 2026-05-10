@@ -1,36 +1,100 @@
-# 土地評估 Codex 專案規格包
+# 海悅廣告｜土地評估系統
 
-這份資料包是給 Codex 使用的完整開發規格，目標是建立「海悅廣告｜土地評估系統」。
+這是一套土地評估 MVP，可用於：
 
-## 建議給 Codex 的使用方式
+- 匯入 ChatGPT 產出的土地評估 JSON
+- 將 JSON 轉成可編輯表單
+- 手動修改每一個報告欄位
+- 即時預覽「海悅廣告　土地評估分析表」
+- 匯出修改後 JSON
+- 使用瀏覽器列印功能輸出 PDF
+- 透過 GitHub Pages 部署成公開網頁
 
-請將整包資料放入專案根目錄，然後對 Codex 下指令：
+## 線上部署
+
+本 repo 已加入 GitHub Pages workflow：
+
+`.github/workflows/deploy-pages.yml`
+
+部署步驟：
+
+1. 到 GitHub repo 的 `Settings`。
+2. 點左側 `Pages`。
+3. Source 選 `GitHub Actions`。
+4. 回到 `Actions`，等待 `Deploy static app to GitHub Pages` 跑完。
+5. 完成後網址為：
 
 ```text
-請先閱讀本資料夾所有檔案，尤其是 00_Codex_Master_Prompt.md。
-請依照規格建立一套土地評估系統。
-MVP 必須完成：JSON 匯入、表單編輯、報告預覽、JSON 匯出、PDF 輸出。
+https://daisanity-svg.github.io/land-evaluation-system/
 ```
 
-## 檔案說明
+## 本機啟動
 
-- `00_Codex_Master_Prompt.md`：給 Codex 的總任務提示詞
-- `01_Product_Requirement_Document.md`：產品需求文件
-- `02_Data_Model_JSON_Schema.json`：核心 JSON Schema
-- `03_Report_Template_Fields.json`：報告欄位與版型順序
-- `04_Research_Logic.md`：土地評估調研邏輯
-- `05_UI_UX_Spec.md`：介面與操作流程規格
-- `06_PDF_Export_Rules.md`：PDF 輸出與檔名規則
-- `07_Test_Cases.json`：測試案例
-- `08_Acceptance_Checklist.md`：驗收清單
-- `sample_input.json`：測試匯入用 JSON
-- `sample_output.json`：預期輸出用 JSON
+```bash
+npm install
+npm run dev
+```
 
-## MVP 核心
+開啟：
 
-1. 使用者貼上 JSON
-2. 系統解析成可編輯表單
-3. 使用者可修改每一欄
-4. 系統即時產生一頁式土地評估報告
-5. 可輸出 PDF
-6. 可下載修改後 JSON
+```text
+http://localhost:3000
+```
+
+## 使用方式
+
+### 1. 匯入 JSON
+
+將 ChatGPT 產出的土地評估 JSON 貼到「JSON 匯入」欄位，按「匯入 JSON」。
+
+### 2. 手動修改欄位
+
+左側表單可修改：
+
+- 基本資料
+- 法定量體
+- 基地四向現況
+- 交通動線
+- 生活機能
+- 公共建設
+- 學區與里別
+- 競案分析
+- 價格預判
+- 建議產品
+- 綜合評估
+
+### 3. 預覽報告
+
+右側即時顯示一頁式「海悅廣告　土地評估分析表」。
+
+### 4. 輸出 PDF
+
+按右上角「列印 / PDF」，或使用：
+
+```text
+Command + P
+```
+
+列印目的地選「儲存為 PDF」。
+
+## 主要檔案
+
+```text
+.github/workflows/deploy-pages.yml
+app/layout.jsx
+app/page.jsx
+app/globals.css
+components/JsonForm.jsx
+components/ReportPreview.jsx
+lib/defaultData.js
+next.config.js
+package.json
+run_web_app.sh
+sample_input.json
+```
+
+## 注意事項
+
+- 空值或不確定資料預設保留「待複核」。
+- PDF 檔名可在儲存時依規則手動命名：建設公司名＋地段地號＋調研日期。
+- GitHub Pages 首次部署需先到 Settings → Pages 選 GitHub Actions。
