@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>海悅廣告｜土地評估系統（免安裝版）</title>
+  <style>
+    body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;padding:16px;color:#0f172a}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .panel{background:#fff;border-radius:8px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,.1);max-height:90vh;overflow:auto}
+    textarea,input{width:100%;box-sizing:border-box;border:1px solid #cbd5e1;border-radius:4px;padding:6px}
+    table{width:100%;border-collapse:collapse;font-size:12px}.b{border:1px solid #000}.th{background:#e2e8f0;width:190px;text-align:left}
+    button{border:0;border-radius:6px;padding:6px 10px;color:#fff;cursor:pointer;margin-right:8px}
+  </style>
+</head>
+<body>
+  <h1>海悅廣告｜土地評估系統（免安裝版）</h1>
+  <div class="grid">
+    <section class="panel">
+      <h3>JSON 匯入</h3>
+      <textarea id="jsonInput" rows="10" placeholder="貼上 JSON"></textarea>
+      <div style="margin:8px 0">
+        <button style="background:#2563eb" onclick="applyJson()">驗證並套用</button>
+        <button style="background:#334155" onclick="exportJson()">匯出 JSON</button>
+        <button style="background:#059669" onclick="downloadPdf()">下載 PDF（列印）</button>
+      </div>
+      <p id="msg"></p>
+      <h3>快速編輯（MVP）</h3>
+      <label>配合業主</label><input id="client"/>
+      <label>調研時間</label><input id="date"/>
+      <label>標的位置</label><textarea id="location" rows="2"></textarea>
+      <label>土地售價</label><input id="price"/>
+      <label>交通動線</label><textarea id="traffic" rows="2"></textarea>
+      <label>生活機能</label><textarea id="living" rows="2"></textarea>
+      <label>公共建設</label><textarea id="public" rows="2"></textarea>
+      <label>初步結論</label><textarea id="conclusion" rows="3"></textarea>
+      <button style="background:#7c3aed;margin-top:8px" onclick="syncFromForm()">更新預覽</button>
+    </section>
+    <section class="panel">
+      <h3>即時預覽</h3>
+      <div id="report"></div>
+    </section>
+  </div>
+<script>
+let data;
+const E='待複核';
+fetch('sample_input.json').then(r=>r.json()).then(j=>{data=j; renderForm(); render(); document.getElementById('jsonInput').value=JSON.stringify(j,null,2)});
+function v(x){return (x===undefined||x===null||x==='')?E:x}
+function applyJson(){
+  try{const p=JSON.parse(document.getElementById('jsonInput').value); data=p; renderForm(); render(); msg('JSON 匯入成功');}
+  catch(e){msg('JSON 格式錯誤：'+e.message)}
+}
+function msg(t){document.getElementById('msg').textContent=t}
+function renderForm(){
+  client.value=v(data?.basic_info?.client); date.value=v(data?.basic_info?.research_date); location.value=v(data?.basic_info?.site_location);
+  price.value=v(data?.basic_info?.land_price); traffic.value=v(data?.environment?.traffic); living.value=v(data?.environment?.living_functions);
+  public.value=v(data?.environment?.public_facilities); conclusion.value=v(data?.summary_evaluation?.initial_conclusion);
+}
+function syncFromForm(){
+  data.basic_info.client=client.value||E; data.basic_info.research_date=date.value||E; data.basic_info.site_location=location.value||E;
+  data.basic_info.land_price=price.value||E; data.environment.traffic=traffic.value||E; data.environment.living_functions=living.value||E;
+  data.environment.public_facilities=public.value||E; data.summary_evaluation.initial_conclusion=conclusion.value||E;
+  render(); msg('已更新預覽');
+}
+function lots(){return (data.basic_info.land_lots||[]).map(l=>`${v(l.city)}${v(l.district)}${v(l.section)}${l.subsection||''}${v(l.lot_number)}地號`).join('、')||E}
+function row(l,vv){return `<tr><th class='b th'>${l}</th><td class='b' style='white-space:pre-wrap;padding:4px'>${v(vv)}</td></tr>`}
+function render(){
+  const d=data;
+  report.innerHTML=`<h2 style='text-align:center'>海悅廣告　土地評估分析表</h2><table>
+    ${row('配合業主／調研時間',`${v(d.basic_info.client)}／${v(d.basic_info.research_date)}`)}
+    ${row('標的位置／標的地號',`${v(d.basic_info.site_location)}／${lots()}`)}
+    ${row('土地分區／基地面積',`${v(d.legal_volume.zoning)}／${v(d.legal_volume.total_area_sqm)}㎡(${v(d.legal_volume.total_area_ping)}坪)`)}
+    ${row('法定建蔽率／法定容積率',`${v(d.legal_volume.coverage_ratio)}／${v(d.legal_volume.floor_area_ratio)}`)}
+    ${row('臨路條件／土地售價',`${v(d.legal_volume.road_access_description)}／${v(d.basic_info.land_price)}`)}
+    ${row('學區／里別',`${v(d.school_and_village.elementary_school)}、${v(d.school_and_village.junior_high_school)}／${v(d.school_and_village.village)}`)}
+    ${row('基地現況四向',(d.site_conditions.directions||[]).map(x=>`${v(x.direction)}:${v(x.description)}`).join('\n'))}
+    ${row('交通動線',d.environment.traffic)}${row('生活機能',d.environment.living_functions)}${row('公共建設',d.environment.public_facilities)}
+    ${row('區域銷況',`${v(d.pricing_forecast.new_project_price_band)}；${v(d.pricing_forecast.resale_price_band)}`)}
+    ${row('建議產品',`2房:${v(d.product_recommendation.two_bedroom)} / 3房:${v(d.product_recommendation.three_bedroom)} / 4房:${v(d.product_recommendation.four_bedroom)}`)}
+    ${row('個案參考表',(d.comparables.cases||[]).map(c=>`${v(c.case_name)}(${v(c.case_type)}) ${v(c.average_price_per_ping)}`).join('\n'))}
+    ${row('價格預判',`${v(d.pricing_forecast.suggested_list_price)}；${v(d.pricing_forecast.target_transaction_price)}`)}
+    ${row('綜合評估',`優勢:${(d.summary_evaluation.strengths||[]).join('、')}\n劣勢:${(d.summary_evaluation.weaknesses||[]).join('、')}\n結論:${v(d.summary_evaluation.initial_conclusion)}`)}
+    ${row('區域圖','待複核')}
+    ${row('資料來源／待複核事項',`${(d.sources_and_verification.sources||[]).join('、')}\n待複核:${(d.sources_and_verification.items_to_verify||[]).join('、')}`)}
+  </table>`;
+}
+function exportJson(){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='land-evaluation-export.json';a.click();}
+function pdfName(){const c=v(data.basic_info.client);const lots=data.basic_info.land_lots||[];const f=lots[0];const s=f?`${v(f.section)}${v(f.lot_number)}地號`:E;const lot=lots.length>1?`${s}共${lots.length}筆`:s;return `${c}_${lot}_${v(data.basic_info.research_date)}.pdf`;}
+function downloadPdf(){document.title=pdfName();window.print();}
+</script>
+</body></html>
