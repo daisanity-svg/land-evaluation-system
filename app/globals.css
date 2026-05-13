@@ -43,16 +43,16 @@ button,input,textarea,select{font:inherit}.app-shell{min-height:100vh;padding:28
   .workflow-grid{display:block}.panel{border:0;box-shadow:none;border-radius:0;overflow:visible}.preview-panel{position:static}
   .card-report,.report-paper{margin:0 auto;border:0;border-radius:0;box-shadow:none;background:#fff;max-width:184mm;overflow:visible}
   .report-brand-row{color:#fff;background:linear-gradient(90deg,#0a5c83,#1490c3)!important;border-bottom:0;break-inside:avoid;page-break-inside:avoid;break-after:avoid;page-break-after:avoid}
-  .report-section{padding:9mm 0 7mm;border-bottom:1px solid #d7e6ee;break-inside:avoid-page;page-break-inside:avoid;orphans:3;widows:3}
+  .report-section{padding:8mm 0 6mm;border-bottom:1px solid #d7e6ee;break-inside:auto;page-break-inside:auto;orphans:3;widows:3}
   .section-heading{margin-bottom:10px;break-inside:avoid;page-break-inside:avoid;break-after:avoid;page-break-after:avoid}
   .section-heading span{width:28px;height:28px;border-radius:10px;font-size:10px}.section-heading h2{font-size:16px}.section-heading p{font-size:10.5px}
   .section-heading + *, .info-card h3 + *, .swot-card h3 + *{break-before:avoid;page-break-before:avoid}
-  .metric-card,.info-card,.swot-card,.direction-list div,.case-card,.key-value,.big-number{break-inside:avoid;page-break-inside:avoid;box-shadow:none}
-  .owner-facts,.owner-case-list,.tight-facts,.product-grid,.case-card-grid,.summary-grid,.direction-list,.swot-grid{break-inside:avoid-page;page-break-inside:avoid}
+  .metric-card,.info-card,.swot-card,.direction-list div,.case-card,.key-value,.big-number,.product-grid > .info-card,.owner-case-list > .info-card{break-inside:avoid;page-break-inside:avoid;box-shadow:none}
+  .owner-facts,.owner-case-list,.tight-facts,.product-grid,.case-card-grid,.summary-grid,.direction-list,.swot-grid{break-inside:auto;page-break-inside:auto}
   .summary-grid{grid-template-columns:repeat(2,1fr);gap:8px}.metric-card{min-height:auto;padding:12px}.metric-card small{font-size:10.5px}.metric-card strong{font-size:12.5px;line-height:1.55}
   .owner-facts,.owner-case-list,.tight-facts,.product-grid,.case-card-grid{grid-template-columns:1fr;gap:10px}.info-card,.swot-card{padding:14px;border-radius:14px}.info-card h3,.swot-card h3{font-size:14px;margin-bottom:8px;break-after:avoid;page-break-after:avoid}.info-card p,.swot-card p{font-size:11.5px;line-height:1.75;color:#172f3f;orphans:3;widows:3}.big-number{font-size:24px}.key-value{font-size:11.5px}
   .direction-list{grid-template-columns:repeat(2,1fr);gap:8px}.direction-list div{padding:10px}.swot-grid{grid-template-columns:repeat(2,1fr);gap:10px}.text-report{font-size:11.5px;line-height:1.75;min-height:auto;padding:18px 22px;color:#111;orphans:3;widows:3}
   .report-credit{display:none!important}
-  .print-fixed-footer{display:flex;position:fixed;left:12mm;right:12mm;bottom:7mm;z-index:9999;justify-content:space-between;align-items:center;border-top:1px solid #111;padding-top:3mm;color:#111;background:#fff;font-size:9px;letter-spacing:.08em}.print-fixed-footer span{font-weight:800}.print-fixed-footer strong{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.16em}
+  .print-fixed-footer{display:flex;position:fixed;left:12mm;right:12mm;bottom:5.5mm;z-index:9999;justify-content:space-between;align-items:center;border-top:1px solid #111;padding-top:2.5mm;color:#111;background:#fff;font-size:9px;letter-spacing:.08em}.print-fixed-footer span{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.16em}.print-fixed-footer strong{font-weight:800}
   .report-brand-mark{box-shadow:none}.report-brand-subtitle{color:rgba(255,255,255,.86)}
 }
