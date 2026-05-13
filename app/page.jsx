@@ -37,7 +37,7 @@ export default function Page() {
   const copyPrompt = async () => {
     await navigator.clipboard.writeText(buildPrompt(form));
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   const openGptWithPrompt = async () => {
@@ -50,12 +50,14 @@ export default function Page() {
     try {
       await navigator.clipboard.writeText(prompt);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), 2500);
     } catch (error) {
-      // 若瀏覽器阻擋剪貼簿，仍然嘗試用網址帶入提示詞。
+      // 若瀏覽器阻擋剪貼簿，仍然開啟 GPT，並讓使用者手動複製。
     }
 
-    const urlWithPrompt = `${GPT_URL}?q=${encodeURIComponent(prompt)}`;
+    alert('提示詞已自動複製。\n\n接下來會開啟「海悅土地評估調研助手」。\n若 GPT 頁面沒有自動帶入文字，請在輸入框按 Command + V 貼上，再按送出即可開始調研。');
+
+    const urlWithPrompt = `${GPT_URL}?q=${encodeURIComponent(prompt)}&prompt=${encodeURIComponent(prompt)}`;
     window.open(urlWithPrompt, '_blank', 'noopener,noreferrer');
   };
 
@@ -90,7 +92,7 @@ export default function Page() {
           <div>
             <h1 className="app-title">免費版土地評估報告系統</h1>
             <p className="app-subtitle">
-              輸入基本資料後，點擊「自動調研」即可開啟海悅土地評估調研助手，並自動帶入提示詞。使用者只要在 GPT 頁面按送出，完成調研後再複製回本系統輸出 PDF。
+              輸入基本資料後，點擊「自動調研」即可開啟海悅土地評估調研助手；系統會先把提示詞複製好，使用者到 GPT 頁面貼上送出，即可完成免費自動調研。
             </p>
           </div>
           <div className="toolbar hero-actions">
@@ -99,8 +101,8 @@ export default function Page() {
           </div>
         </div>
         <div className="status-row">
-          <span>輸入地號即可帶入 GPT</span>
-          <span>GPT 自動調研</span>
+          <span>自動複製提示詞</span>
+          <span>開啟 GPT 調研助手</span>
           <span>不使用 API Key</span>
           <span>貼回報告即可套版</span>
           <span>公開使用者可輸出 PDF</span>
@@ -113,7 +115,7 @@ export default function Page() {
           <div className="panel-header compact">
             <p className="eyebrow small">Step 1</p>
             <h2>輸入資料後進入 GPT 自動調研</h2>
-            <p className="muted">填寫三個欄位後，按「自動調研」，系統會開啟海悅土地評估調研助手並帶入提示詞；使用者在 GPT 頁面按送出即可開始。</p>
+            <p className="muted">填寫三個欄位後，按「自動調研」。系統會自動複製提示詞並開啟海悅土地評估調研助手；到 GPT 頁面貼上後送出即可。</p>
           </div>
 
           <div className="panel-body simple-form">
@@ -132,8 +134,8 @@ export default function Page() {
 
             <div className="action-card">
               <div>
-                <strong>操作流程</strong>
-                <p>按自動調研 → 開啟 GPT 並帶入提示詞 → 在 GPT 按送出 → 複製結果 → 回到本頁貼上報告。</p>
+                <strong>免費版操作流程</strong>
+                <p>按自動調研 → 提示詞自動複製 → 開啟 GPT → 按 Command + V 貼上 → 送出 → 複製結果回本頁。</p>
               </div>
               <div className="toolbar">
                 <button className="btn" onClick={copyPrompt}>{copied ? '提示詞已複製' : '複製提示詞'}</button>
@@ -178,7 +180,7 @@ export default function Page() {
                 <span>PDF OUTPUT</span>
               </div>
             </div>
-            <pre className="text-report">{hasReport ? form.reportText : '尚未貼上土地評估報告。\n\n請先輸入配合業主、調研日期與目標地號，點擊「自動調研」。系統會開啟海悅土地評估調研助手並自動帶入提示詞。調研完成後，請複製 GPT 產出的完整報告並貼回本頁。'}</pre>
+            <pre className="text-report">{hasReport ? form.reportText : '尚未貼上土地評估報告。\n\n請先輸入配合業主、調研日期與目標地號，點擊「自動調研」。系統會自動複製提示詞並開啟海悅土地評估調研助手。調研完成後，請複製 GPT 產出的完整報告並貼回本頁。'}</pre>
             <div className="report-credit">海悅機構｜海宇國際 戴異軒 製</div>
           </article>
         </section>
