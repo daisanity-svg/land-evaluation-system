@@ -1,8 +1,9 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 
 const today = new Date().toISOString().slice(0, 10);
+const GPT_URL = 'https://chatgpt.com/g/g-6a03e60a20948191b57eb98f7cbf4672-hai-yue-tu-di-ping-gu-diao-yan-zhu-shou';
 
 const makeFileName = ({ client, landNumber, researchDate }) => {
   const safeClient = client || '土地評估';
@@ -15,72 +16,39 @@ const emptyForm = {
   client: '',
   researchDate: today,
   landNumber: '',
-  landPrice: '',
-  specifiedCases: '',
+  reportText: '',
 };
 
 export default function Page() {
   const [form, setForm] = useState(emptyForm);
-  const [reportText, setReportText] = useState('');
-  const [sources, setSources] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  const canResearch = useMemo(() => form.client.trim() && form.landNumber.trim(), [form.client, form.landNumber]);
+  const [copied, setCopied] = useState(false);
 
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
-
-  const startResearch = async () => {
-    if (!canResearch) {
-      setError('請至少填寫「配合業主」與「目標地號」。');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    setReportText('');
-    setSources([]);
-
-    try {
-      const response = await fetch('/api/research', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || '自動調研失敗，請稍後再試。');
-
-      setReportText(data.reportText || '');
-      setSources(Array.isArray(data.sources) ? data.sources : []);
-    } catch (err) {
-      setError(err.message || '自動調研失敗。');
-    } finally {
-      setLoading(false);
-    }
-  };
+  const hasReport = form.reportText.trim().length > 0;
 
   const printPdf = () => {
     document.title = makeFileName(form);
     window.print();
   };
 
+  const copyPrompt = async () => {
+    const prompt = `幫我做土地評估，配合業主：${form.client || '＿＿建設'}，調研日期：${form.researchDate || '今天'}，目標地號：${form.landNumber || '＿＿地號'}。請依海悅土地評估格式完成完整報告。`;
+    await navigator.clipboard.writeText(prompt);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   const copyReport = async () => {
-    if (!reportText) return;
-    await navigator.clipboard.writeText(reportText);
+    if (!hasReport) return;
+    await navigator.clipboard.writeText(form.reportText);
     alert('已複製完整報告。');
   };
 
   const requestWord = () => {
-    alert('Word 輸出僅限戴異軒本人登入後使用。下一階段會加入登入權限與 DOCX 下載。');
+    alert('Word 輸出僅限戴異軒本人使用。免費版目前請由戴異軒本人複製報告內容後自行貼入 Word 編修；後續若要一鍵 DOCX 需升級後端權限版。');
   };
 
-  const reset = () => {
-    setForm(emptyForm);
-    setReportText('');
-    setSources([]);
-    setError('');
-  };
+  const reset = () => setForm(emptyForm);
 
   return (
     <main className="app-shell">
@@ -93,38 +61,39 @@ export default function Page() {
               <div className="brand-copy-bottom">海悅廣告｜土地評估系統</div>
             </div>
           </div>
-          <div className="public-chip">Public Link • PDF Ready</div>
+          <div className="public-chip">Free Workflow • GPT + PDF</div>
         </div>
 
         <div className="eyebrow">Hiyes Advertising Land Intelligence</div>
         <div className="hero-content">
           <div>
-            <h1 className="app-title">輸入地號，自動產出土地評估報告</h1>
+            <h1 className="app-title">免費版土地評估報告系統</h1>
             <p className="app-subtitle">
-              公開使用者只要輸入配合業主與目標地號，即可產出報告並輸出 PDF；Word 版本僅限戴異軒本人登入後使用。
+              先使用「海悅土地評估調研助手」自動完成調研，再將完整報告貼回本系統套版與輸出 PDF。此版本不使用 OpenAI API，因此不會額外產生 API 費。
             </p>
           </div>
           <div className="toolbar hero-actions">
-            <button className="btn ghost" onClick={reset}>清空</button>
-            <button className="btn primary" onClick={printPdf} disabled={!reportText}>輸出 PDF</button>
+            <a className="btn ghost" href={GPT_URL} target="_blank" rel="noreferrer">開啟調研 GPT</a>
+            <button className="btn primary" onClick={printPdf} disabled={!hasReport}>輸出 PDF</button>
           </div>
         </div>
         <div className="status-row">
-          <span>輸入地號即可開始</span>
-          <span>自動調研產報告</span>
+          <span>GPT 自動調研</span>
+          <span>不使用 API Key</span>
+          <span>貼回報告即可套版</span>
           <span>公開使用者可輸出 PDF</span>
           <span>Word 僅限戴異軒</span>
-          <span>海悅識別海藍風格</span>
         </div>
       </section>
 
       <section className="workflow-grid">
         <section className="panel input-panel">
           <div className="panel-header compact">
-            <p className="eyebrow small">Research Input</p>
-            <h2>輸入調研條件</h2>
-            <p className="muted">一般使用者只需要填寫三個主要欄位：配合業主、調研日期、目標地號。</p>
+            <p className="eyebrow small">Step 1</p>
+            <h2>輸入基本資料並前往 GPT 調研</h2>
+            <p className="muted">填寫三個欄位後，複製提示詞，到 GPT 內貼上即可自動產出土地評估報告。</p>
           </div>
+
           <div className="panel-body simple-form">
             <label className="field">
               <span>配合業主</span>
@@ -138,37 +107,39 @@ export default function Page() {
               <span>目標地號</span>
               <textarea rows={4} value={form.landNumber} onChange={(e) => update('landNumber', e.target.value)} placeholder="例如：桃園市中壢區中運段156、157、160地號" />
             </label>
-            <details className="optional-fields">
-              <summary>進階選填</summary>
-              <label className="field">
-                <span>土地售價</span>
-                <input value={form.landPrice} onChange={(e) => update('landPrice', e.target.value)} placeholder="未提供可留空" />
-              </label>
-              <label className="field">
-                <span>指定競案</span>
-                <textarea rows={3} value={form.specifiedCases} onChange={(e) => update('specifiedCases', e.target.value)} placeholder="未指定則由系統自主篩選周邊競案" />
-              </label>
-            </details>
-            {error && <div className="error-box">{error}</div>}
-            <button className="btn primary research-btn" onClick={startResearch} disabled={loading || !canResearch}>
-              {loading ? '調研中，請稍候…' : '開始自動調研'}
-            </button>
-            <p className="hint-text">正式自動調研需在 Vercel 設定 OPENAI_API_KEY。未設定時系統會提示環境變數尚未完成。</p>
+
+            <div className="action-card">
+              <div>
+                <strong>免費版流程</strong>
+                <p>複製提示詞 → 開啟 GPT → 貼上並產出報告 → 回到本頁貼上完整報告。</p>
+              </div>
+              <div className="toolbar">
+                <button className="btn" onClick={copyPrompt}>{copied ? '已複製' : '複製 GPT 提示詞'}</button>
+                <a className="btn primary" href={GPT_URL} target="_blank" rel="noreferrer">前往 GPT</a>
+              </div>
+            </div>
           </div>
         </section>
 
         <section className="panel preview-panel">
           <div className="panel-header preview-header">
             <div>
-              <p className="eyebrow small">Report Output</p>
-              <h2>土地評估報告</h2>
-              <p className="muted">報告完成後可輸出 PDF；Word 下載需本人權限。</p>
+              <p className="eyebrow small">Step 2</p>
+              <h2>貼上完整報告並輸出 PDF</h2>
+              <p className="muted">將 GPT 產出的完整土地評估報告貼入下方，系統會自動套用海悅版式。</p>
             </div>
             <div className="toolbar">
-              <button className="btn" onClick={copyReport} disabled={!reportText}>複製全文</button>
-              <button className="btn primary" onClick={printPdf} disabled={!reportText}>PDF</button>
+              <button className="btn" onClick={copyReport} disabled={!hasReport}>複製全文</button>
+              <button className="btn primary" onClick={printPdf} disabled={!hasReport}>PDF</button>
               <button className="btn locked" onClick={requestWord}>Word</button>
             </div>
+          </div>
+
+          <div className="paste-area no-print">
+            <label className="field">
+              <span>貼上 GPT 產出的完整土地評估報告</span>
+              <textarea rows={10} value={form.reportText} onChange={(e) => update('reportText', e.target.value)} placeholder="請把海悅土地評估調研助手產出的完整報告貼在這裡。" />
+            </label>
           </div>
 
           <article className="report-paper">
@@ -185,20 +156,7 @@ export default function Page() {
                 <span>PDF OUTPUT</span>
               </div>
             </div>
-
-            <pre className="text-report">
-              {reportText || '請先輸入配合業主與目標地號，點擊「開始自動調研」。\n\n系統將自動產出包含：基本資料、法定量體、基地四向現況、交通生活機能、學區里別、競案分析、價格預判、產品建議、綜合評估與待複核事項的土地評估報告。'}
-            </pre>
-
-            {sources.length > 0 && (
-              <div className="source-list">
-                <strong>參考來源</strong>
-                {sources.map((source, index) => (
-                  <a key={index} href={source.url} target="_blank" rel="noreferrer">{source.title || source.url}</a>
-                ))}
-              </div>
-            )}
-
+            <pre className="text-report">{hasReport ? form.reportText : '尚未貼上土地評估報告。\n\n請先前往「海悅土地評估調研助手」輸入配合業主、調研日期與目標地號，產出完整報告後，複製並貼回本頁。'}</pre>
             <div className="report-credit">海悅機構｜海宇國際 戴異軒 製</div>
           </article>
         </section>
