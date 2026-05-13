@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 
 const today = new Date().toISOString().slice(0, 10);
 const GPT_URL = 'https://chatgpt.com/g/g-6a03e60a20948191b57eb98f7cbf4672-hai-yue-tu-di-ping-gu-diao-yan-zhu-shou';
@@ -11,6 +11,8 @@ const makeFileName = ({ client, landNumber, researchDate }) => {
   const safeDate = researchDate || today;
   return `${safeClient}_${safeLand}_${safeDate}`.replace(/[\\/:*?"<>|]/g, '-');
 };
+
+const buildPrompt = ({ client, researchDate, landNumber }) => `幫我做土地評估，配合業主：${client || '＿＿建設'}，調研日期：${researchDate || '今天'}，目標地號：${landNumber || '＿＿地號'}。\n\n請依海悅土地評估格式，調查這筆土地並產出完整報告。請包含土地分區、建蔽率、容積率、基地面積、學區、里別、基地四向現況、交通動線、生活機能、公共建設、區域銷況、競案分析、建議產品、價格預判、綜合評估、資料來源與待複核事項。`;
 
 const emptyForm = {
   client: '',
@@ -25,6 +27,7 @@ export default function Page() {
 
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
   const hasReport = form.reportText.trim().length > 0;
+  const canOpenGpt = useMemo(() => form.client.trim() && form.landNumber.trim(), [form.client, form.landNumber]);
 
   const printPdf = () => {
     document.title = makeFileName(form);
@@ -32,10 +35,28 @@ export default function Page() {
   };
 
   const copyPrompt = async () => {
-    const prompt = `幫我做土地評估，配合業主：${form.client || '＿＿建設'}，調研日期：${form.researchDate || '今天'}，目標地號：${form.landNumber || '＿＿地號'}。請依海悅土地評估格式完成完整報告。`;
-    await navigator.clipboard.writeText(prompt);
+    await navigator.clipboard.writeText(buildPrompt(form));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const openGptWithPrompt = async () => {
+    if (!canOpenGpt) {
+      alert('請先填寫配合業主與目標地號。');
+      return;
+    }
+
+    const prompt = buildPrompt(form);
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      // 若瀏覽器阻擋剪貼簿，仍然嘗試用網址帶入提示詞。
+    }
+
+    const urlWithPrompt = `${GPT_URL}?q=${encodeURIComponent(prompt)}`;
+    window.open(urlWithPrompt, '_blank', 'noopener,noreferrer');
   };
 
   const copyReport = async () => {
@@ -69,15 +90,16 @@ export default function Page() {
           <div>
             <h1 className="app-title">免費版土地評估報告系統</h1>
             <p className="app-subtitle">
-              先使用「海悅土地評估調研助手」自動完成調研，再將完整報告貼回本系統套版與輸出 PDF。此版本不使用 OpenAI API，因此不會額外產生 API 費。
+              輸入基本資料後，點擊「自動調研」即可開啟海悅土地評估調研助手，並自動帶入提示詞。使用者只要在 GPT 頁面按送出，完成調研後再複製回本系統輸出 PDF。
             </p>
           </div>
           <div className="toolbar hero-actions">
-            <a className="btn ghost" href={GPT_URL} target="_blank" rel="noreferrer">開啟調研 GPT</a>
+            <button className="btn ghost" onClick={reset}>清空</button>
             <button className="btn primary" onClick={printPdf} disabled={!hasReport}>輸出 PDF</button>
           </div>
         </div>
         <div className="status-row">
+          <span>輸入地號即可帶入 GPT</span>
           <span>GPT 自動調研</span>
           <span>不使用 API Key</span>
           <span>貼回報告即可套版</span>
@@ -90,8 +112,8 @@ export default function Page() {
         <section className="panel input-panel">
           <div className="panel-header compact">
             <p className="eyebrow small">Step 1</p>
-            <h2>輸入基本資料並前往 GPT 調研</h2>
-            <p className="muted">填寫三個欄位後，複製提示詞，到 GPT 內貼上即可自動產出土地評估報告。</p>
+            <h2>輸入資料後進入 GPT 自動調研</h2>
+            <p className="muted">填寫三個欄位後，按「自動調研」，系統會開啟海悅土地評估調研助手並帶入提示詞；使用者在 GPT 頁面按送出即可開始。</p>
           </div>
 
           <div className="panel-body simple-form">
@@ -110,12 +132,12 @@ export default function Page() {
 
             <div className="action-card">
               <div>
-                <strong>免費版流程</strong>
-                <p>複製提示詞 → 開啟 GPT → 貼上並產出報告 → 回到本頁貼上完整報告。</p>
+                <strong>操作流程</strong>
+                <p>按自動調研 → 開啟 GPT 並帶入提示詞 → 在 GPT 按送出 → 複製結果 → 回到本頁貼上報告。</p>
               </div>
               <div className="toolbar">
-                <button className="btn" onClick={copyPrompt}>{copied ? '已複製' : '複製 GPT 提示詞'}</button>
-                <a className="btn primary" href={GPT_URL} target="_blank" rel="noreferrer">前往 GPT</a>
+                <button className="btn" onClick={copyPrompt}>{copied ? '提示詞已複製' : '複製提示詞'}</button>
+                <button className="btn primary" onClick={openGptWithPrompt} disabled={!canOpenGpt}>自動調研</button>
               </div>
             </div>
           </div>
@@ -156,7 +178,7 @@ export default function Page() {
                 <span>PDF OUTPUT</span>
               </div>
             </div>
-            <pre className="text-report">{hasReport ? form.reportText : '尚未貼上土地評估報告。\n\n請先前往「海悅土地評估調研助手」輸入配合業主、調研日期與目標地號，產出完整報告後，複製並貼回本頁。'}</pre>
+            <pre className="text-report">{hasReport ? form.reportText : '尚未貼上土地評估報告。\n\n請先輸入配合業主、調研日期與目標地號，點擊「自動調研」。系統會開啟海悅土地評估調研助手並自動帶入提示詞。調研完成後，請複製 GPT 產出的完整報告並貼回本頁。'}</pre>
             <div className="report-credit">海悅機構｜海宇國際 戴異軒 製</div>
           </article>
         </section>
