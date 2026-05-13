@@ -35,7 +35,7 @@ export default function Page() {
           <div>
             <h1 className="app-title">海悅廣告｜土地評估工作台</h1>
             <p className="app-subtitle">
-              直接輸入地號與調研內容，產出可複製到 Excel／業主報告的完整文字版土地評估。已取消 JSON 轉換流程。
+              這是一個公開連結即可使用的土地評估網頁工具。直接輸入地號與調研內容，產出可複製到 Excel／業主報告的完整文字版土地評估。
             </p>
           </div>
           <div className="toolbar hero-actions">
@@ -44,8 +44,9 @@ export default function Page() {
           </div>
         </div>
         <div className="status-row">
+          <span>公開連結即可使用</span>
+          <span>無需登入帳號</span>
           <span>固定欄位完整保留</span>
-          <span>資料盡量主動補齊</span>
           <span>文字版一鍵複製</span>
           <span>適合代銷提報</span>
         </div>
