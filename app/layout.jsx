@@ -1,4 +1,5 @@
 import './globals.css';
+import './print-fix.css';
 
 export const metadata = {
   title: '海悅廣告｜土地評估系統',
