@@ -1,32 +1,62 @@
-# 海悅廣告｜土地評估系統
+# 海悅廣告｜土地評估工作台
 
-這是一套土地評估 MVP，可用於：
+這是一套給代銷土地開發初評使用的土地評估工作台。
 
-- 匯入 ChatGPT 產出的土地評估 JSON
-- 將 JSON 轉成可編輯表單
-- 手動修改每一個報告欄位
-- 即時預覽「海悅廣告　土地評估分析表」
-- 匯出修改後 JSON
-- 使用瀏覽器列印功能輸出 PDF
-- 透過 GitHub Pages 部署成公開網頁
+新版流程已取消「ChatGPT 先產 JSON → 貼回 App → App 轉表格」的複雜步驟，改成：
 
-## 線上部署
+1. 使用者直接把地號丟給 ChatGPT，取得完整土地評估文字報告。
+2. 在本工作台中手動貼入或修正各欄位內容。
+3. 右側即時產出「欄位名稱＋完整文字內容」版本。
+4. 一鍵複製全文，可直接貼進 Excel、業主報告或內部提報。
+5. 需要 PDF 時使用瀏覽器列印輸出。
 
-本 repo 已加入 GitHub Pages workflow：
+## 核心定位
 
-`.github/workflows/deploy-pages.yml`
+- 保留原本「海悅廣告 土地評估分析表」所有必要欄位。
+- 不再以 JSON 匯入為核心。
+- 不再強迫轉成制式表格。
+- 輸出以可複製、可修改、可直接貼入 Excel 的文字內容為主。
+- 介面走代銷專業感、業主提報感與精品工作台風格。
 
-部署步驟：
+## 固定欄位
 
-1. 到 GitHub repo 的 `Settings`。
-2. 點左側 `Pages`。
-3. Source 選 `GitHub Actions`。
-4. 回到 `Actions`，等待 `Deploy static app to GitHub Pages` 跑完。
-5. 完成後網址為：
+包含：
 
-```text
-https://daisanity-svg.github.io/land-evaluation-system/
-```
+- 配合業主
+- 調研時間
+- 標的位置
+- 標的地號
+- 土地分區
+- 基地面積
+- 法定建蔽率
+- 法定容積率
+- 臨路條件
+- 土地售價
+- 學區
+- 里別
+- 基地四向現況
+- 交通動線
+- 生活機能
+- 公共建設
+- 區域銷況
+- 建議產品
+- 個案參考
+- 價格預判
+- 綜合評估
+- 資料來源與待複核事項
+
+## 調研原則
+
+所有資料仍需以實際狀況與公開資料查詢為基礎，但每一欄都應盡量主動查出明確答案，不應大量填寫「待複核」。
+
+只有在公開資料確實不足、資料矛盾或需正式文件確認時，才標註：
+
+- 待複核
+- 依公開資料初判
+- 依業主資料初判
+- 待戶政／教育局／分區證明複核
+
+並需說明待複核原因。
 
 ## 本機啟動
 
@@ -41,35 +71,17 @@ npm run dev
 http://localhost:3000
 ```
 
-## 使用方式
+## GitHub Pages
 
-### 1. 匯入 JSON
+若已啟用 GitHub Pages，部署網址通常為：
 
-將 ChatGPT 產出的土地評估 JSON 貼到「JSON 匯入」欄位，按「匯入 JSON」。
+```text
+https://daisanity-svg.github.io/land-evaluation-system/
+```
 
-### 2. 手動修改欄位
+## PDF 輸出
 
-左側表單可修改：
-
-- 基本資料
-- 法定量體
-- 基地四向現況
-- 交通動線
-- 生活機能
-- 公共建設
-- 學區與里別
-- 競案分析
-- 價格預判
-- 建議產品
-- 綜合評估
-
-### 3. 預覽報告
-
-右側即時顯示一頁式「海悅廣告　土地評估分析表」。
-
-### 4. 輸出 PDF
-
-按右上角「列印 / PDF」，或使用：
+按「列印 / PDF」或使用：
 
 ```text
 Command + P
@@ -77,24 +89,8 @@ Command + P
 
 列印目的地選「儲存為 PDF」。
 
-## 主要檔案
+建議檔名規則：
 
 ```text
-.github/workflows/deploy-pages.yml
-app/layout.jsx
-app/page.jsx
-app/globals.css
-components/JsonForm.jsx
-components/ReportPreview.jsx
-lib/defaultData.js
-next.config.js
-package.json
-run_web_app.sh
-sample_input.json
+建設公司名＋地段地號＋調研日期
 ```
-
-## 注意事項
-
-- 空值或不確定資料預設保留「待複核」。
-- PDF 檔名可在儲存時依規則手動命名：建設公司名＋地段地號＋調研日期。
-- GitHub Pages 首次部署需先到 Settings → Pages 選 GitHub Actions。
