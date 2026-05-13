@@ -100,6 +100,9 @@ ${clean(report.sources.source_note)}
 
 待複核事項：
 ${clean(report.sources.review_items)}
+
+設計人：
+海悅機構｜海宇國際 戴異軒 製
 `;
 };
 
@@ -132,6 +135,7 @@ export default function ReportPreview({ report }) {
           <span>Hiyes Advertising</span>
         </div>
         <pre className="text-report">{reportText}</pre>
+        <div className="report-credit">海悅機構｜海宇國際 戴異軒 製</div>
       </article>
     </section>
   );
