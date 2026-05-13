@@ -1,11 +1,19 @@
 export const runtime = 'nodejs';
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
+const RAW_SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+function getSupabaseRestUrl() {
+  if (!RAW_SUPABASE_URL) return '';
+  return RAW_SUPABASE_URL
+    .trim()
+    .replace(/\/+$/, '')
+    .replace(/\/rest\/v1$/i, '');
+}
 
 export async function GET(_request, { params }) {
   try {
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    if (!RAW_SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       return Response.json(
         { error: 'Supabase environment variables are not configured.' },
         { status: 500 }
@@ -17,7 +25,8 @@ export async function GET(_request, { params }) {
       return Response.json({ error: 'reportId is required.' }, { status: 400 });
     }
 
-    const url = `${SUPABASE_URL}/rest/v1/reports?report_id=eq.${encodeURIComponent(reportId)}&select=*`;
+    const supabaseBaseUrl = getSupabaseRestUrl();
+    const url = `${supabaseBaseUrl}/rest/v1/reports?report_id=eq.${encodeURIComponent(reportId)}&select=*`;
     const supabaseResponse = await fetch(url, {
       headers: {
         apikey: SUPABASE_SERVICE_ROLE_KEY,
@@ -26,11 +35,11 @@ export async function GET(_request, { params }) {
       cache: 'no-store',
     });
 
-    const data = await supabaseResponse.json();
+    const data = await supabaseResponse.json().catch(() => null);
 
     if (!supabaseResponse.ok) {
       return Response.json(
-        { error: 'Failed to fetch report.', detail: data },
+        { error: 'Failed to fetch report.', detail: data, supabase_path: '/rest/v1/reports' },
         { status: supabaseResponse.status }
       );
     }
