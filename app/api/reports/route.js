@@ -1,10 +1,18 @@
 export const runtime = 'nodejs';
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
+const RAW_SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
+function getSupabaseRestUrl() {
+  if (!RAW_SUPABASE_URL) return '';
+  return RAW_SUPABASE_URL
+    .trim()
+    .replace(/\/+$/, '')
+    .replace(/\/rest\/v1$/i, '');
+}
+
 function missingConfig() {
-  return !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY;
+  return !RAW_SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY;
 }
 
 export async function POST(request) {
@@ -35,7 +43,8 @@ export async function POST(request) {
       report_text,
     };
 
-    const supabaseResponse = await fetch(`${SUPABASE_URL}/rest/v1/reports`, {
+    const supabaseBaseUrl = getSupabaseRestUrl();
+    const supabaseResponse = await fetch(`${supabaseBaseUrl}/rest/v1/reports`, {
       method: 'POST',
       headers: {
         apikey: SUPABASE_SERVICE_ROLE_KEY,
@@ -50,7 +59,7 @@ export async function POST(request) {
 
     if (!supabaseResponse.ok) {
       return Response.json(
-        { error: 'Failed to save report.', detail: data },
+        { error: 'Failed to save report.', detail: data, supabase_path: '/rest/v1/reports' },
         { status: supabaseResponse.status }
       );
     }
