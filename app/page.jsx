@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 
 const today = new Date().toISOString().slice(0, 10);
 const GPT_URL = 'https://chatgpt.com/g/g-6a03e60a20948191b57eb98f7cbf4672-hai-yue-tu-di-ping-gu-diao-yan-zhu-shou';
-const emptyForm = { client: '', researchDate: today, landNumber: '', reportText: '' };
 const emptyText = '未擷取到內容';
+const emptyForm = { client: '', researchDate: today, landNumber: '', reportText: '' };
 const createReportId = () => `hy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 const FIELD_ALIASES = {
@@ -42,6 +42,19 @@ const FIELD_ALIASES = {
 const ALL_LABELS = Object.values(FIELD_ALIASES).flat();
 const DIRECTION_LABELS = ['東向', '南向', '西向', '北向', '東側', '南側', '西側', '北側', '東北向', '東南向', '西南向', '西北向'];
 
+function makeFileName({ client, landNumber, researchDate }) {
+  return `${client || '土地評估'}_${landNumber || '地號'}_${researchDate || today}`.replace(/[\\/:*?"<>|]/g, '-');
+}
+
+function buildPrompt({ client, researchDate, landNumber }, reportId) {
+  return `幫我做土地評估，配合業主：${client || '＿＿建設'}，調研日期：${researchDate || '今天'}，目標地號：${landNumber || '＿＿地號'}。\n\n請依海悅土地評估格式，調查這筆土地並產出完整報告。請包含土地分區、建蔽率、容積率、基地面積、學區、里別、基地四向現況、交通動線、生活機能、公共建設、區域銷況、競案分析、建議產品、價格預判、綜合評估、資料來源與待複核事項。\n\n重要：本次報告回傳編號 report_id 是：${reportId}。\n調研完成並輸出完整報告後，請呼叫 submitReport 動作，把 report_id、配合業主、目標地號、調研日期與完整報告全文 report_text 回傳到土地評估系統。`;
+}
+
+function buildGptUrl(prompt) {
+  const encoded = encodeURIComponent(prompt);
+  return `${GPT_URL}?q=${encoded}&prompt=${encoded}`;
+}
+
 function normalizeText(text) {
   return String(text || '')
     .replace(/\r\n/g, '\n')
@@ -52,6 +65,7 @@ function normalizeText(text) {
     .trim();
 }
 function escapeRegExp(str) { return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+function cleanValue(value) { return normalizeText(value).replace(/^[-–—\s]+/gm, '').replace(/\[\d+\]/g, '').trim(); }
 function getSection(text, labels, allLabels = ALL_LABELS) {
   const normalized = normalizeText(text);
   const labelList = Array.isArray(labels) ? labels : [labels];
@@ -61,15 +75,8 @@ function getSection(text, labels, allLabels = ALL_LABELS) {
   const match = normalized.match(pattern);
   return match ? cleanValue(match[1]) : '';
 }
-function cleanValue(value) {
-  return normalizeText(value)
-    .replace(/^[-–—\s]+/gm, '')
-    .replace(/\[\d+\]/g, '')
-    .trim();
-}
 function fallbackLine(text, keywords) {
-  const lines = normalizeText(text).split('\n').map((line) => line.trim()).filter(Boolean);
-  return lines.find((line) => keywords.some((kw) => line.includes(kw))) || '';
+  return normalizeText(text).split('\n').map((line) => line.trim()).filter(Boolean).find((line) => keywords.some((kw) => line.includes(kw))) || '';
 }
 function afterLabel(text, labels) {
   const lines = normalizeText(text).split('\n').map((line) => line.trim()).filter(Boolean);
@@ -107,8 +114,6 @@ function parseReportText(input) {
   const getDirection = (label) => getSection(siteRaw, label, DIRECTION_LABELS);
   const schoolRaw = get('school');
   const field = (value) => cleanValue(value) || emptyText;
-  const strengths = [get('strength1'), get('strength2'), get('strength3')].map(field);
-  const weaknesses = [get('weakness1'), get('weakness2'), get('weakness3')].map(field);
   return {
     rawText,
     basic: {
@@ -134,23 +139,16 @@ function parseReportText(input) {
       south: field(getDirection('南向') || getDirection('南側') || getDirection('東南向') || fallbackLine(siteRaw, ['南向', '南側', '基地南側'])),
       west: field(getDirection('西向') || getDirection('西側') || getDirection('西南向') || fallbackLine(siteRaw, ['西向', '西側', '基地西側'])),
       north: field(getDirection('北向') || getDirection('北側') || getDirection('西北向') || fallbackLine(siteRaw, ['北向', '北側', '基地北側'])),
-      raw: field(siteRaw),
     },
-    environment: {
-      traffic: field(get('traffic')),
-      livingFunctions: field(get('livingFunctions')),
-      publicFacilities: field(get('publicFacilities')),
-    },
+    environment: { traffic: field(get('traffic')), livingFunctions: field(get('livingFunctions')), publicFacilities: field(get('publicFacilities')) },
     market: { salesStatus: field(get('salesStatus')), cases: parseCases(get('comparableCases')) },
     suggestion: { pricing: field(get('pricing')), product: field(get('product')) },
-    evaluation: { strengths, weaknesses, conclusion: field(get('conclusion')) },
+    evaluation: { strengths: [field(get('strength1')), field(get('strength2')), field(get('strength3'))], weaknesses: [field(get('weakness1')), field(get('weakness2')), field(get('weakness3'))], conclusion: field(get('conclusion')) },
     sourceAndReview: { sources: field(get('sources')), reviewItems: field(get('reviewItems')) },
   };
 }
 
-function SectionHeading({ index, title, subtitle }) {
-  return <div className="section-heading readable-heading"><span>{index}</span><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div></div>;
-}
+function SectionHeading({ index, title, subtitle }) { return <div className="section-heading readable-heading"><span>{index}</span><div><h2>{title}</h2>{subtitle && <p>{subtitle}</p>}</div></div>; }
 function MetricCard({ label, value }) { return <div className="metric-card readable-metric"><small>{label}</small><strong>{shortValue(value)}</strong></div>; }
 function InfoCard({ title, children, className = '' }) { return <section className={`info-card readable-card ${className}`}><h3>{title}</h3><div className="info-card-content">{children}</div></section>; }
 function ReadableText({ text }) { return <>{splitIntoReadableBlocks(text).map((block, index) => <p key={index}>{block}</p>)}</>; }
@@ -182,10 +180,12 @@ export default function Page() {
   const [reportId, setReportId] = useState(createReportId);
   const [waiting, setWaiting] = useState(false);
   const [syncMessage, setSyncMessage] = useState('尚未開始等待 GPT 回傳。');
+  const [lastGptLink, setLastGptLink] = useState('');
   const update = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
   const hasReport = form.reportText.trim().length > 0;
   const canOpenGpt = useMemo(() => form.client.trim() && form.landNumber.trim(), [form.client, form.landNumber]);
   const structuredReport = useMemo(() => parseReportText(form.reportText), [form.reportText]);
+
   const checkReturnedReport = async (silent = false) => {
     if (!reportId) return;
     try {
@@ -196,18 +196,25 @@ export default function Page() {
     } catch { if (!silent) setSyncMessage('檢查回傳報告時發生錯誤。'); }
   };
   useEffect(() => { if (!waiting || hasReport) return; const timer = setInterval(() => checkReturnedReport(true), 5000); return () => clearInterval(timer); }, [waiting, hasReport, reportId]);
+
   const printPdf = () => { document.title = makeFileName(form); window.print(); };
   const copyPrompt = async () => { await navigator.clipboard.writeText(buildPrompt(form, reportId)); setCopied(true); setTimeout(() => setCopied(false), 2500); };
   const openGptWithPrompt = async () => {
     if (!canOpenGpt) { alert('請先填寫配合業主與目標地號。'); return; }
     const prompt = buildPrompt(form, reportId);
+    const gptLink = buildGptUrl(prompt);
+    setLastGptLink(gptLink);
     try { await navigator.clipboard.writeText(prompt); setCopied(true); setTimeout(() => setCopied(false), 2500); } catch {}
-    setWaiting(true); setSyncMessage(`等待 GPT 回傳報告中，report_id：${reportId}`);
-    alert('提示詞已自動複製。\n\n接下來會開啟「海悅土地評估調研助手」。\n若 GPT 頁面沒有自動帶入文字，請在輸入框按 Command + V 貼上，再按送出即可開始調研。\n\n若 GPT Action 設定完成，調研結束後報告會自動回到本系統。');
-    window.open(`${GPT_URL}?q=${encodeURIComponent(prompt)}&prompt=${encodeURIComponent(prompt)}`, '_blank', 'noopener,noreferrer');
+    setWaiting(true);
+    setSyncMessage(`已開啟海悅土地評估助手，等待 GPT 回傳報告中。report_id：${reportId}`);
+    const popup = window.open(gptLink, '_blank', 'noopener,noreferrer');
+    if (!popup) {
+      alert('瀏覽器阻擋了新分頁。提示詞已複製，請點畫面上的「開啟海悅土地評估助手」連結。');
+    }
   };
   const copyReport = async () => { if (!hasReport) return; await navigator.clipboard.writeText(form.reportText); alert('已複製完整報告。'); };
   const requestWord = () => alert('Word 輸出僅限戴異軒本人使用。免費版目前請由戴異軒本人複製報告內容後自行貼入 Word 編修；後續若要一鍵 DOCX 需升級後端權限版。');
-  const reset = () => { setForm(emptyForm); setReportId(createReportId()); setWaiting(false); setSyncMessage('尚未開始等待 GPT 回傳。'); };
-  return <main className="app-shell"><section className="hero-panel"><div className="hero-topbar"><div className="brand-lockup"><div className="brand-mark">H</div><div className="brand-copy"><div className="brand-copy-top">HIYES</div><div className="brand-copy-bottom">海悅廣告｜土地評估系統</div></div></div><div className="public-chip">Owner Report • GPT + PDF</div></div><div className="eyebrow">Hiyes Advertising Land Intelligence</div><div className="hero-content"><div><h1 className="app-title">土地評估業主閱讀版報告</h1><p className="app-subtitle">將 GPT 調研內容重新整理成業主可快速閱讀的寬版章節報告，不再輸出細長文字柱。</p></div><div className="toolbar hero-actions"><button className="btn ghost" onClick={reset}>清空</button><button className="btn primary" onClick={printPdf} disabled={!hasReport}>輸出 PDF</button></div></div><div className="status-row"><span>業主閱讀版</span><span>寬版章節</span><span>Action 自動回傳</span><span>PDF 可輸出</span><span>Word 僅限戴異軒</span></div></section><section className="workflow-grid"><section className="panel input-panel"><div className="panel-header compact"><p className="eyebrow small">Step 1</p><h2>輸入資料後進入 GPT 自動調研</h2><p className="muted">按自動調研後，系統會自動複製提示詞並開啟海悅土地評估調研助手。</p></div><div className="panel-body simple-form"><label className="field"><span>配合業主</span><input value={form.client} onChange={(e) => update('client', e.target.value)} placeholder="例如：弘峻建設" /></label><label className="field"><span>調研日期</span><input type="date" value={form.researchDate} onChange={(e) => update('researchDate', e.target.value)} /></label><label className="field"><span>目標地號</span><textarea rows={4} value={form.landNumber} onChange={(e) => update('landNumber', e.target.value)} placeholder="例如：桃園市中壢區中運段156、157、160地號" /></label><div className="sync-box"><strong>回傳編號 report_id</strong><code>{reportId}</code><p>{syncMessage}</p></div><div className="action-card"><div><strong>操作流程</strong><p>按自動調研 → GPT 調研 → Action 自動回傳，或手動複製結果貼回本頁。</p></div><div className="toolbar"><button className="btn" onClick={copyPrompt}>{copied ? '提示詞已複製' : '複製提示詞'}</button><button className="btn primary" onClick={openGptWithPrompt} disabled={!canOpenGpt}>自動調研</button><button className="btn" onClick={() => checkReturnedReport(false)}>檢查回傳</button></div></div></div></section><section className="panel preview-panel"><div className="panel-header preview-header"><div><p className="eyebrow small">Step 2</p><h2>生成業主閱讀版報告</h2><p className="muted">若 GPT Action 已回傳會自動生成；也可手動貼上 GPT 完整報告。</p></div><div className="toolbar"><button className="btn" onClick={copyReport} disabled={!hasReport}>複製全文</button><button className="btn primary" onClick={printPdf} disabled={!hasReport}>PDF</button><button className="btn locked" onClick={requestWord}>Word</button></div></div><div className="paste-area no-print"><label className="field"><span>貼上 GPT 產出的完整土地評估報告</span><textarea rows={10} value={form.reportText} onChange={(e) => update('reportText', e.target.value)} placeholder="請把海悅土地評估調研助手產出的完整報告貼在這裡。" /></label></div><div className="report-tabs no-print"><button className={viewMode === 'card' ? 'active' : ''} onClick={() => setViewMode('card')}>業主閱讀版</button><button className={viewMode === 'raw' ? 'active' : ''} onClick={() => setViewMode('raw')}>原文版</button></div>{hasReport ? (viewMode === 'card' ? <CardReport report={structuredReport} /> : <article className="report-paper raw-paper"><div className="report-brand-row"><div className="report-brand-title">HIYES｜原文版</div></div><pre className="text-report">{form.reportText}</pre><div className="report-credit">海悅機構｜海宇國際 戴異軒 製</div></article>) : <article className="report-paper"><pre className="text-report">尚未貼上土地評估報告。\n\n請先輸入配合業主、調研日期與目標地號，點擊「自動調研」。若 GPT Action 已設定，調研完成後會自動回傳；也可手動複製 GPT 報告貼回本頁。</pre><div className="report-credit">海悅機構｜海宇國際 戴異軒 製</div></article>}</section></section><footer className="designer-credit"><span>Designed by</span><strong>海悅機構｜海宇國際 戴異軒 製</strong></footer></main>;
+  const reset = () => { setForm(emptyForm); setReportId(createReportId()); setWaiting(false); setSyncMessage('尚未開始等待 GPT 回傳。'); setLastGptLink(''); };
+
+  return <main className="app-shell"><section className="hero-panel"><div className="hero-topbar"><div className="brand-lockup"><div className="brand-mark">H</div><div className="brand-copy"><div className="brand-copy-top">HIYES</div><div className="brand-copy-bottom">海悅廣告｜土地評估系統</div></div></div><div className="public-chip">Owner Report • GPT + PDF</div></div><div className="eyebrow">Hiyes Advertising Land Intelligence</div><div className="hero-content"><div><h1 className="app-title">土地評估業主閱讀版報告</h1><p className="app-subtitle">將 GPT 調研內容重新整理成業主可快速閱讀的寬版章節報告，並同步連動海悅土地評估助手。</p></div><div className="toolbar hero-actions"><button className="btn ghost" onClick={reset}>清空</button><button className="btn primary" onClick={printPdf} disabled={!hasReport}>輸出 PDF</button></div></div><div className="status-row"><span>業主閱讀版</span><span>自動開啟 GPT 助手</span><span>Action 自動回傳</span><span>PDF 可輸出</span><span>Word 僅限戴異軒</span></div></section><section className="workflow-grid"><section className="panel input-panel"><div className="panel-header compact"><p className="eyebrow small">Step 1</p><h2>輸入資料後進入 GPT 自動調研</h2><p className="muted">按自動調研後，系統會自動複製提示詞並開啟海悅土地評估調研助手。</p></div><div className="panel-body simple-form"><label className="field"><span>配合業主</span><input value={form.client} onChange={(e) => update('client', e.target.value)} placeholder="例如：弘峻建設" /></label><label className="field"><span>調研日期</span><input type="date" value={form.researchDate} onChange={(e) => update('researchDate', e.target.value)} /></label><label className="field"><span>目標地號</span><textarea rows={4} value={form.landNumber} onChange={(e) => update('landNumber', e.target.value)} placeholder="例如：桃園市中壢區中運段156、157、160地號" /></label><div className="sync-box"><strong>回傳編號 report_id</strong><code>{reportId}</code><p>{syncMessage}</p>{lastGptLink && <a className="fallback-link" href={lastGptLink} target="_blank" rel="noreferrer">開啟海悅土地評估助手</a>}</div><div className="action-card"><div><strong>操作流程</strong><p>按自動調研 → 自動開啟海悅土地評估助手 → GPT 調研 → Action 自動回傳，或手動複製結果貼回本頁。</p></div><div className="toolbar"><button className="btn" onClick={copyPrompt}>{copied ? '提示詞已複製' : '複製提示詞'}</button><button className="btn primary" onClick={openGptWithPrompt} disabled={!canOpenGpt}>自動調研</button><button className="btn" onClick={() => checkReturnedReport(false)}>檢查回傳</button></div></div></div></section><section className="panel preview-panel"><div className="panel-header preview-header"><div><p className="eyebrow small">Step 2</p><h2>生成業主閱讀版報告</h2><p className="muted">若 GPT Action 已回傳會自動生成；也可手動貼上 GPT 完整報告。</p></div><div className="toolbar"><button className="btn" onClick={copyReport} disabled={!hasReport}>複製全文</button><button className="btn primary" onClick={printPdf} disabled={!hasReport}>PDF</button><button className="btn locked" onClick={requestWord}>Word</button></div></div><div className="paste-area no-print"><label className="field"><span>貼上 GPT 產出的完整土地評估報告</span><textarea rows={10} value={form.reportText} onChange={(e) => update('reportText', e.target.value)} placeholder="請把海悅土地評估調研助手產出的完整報告貼在這裡。" /></label></div><div className="report-tabs no-print"><button className={viewMode === 'card' ? 'active' : ''} onClick={() => setViewMode('card')}>業主閱讀版</button><button className={viewMode === 'raw' ? 'active' : ''} onClick={() => setViewMode('raw')}>原文版</button></div>{hasReport ? (viewMode === 'card' ? <CardReport report={structuredReport} /> : <article className="report-paper raw-paper"><div className="report-brand-row"><div className="report-brand-title">HIYES｜原文版</div></div><pre className="text-report">{form.reportText}</pre><div className="report-credit">海悅機構｜海宇國際 戴異軒 製</div></article>) : <article className="report-paper"><pre className="text-report">尚未貼上土地評估報告。\n\n請先輸入配合業主、調研日期與目標地號，點擊「自動調研」。若 GPT Action 已設定，調研完成後會自動回傳；也可手動複製 GPT 報告貼回本頁。</pre><div className="report-credit">海悅機構｜海宇國際 戴異軒 製</div></article>}</section></section><footer className="designer-credit"><span>Designed by</span><strong>海悅機構｜海宇國際 戴異軒 製</strong></footer></main>;
 }
