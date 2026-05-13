@@ -55,6 +55,11 @@ export default function Page() {
         <JsonForm report={report} setReport={setReport} />
         <ReportPreview report={report} />
       </section>
+
+      <footer className="designer-credit" aria-label="設計人署名">
+        <span>Designed by</span>
+        <strong>海悅機構｜海宇國際 戴異軒 製</strong>
+      </footer>
     </main>
   );
 }
