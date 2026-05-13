@@ -1,0 +1,62 @@
+@media print {
+  @page {
+    size: A4;
+    margin: 12mm 12mm 22mm;
+  }
+
+  html,
+  body {
+    width: 210mm;
+    min-height: 297mm;
+    overflow: visible !important;
+  }
+
+  .card-report,
+  .report-paper {
+    width: 186mm !important;
+    max-width: 186mm !important;
+    margin: 0 auto !important;
+    overflow: visible !important;
+  }
+
+  .report-section {
+    padding: 6mm 0 8mm !important;
+    margin: 0 !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .report-section:last-child {
+    padding-bottom: 24mm !important;
+    margin-bottom: 20mm !important;
+  }
+
+  .report-section::after {
+    content: '';
+    display: block;
+    height: 2mm;
+  }
+
+  .section-heading,
+  .metric-card,
+  .info-card,
+  .swot-card,
+  table,
+  tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .info-card {
+    margin-bottom: 6mm !important;
+  }
+
+  .text-report {
+    overflow: visible !important;
+    padding-bottom: 8mm !important;
+  }
+
+  .print-fixed-footer {
+    bottom: 7mm !important;
+  }
+}
