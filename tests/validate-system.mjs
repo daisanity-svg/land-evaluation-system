@@ -27,40 +27,36 @@ const checks = [
     pass: layout.includes('tryParseManualPayload') && layout.includes('report_text') && layout.includes('summary') && layout.includes('localStorage'),
   },
   {
-    name: 'Briefing hides risk/source sections from owner report',
-    pass: page.includes('isHiddenOwnerSection') && page.includes("title.includes('風險')") && page.includes("title.includes('資料來源')"),
+    name: 'Owner output uses 01-12 only',
+    pass: layout.includes("var ORDER = ['02','03','04','05','06','07','08','09','10','11','12']") && !layout.includes("'14':'"),
   },
   {
-    name: 'Owner sanitizer removes internal-only labels',
-    pass: layout.includes('代銷判斷') && layout.includes('學區銷售權重') && layout.includes('內部價格策略') && layout.includes('可建築面積'),
+    name: 'Owner report renderer rebuilds stable DOM from report text',
+    pass: layout.includes('rebuildOwnerReport') && layout.includes('parseSections') && layout.includes('renderSection'),
   },
   {
-    name: 'Chapter 14 is normalized or removed from owner report',
-    pass: layout.includes('section-14') && layout.includes('section-12') && layout.includes('結論'),
+    name: 'Competition renderer is specialized',
+    pass: layout.includes('renderCases') && layout.includes('competition-card') && layout.includes('市場行情總結') && layout.includes('競案資料卡'),
   },
   {
-    name: 'Base land section can rebuild area table',
-    pass: layout.includes('rebuildBaseLandTable') && layout.includes('land-area-table') && layout.includes("['地號','面積㎡','面積坪','備註']"),
+    name: 'Price renderer always outputs fixed price cards',
+    pass: layout.includes('renderPrice') && layout.includes('二樓以上住宅') && layout.includes('坡道平面車位') && layout.includes("block = [item[0] + '：待複核']"),
   },
   {
-    name: 'Competition card cleanup removes placeholder cards',
-    pass: layout.includes('cleanCompetitionCards') && layout.includes('競案資料十三') && layout.includes('hasRealCase') && layout.includes('competition-card'),
+    name: 'Product renderer outputs fixed product cards',
+    pass: layout.includes('renderProduct') && layout.includes('兩房產品') && layout.includes('三房產品') && layout.includes('不建議產品'),
   },
   {
-    name: 'Price section uses whitelist cleanup',
-    pass: layout.includes('cleanPriceSection') && layout.includes("['二樓以上住宅','店面','坡道平面車位'") && layout.includes('priceForbidden'),
+    name: 'SWOT renderer prevents chapter 11 from disappearing',
+    pass: layout.includes('renderSwot') && layout.includes('advantage-card') && layout.includes('resistance-card'),
   },
   {
-    name: 'Product section uses whitelist cleanup',
-    pass: layout.includes('cleanProductSection') && layout.includes("['兩房','三房','不建議產品'") && layout.includes('productForbidden'),
+    name: 'Print keeps browser header/footer strategy',
+    pass: ownerCss.includes('@page') && ownerCss.includes('margin: 12mm 10mm 14mm') && !ownerCss.includes('visibility: hidden'),
   },
   {
-    name: 'Competitor section renders as data cards',
-    pass: page.includes("sectionId==='08'") && page.includes('競案資料卡') && page.includes('case-grid'),
-  },
-  {
-    name: 'Pricing section renders as price cards',
-    pass: page.includes("sectionId==='09'") && page.includes('price-grid') && page.includes('二樓以上住宅'),
+    name: 'Print hides operation UI panels',
+    pass: ownerCss.includes('.hero-panel') && ownerCss.includes('.input-panel') && ownerCss.includes('.paste-area') && ownerCss.includes('display: none !important'),
   },
   {
     name: 'Reading hierarchy CSS exists in owner stylesheet',
@@ -69,10 +65,6 @@ const checks = [
   {
     name: 'Print CSS prevents card splitting',
     pass: ownerCss.includes('break-inside: avoid') && ownerCss.includes('page-break-inside: avoid'),
-  },
-  {
-    name: 'PDF only prints report export area',
-    pass: ownerCss.includes('#report-export-area') && ownerCss.includes('body *') && ownerCss.includes('visibility: hidden'),
   },
   {
     name: 'Conclusion starts on independent page',
@@ -89,6 +81,10 @@ const checks = [
   {
     name: 'submitReport API accepts summary and falls back for old schema',
     pass: submitApi.includes('normalizeSummary') && submitApi.includes('looksLikeMissingSummaryColumn') && submitApi.includes('basePayload'),
+  },
+  {
+    name: 'submitReport accepts snake_case and camelCase payloads',
+    pass: submitApi.includes('body.report_id') && submitApi.includes('body.reportId') && submitApi.includes('body.report_text') && submitApi.includes('body.reportText'),
   },
   {
     name: 'submitReport mapping is preserved',
