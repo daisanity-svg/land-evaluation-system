@@ -7,7 +7,7 @@ export const metadata = {
   description: '新版兩層架構：內部調研邏輯與業主版土地評估報告',
 };
 
-const ownerReportSanitizer = `
+const ownerReportSanitizer = String.raw`
 (function () {
   var STORAGE_KEY = 'hiyes-land-evaluation-draft-v9-reading-mode';
   var manualImportLock = false;
