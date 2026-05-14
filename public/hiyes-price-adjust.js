@@ -1,12 +1,19 @@
 (function () {
-  const STORAGE_KEY = 'hiyes-manual-price-adjustment-v1';
+  const STORAGE_PREFIX = 'hiyes-manual-price-adjustment-v2:';
   const PRINT_CLONE_ID = 'hiyes-print-report-clone';
   const $ = (s, r = document) => r.querySelector(s);
   const $all = (s, r = document) => Array.from(r.querySelectorAll(s));
   const clean = (v) => String(v || '').replace(/\s+/g, ' ').trim();
-  const load = () => { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; } catch { return {}; } };
-  const save = (data) => localStorage.setItem(STORAGE_KEY, JSON.stringify(data || {}));
   const hasReport = () => Boolean($('.card-report.readable-report.briefing-report'));
+
+  function reportKey() {
+    const header = clean(document.querySelector('title')?.textContent || '');
+    const report = clean($('.card-report.readable-report.briefing-report')?.textContent || '').slice(0, 180);
+    const top = clean(document.body?.innerText || '').match(/\d{4}\/\d{1,2}\/\d{1,2}[^\n]*地號[^\n]*/)?.[0] || '';
+    return `${STORAGE_PREFIX}${header || top || report || 'current'}`.slice(0, 260);
+  }
+  function load() { try { return JSON.parse(localStorage.getItem(reportKey()) || '{}') || {}; } catch { return {}; } }
+  function save(data) { localStorage.setItem(reportKey(), JSON.stringify(data || {})); }
 
   function makeKv(label, value, priority) {
     const div = document.createElement('div');
@@ -103,7 +110,7 @@
       card.querySelector('h4').textContent = c.name;
       const content = card.querySelector('.brief-card-content');
       c.pairs.forEach(([l, v]) => content.appendChild(makeKv(l, v)));
-      c.notes.forEach((n) => { const p = document.createElement('p'); p.className = 'brief-body-text'; p.textContent = n; content.appendChild(p); });
+      c.notes.forEach((n) => { const p=document.createElement('p'); p.className='brief-body-text'; p.textContent=n; content.appendChild(p); });
       grid.appendChild(card);
     });
     grid.dataset.hiyesRepaired = '2';
@@ -115,48 +122,47 @@
     const summaryTexts = [];
     $all('.brief-data-card', grid).forEach((card) => {
       pairs(card).forEach(([l, v]) => { if (/價格判斷摘要|價格摘要|判斷摘要|價格判斷依據/.test(l) && v) summaryTexts.push(v); });
-      $all('.brief-body-text', card).forEach((p) => { const t = clean(p.textContent).replace(/^價格判斷摘要[：:]?/, '').replace(/^價格判斷依據[：:]?/, ''); if (/價格/.test(p.textContent) && t) summaryTexts.push(t); });
+      $all('.brief-body-text', card).forEach((p) => { const t=clean(p.textContent).replace(/^價格判斷摘要[：:]?/, '').replace(/^價格判斷依據[：:]?/, ''); if (/價格/.test(p.textContent) && t) summaryTexts.push(t); });
     });
     const data = load();
     const rebuilt = document.createElement('div'); rebuilt.className = `${grid.className} hiyes-price-repaired`; rebuilt.dataset.hiyesPriceRepaired = '3';
     [['二樓以上住宅','二樓以上住宅','residential'],['店面','店面','shop'],['坡道平面車位','坡道平面車位','parking']].forEach(([title, key, field]) => {
-      const card = document.createElement('div'); card.className = 'brief-data-card price hiyes-price-card';
-      card.innerHTML = '<div class="brief-card-eyebrow">價格重點</div><h4></h4><div class="brief-card-content"></div>';
-      card.querySelector('h4').textContent = title;
+      const card=document.createElement('div'); card.className='brief-data-card price hiyes-price-card';
+      card.innerHTML='<div class="brief-card-eyebrow">價格重點</div><h4></h4><div class="brief-card-content"></div>';
+      card.querySelector('h4').textContent=title;
       card.querySelector('.brief-card-content').appendChild(makeKv('建議成交價格', data[field] || findPrice(key) || '待複核', true));
       rebuilt.appendChild(card);
     });
-    const sCard = document.createElement('div'); sCard.className = 'brief-data-card price hiyes-price-summary-card';
-    sCard.innerHTML = '<div class="brief-card-eyebrow">價格判斷</div><h4>價格判斷依據</h4><div class="brief-card-content"></div>';
-    const p = document.createElement('p'); p.className = 'brief-body-text'; p.textContent = summaryTexts.filter(Boolean).join('。') || '依區域成交行情、競案條件與產品總價帶進行綜合判斷。';
+    const sCard=document.createElement('div'); sCard.className='brief-data-card price hiyes-price-summary-card';
+    sCard.innerHTML='<div class="brief-card-eyebrow">價格判斷</div><h4>價格判斷依據</h4><div class="brief-card-content"></div>';
+    const p=document.createElement('p'); p.className='brief-body-text'; p.textContent=summaryTexts.filter(Boolean).join('。') || '依區域成交行情、競案條件與產品總價帶進行綜合判斷。';
     sCard.querySelector('.brief-card-content').appendChild(p); rebuilt.appendChild(sCard);
     grid.replaceWith(rebuilt);
   }
 
   function splitItems(text) {
-    const out = []; const re = /(?:^|\s)(\d+)[.、]\s*([^\d]+?)(?=\s\d+[.、]|$)/g; let m;
-    while ((m = re.exec(clean(text)))) out.push(clean(m[2]));
+    const out=[]; const re=/(?:^|\s)(\d+)[.、]\s*([^\d]+?)(?=\s\d+[.、]|$)/g; let m;
+    while ((m=re.exec(clean(text)))) out.push(clean(m[2]));
     return out;
   }
 
   function repairSwot() {
-    const section = $('.section-11'); const grid = section?.querySelector('.swot-brief-grid,.brief-card-grid');
+    const section=$('.section-11'); const grid=section?.querySelector('.swot-brief-grid,.brief-card-grid');
     if (!grid || grid.dataset.hiyesSwotRepaired === '3') return;
-    let items = splitItems(clean(grid.textContent));
+    let items=splitItems(clean(grid.textContent));
     if (items.length < 4) {
-      items = [];
-      $all('.brief-body-text,.brief-kv-value', grid).forEach(el => { const t=clean(el.textContent); if(t && !/^銷售優勢$|^銷售抗性$|^銷售判斷$/.test(t)) items.push(t); });
+      items=[]; $all('.brief-body-text,.brief-kv-value', grid).forEach(el => { const t=clean(el.textContent); if(t && !/^銷售優勢$|^銷售抗性$|^銷售判斷$/.test(t)) items.push(t); });
     }
-    const adv = items.slice(0, 3); const res = items.slice(3, 6);
-    grid.innerHTML = ''; grid.classList.add('hiyes-swot-two-card');
-    [['銷售優勢', adv, 'advantage'], ['銷售抗性', res, 'resistance']].forEach(([title, list, type]) => {
-      const card = document.createElement('div'); card.className = `brief-data-card swot hiyes-swot-card ${type}`;
-      card.innerHTML = '<div class="brief-card-eyebrow">銷售判斷</div><h4></h4><div class="brief-card-content"></div>';
-      card.querySelector('h4').textContent = title; const wrap = card.querySelector('.brief-card-content');
-      (list.length ? list : ['待報告補充。']).slice(0,3).forEach((item, i) => { const p=document.createElement('p'); p.className='brief-body-text'; p.textContent=`${i+1}. ${item}`; wrap.appendChild(p); });
+    const adv=items.slice(0,3); const res=items.slice(3,6);
+    grid.innerHTML=''; grid.classList.add('hiyes-swot-two-card');
+    [['銷售優勢',adv,'advantage'],['銷售抗性',res,'resistance']].forEach(([title,list,type])=>{
+      const card=document.createElement('div'); card.className=`brief-data-card swot hiyes-swot-card ${type}`;
+      card.innerHTML='<div class="brief-card-eyebrow">銷售判斷</div><h4></h4><div class="brief-card-content"></div>';
+      card.querySelector('h4').textContent=title; const wrap=card.querySelector('.brief-card-content');
+      (list.length ? list : ['待報告補充。']).slice(0,3).forEach((item,i)=>{ const p=document.createElement('p'); p.className='brief-body-text'; p.textContent=`${i+1}. ${item}`; wrap.appendChild(p); });
       grid.appendChild(card);
     });
-    grid.dataset.hiyesSwotRepaired = '3';
+    grid.dataset.hiyesSwotRepaired='3';
   }
 
   function applyManualPrice(data) {
@@ -166,22 +172,43 @@
   }
 
   function buildPanel() {
-    if ($('#manual-price-panel')) return; const preview = $('.preview-panel'); if (!preview) return; const data = load();
-    const panel = document.createElement('section'); panel.id='manual-price-panel'; panel.className='manual-price-panel no-print';
-    panel.innerHTML = `<h3>價格手動調整</h3><p>當客觀成交行情需要依市場狀況上調或下修時，可在此覆蓋 PDF 顯示價格。此功能只影響前端閱讀版與 PDF，不會改動 submitReport、summary JSON 或資料庫 mapping。</p><div class="manual-price-grid"><label>二樓以上住宅<input data-price-field="residential" placeholder="例如：62～66 萬／坪" value="${data.residential||''}"></label><label>店面<input data-price-field="shop" placeholder="例如：110～135 萬／坪" value="${data.shop||''}"></label><label>坡道平面車位<input data-price-field="parking" placeholder="例如：220～260 萬／位" value="${data.parking||''}"></label><label style="grid-column:1/-1;">價格調整說明<textarea data-price-field="note" placeholder="例如：考量區域新案銷售速度與主力總價承受度，住宅建議成交價格較客觀行情上修 1～2 萬／坪。">${data.note||''}</textarea></label></div><div class="manual-price-actions"><button type="button" data-price-action="apply">套用到 PDF</button><button type="button" class="secondary" data-price-action="clear">清除調整</button></div>`;
-    const tabs = $('.report-tabs', preview); if (tabs) tabs.parentNode.insertBefore(panel, tabs.nextSibling); else preview.insertBefore(panel, preview.firstChild);
-    panel.addEventListener('input', () => { const d=readPanel(panel); save(d); applyManualPrice(d); });
-    panel.addEventListener('click', (e) => { const a=e.target?.dataset?.priceAction; if(!a)return; if(a==='apply'){const d=readPanel(panel); save(d); applyManualPrice(d);} if(a==='clear'){save({}); panel.querySelectorAll('[data-price-field]').forEach(i=>i.value=''); repairPrices(); applyManualPrice({});} });
+    if ($('#manual-price-panel')) return; const preview=$('.preview-panel'); if(!preview) return; const data=load();
+    const panel=document.createElement('section'); panel.id='manual-price-panel'; panel.className='manual-price-panel no-print';
+    panel.innerHTML=`<h3>價格手動調整</h3><p>新案預設採用系統判斷價格；看完報告後如需上修或下修，再手動輸入並套用到 PDF。</p><div class="manual-price-grid"><label>二樓以上住宅<input data-price-field="residential" placeholder="例如：62～66 萬／坪" value="${data.residential||''}"></label><label>店面<input data-price-field="shop" placeholder="例如：110～135 萬／坪" value="${data.shop||''}"></label><label>坡道平面車位<input data-price-field="parking" placeholder="例如：220～260 萬／位" value="${data.parking||''}"></label><label style="grid-column:1/-1;">價格調整說明<textarea data-price-field="note" placeholder="僅供內部註記，不會另外新增到 PDF 價格章節。">${data.note||''}</textarea></label></div><div class="manual-price-actions"><button type="button" data-price-action="apply">套用到 PDF</button><button type="button" class="secondary" data-price-action="clear">清除調整</button></div>`;
+    const tabs=$('.report-tabs', preview); if(tabs) tabs.parentNode.insertBefore(panel, tabs.nextSibling); else preview.insertBefore(panel, preview.firstChild);
+    panel.addEventListener('input',()=>{ const d=readPanel(panel); save(d); applyManualPrice(d); });
+    panel.addEventListener('click',(e)=>{ const a=e.target?.dataset?.priceAction; if(!a)return; if(a==='apply'){const d=readPanel(panel); save(d); applyManualPrice(d);} if(a==='clear'){save({}); panel.querySelectorAll('[data-price-field]').forEach(i=>i.value=''); location.reload();} });
   }
-  function readPanel(panel) { const d={}; panel.querySelectorAll('[data-price-field]').forEach(i => d[i.dataset.priceField]=clean(i.value)); return d; }
+  function readPanel(panel) { const d={}; panel.querySelectorAll('[data-price-field]').forEach(i=>d[i.dataset.priceField]=clean(i.value)); return d; }
 
-  function removePrintClone() { const old = document.getElementById(PRINT_CLONE_ID); if (old) old.remove(); }
-  function createPrintClone() { removePrintClone(); const report = $('.card-report.readable-report.briefing-report'); if (!report) return; applyManualPrice(load()); const clone = report.cloneNode(true); clone.id = PRINT_CLONE_ID; clone.classList.add('hiyes-print-clone'); $all('.manual-price-output', clone).forEach((node) => node.remove()); document.body.appendChild(clone); }
+  function hardCleanClone(clone) {
+    $all('.manual-price-output', clone).forEach((node)=>node.remove());
+    $all('.section-heading.briefing-heading', clone).forEach((node)=>{
+      const text=clean(node.textContent);
+      if (/土地評估/.test(text) && /案件簡報/.test(text)) node.remove();
+    });
+    $all('*', clone).forEach((el)=>{
+      const cls=String(el.className || '');
+      const keepCard=/metric-card|brief-data-card|brief-kv|report-brand-row|section-heading|brief-table|print-fixed-footer/.test(cls);
+      const keepSwot=/hiyes-swot-card|advantage-card|resistance-card/.test(cls);
+      if (!keepCard && !keepSwot) {
+        el.style.background='transparent';
+        el.style.backgroundColor='transparent';
+        el.style.backgroundImage='none';
+      }
+      if (/brief-data-card|metric-card|brief-kv|report-brand-row|hiyes-swot-card|advantage-card|resistance-card/.test(cls)) {
+        el.style.backgroundImage='none';
+      }
+    });
+  }
 
-  function init() { buildPanel(); repairCases(); repairPrices(); repairSwot(); applyManualPrice(load()); }
-  window.addEventListener('beforeprint', () => { init(); createPrintClone(); });
-  window.addEventListener('afterprint', removePrintClone);
-  const observer = new MutationObserver(() => { clearTimeout(window.__hiyesPriceAdjustTimer); window.__hiyesPriceAdjustTimer = setTimeout(init, 200); });
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
-  observer.observe(document.documentElement, { childList: true, subtree: true });
+  function removePrintClone(){ const old=document.getElementById(PRINT_CLONE_ID); if(old) old.remove(); }
+  function createPrintClone(){ removePrintClone(); const report=$('.card-report.readable-report.briefing-report'); if(!report) return; applyManualPrice(load()); const clone=report.cloneNode(true); clone.id=PRINT_CLONE_ID; clone.classList.add('hiyes-print-clone'); hardCleanClone(clone); document.body.appendChild(clone); }
+
+  function init(){ buildPanel(); repairCases(); repairPrices(); repairSwot(); applyManualPrice(load()); }
+  window.addEventListener('beforeprint',()=>{ init(); createPrintClone(); });
+  window.addEventListener('afterprint',removePrintClone);
+  const observer=new MutationObserver(()=>{ clearTimeout(window.__hiyesPriceAdjustTimer); window.__hiyesPriceAdjustTimer=setTimeout(init,200); });
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',init); else init();
+  observer.observe(document.documentElement,{childList:true,subtree:true});
 })();
