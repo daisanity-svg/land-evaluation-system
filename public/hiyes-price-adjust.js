@@ -5,6 +5,7 @@
   const $all = (s, r = document) => Array.from(r.querySelectorAll(s));
   const clean = (v) => String(v || '').replace(/\s+/g, ' ').trim();
   const hasReport = () => Boolean($('.card-report.readable-report.briefing-report'));
+  const isMarketSummaryLabel = (v) => /市場行情總結|市場總結|區域行情總結|行情總結|市場分析總結/.test(clean(v));
 
   function reportKey() {
     const header = clean(document.querySelector('title')?.textContent || '');
@@ -75,10 +76,7 @@
     const cards = $all('.hiyes-price-card, .brief-data-card.price');
     const card = cards.find((c) => clean(c.querySelector('h4')?.textContent).includes(title));
     const target = card?.querySelector('.brief-kv-value');
-    if (target) {
-      target.textContent = value;
-      card.classList.add('manual-price-overridden');
-    }
+    if (target) { target.textContent = value; card.classList.add('manual-price-overridden'); }
   }
 
   function applyManualValuesToPriceCards(data) {
@@ -88,19 +86,42 @@
     $all('.manual-price-output').forEach((node) => node.remove());
   }
 
+  function makeMarketSummaryCard(text) {
+    const card = document.createElement('div');
+    card.className = 'brief-data-card case hiyes-market-summary-card';
+    card.innerHTML = '<div class="brief-card-eyebrow">市場判斷</div><h4>市場行情總結</h4><div class="brief-card-content"></div>';
+    const p = document.createElement('p');
+    p.className = 'brief-body-text';
+    p.textContent = text || '依周邊競案成交與開價資訊綜合判斷。';
+    card.querySelector('.brief-card-content').appendChild(p);
+    return card;
+  }
+
   function repairCases() {
     const section = $('.section-08'); const grid = section?.querySelector('.case-grid,.brief-card-grid');
-    if (!grid || grid.dataset.hiyesRepaired === '2') return;
+    if (!grid || grid.dataset.hiyesRepaired === '4') return;
     const raw = $all('.brief-data-card', grid); if (!raw.length) return;
-    const cases = []; let cur = null;
+    const cases = []; let cur = null; const marketTexts = [];
     raw.forEach((card) => {
-      const title = cardTitle(card); const ps = pairs(card);
+      const title = cardTitle(card); const ps = pairs(card); const whole = clean(card.textContent);
+      if (isMarketSummaryLabel(title) || isMarketSummaryLabel(whole)) {
+        const found = ps.find(([l]) => isMarketSummaryLabel(l))?.[1] || whole.replace(/^市場行情總結[：:]?/, '');
+        marketTexts.push(found);
+        return;
+      }
       const start = /^競案[一二三四五六七八九十0-9]+\s*[｜|]/.test(title) || ps.some(([l]) => /案名/.test(l));
       const namePair = ps.find(([l]) => /案名|競案/.test(l));
       const name = clean((namePair?.[1] || title).replace(/^競案\s*\d+\s*[｜|：:]?/, '').replace(/^競案[一二三四五六七八九十0-9]+\s*[｜|：:]?/, ''));
       if (start || !cur) { cur = { name: name || `競案 ${cases.length + 1}`, pairs: [], notes: [] }; cases.push(cur); }
-      ps.forEach(([l, v]) => { if (!/案名|競案/.test(l) && l && v && !cur.pairs.some(([a,b]) => a===l && b===v)) cur.pairs.push([l, v]); });
-      $all('.brief-body-text', card).forEach((p) => { const t = clean(p.textContent); if (t && t !== cur.name && !/^競案\s*\d+$/.test(t) && !cur.notes.includes(t)) cur.notes.push(t); });
+      ps.forEach(([l, v]) => {
+        if (isMarketSummaryLabel(l)) { marketTexts.push(v); return; }
+        if (!/案名|競案/.test(l) && l && v && !cur.pairs.some(([a,b]) => a===l && b===v)) cur.pairs.push([l, v]);
+      });
+      $all('.brief-body-text', card).forEach((p) => {
+        const t = clean(p.textContent);
+        if (isMarketSummaryLabel(t)) { marketTexts.push(t.replace(/^市場行情總結[：:]?/, '')); return; }
+        if (t && t !== cur.name && !/^競案\s*\d+$/.test(t) && !cur.notes.includes(t)) cur.notes.push(t);
+      });
     });
     grid.innerHTML = ''; grid.classList.add('hiyes-case-repaired');
     cases.filter(c => c.name || c.pairs.length || c.notes.length).forEach((c, i) => {
@@ -113,7 +134,9 @@
       c.notes.forEach((n) => { const p=document.createElement('p'); p.className='brief-body-text'; p.textContent=n; content.appendChild(p); });
       grid.appendChild(card);
     });
-    grid.dataset.hiyesRepaired = '2';
+    const summary = marketTexts.map(clean).filter(Boolean).join(' ');
+    if (summary) grid.appendChild(makeMarketSummaryCard(summary));
+    grid.dataset.hiyesRepaired = '4';
   }
 
   function repairPrices() {
@@ -140,19 +163,13 @@
     grid.replaceWith(rebuilt);
   }
 
-  function splitItems(text) {
-    const out=[]; const re=/(?:^|\s)(\d+)[.、]\s*([^\d]+?)(?=\s\d+[.、]|$)/g; let m;
-    while ((m=re.exec(clean(text)))) out.push(clean(m[2]));
-    return out;
-  }
+  function splitItems(text) { const out=[]; const re=/(?:^|\s)(\d+)[.、]\s*([^\d]+?)(?=\s\d+[.、]|$)/g; let m; while ((m=re.exec(clean(text)))) out.push(clean(m[2])); return out; }
 
   function repairSwot() {
     const section=$('.section-11'); const grid=section?.querySelector('.swot-brief-grid,.brief-card-grid');
     if (!grid || grid.dataset.hiyesSwotRepaired === '3') return;
     let items=splitItems(clean(grid.textContent));
-    if (items.length < 4) {
-      items=[]; $all('.brief-body-text,.brief-kv-value', grid).forEach(el => { const t=clean(el.textContent); if(t && !/^銷售優勢$|^銷售抗性$|^銷售判斷$/.test(t)) items.push(t); });
-    }
+    if (items.length < 4) { items=[]; $all('.brief-body-text,.brief-kv-value', grid).forEach(el => { const t=clean(el.textContent); if(t && !/^銷售優勢$|^銷售抗性$|^銷售判斷$/.test(t)) items.push(t); }); }
     const adv=items.slice(0,3); const res=items.slice(3,6);
     grid.innerHTML=''; grid.classList.add('hiyes-swot-two-card');
     [['銷售優勢',adv,'advantage'],['銷售抗性',res,'resistance']].forEach(([title,list,type])=>{
@@ -165,11 +182,7 @@
     grid.dataset.hiyesSwotRepaired='3';
   }
 
-  function applyManualPrice(data) {
-    if (!hasReport()) return;
-    cleanSummaryPrice(data);
-    applyManualValuesToPriceCards(data);
-  }
+  function applyManualPrice(data) { if (!hasReport()) return; cleanSummaryPrice(data); applyManualValuesToPriceCards(data); }
 
   function buildPanel() {
     if ($('#manual-price-panel')) return; const preview=$('.preview-panel'); if(!preview) return; const data=load();
@@ -183,22 +196,22 @@
 
   function hardCleanClone(clone) {
     $all('.manual-price-output', clone).forEach((node)=>node.remove());
-    $all('.section-heading.briefing-heading', clone).forEach((node)=>{
-      const text=clean(node.textContent);
-      if (/土地評估/.test(text) && /案件簡報/.test(text)) node.remove();
-    });
+    $all('.section-heading.briefing-heading', clone).forEach((node)=>{ const text=clean(node.textContent); if (/土地評估/.test(text) && /案件簡報/.test(text)) node.remove(); });
     $all('*', clone).forEach((el)=>{
       const cls=String(el.className || '');
+      const text=clean(el.textContent);
+      const style=window.getComputedStyle(el);
+      const bg=style.backgroundColor;
       const keepCard=/metric-card|brief-data-card|brief-kv|report-brand-row|section-heading|brief-table|print-fixed-footer/.test(cls);
       const keepSwot=/hiyes-swot-card|advantage-card|resistance-card/.test(cls);
-      if (!keepCard && !keepSwot) {
-        el.style.background='transparent';
-        el.style.backgroundColor='transparent';
-        el.style.backgroundImage='none';
+      const isBlueUnderlay=/rgba?\(\s*(238|239|240|241|247|221|225|230|235)\s*,\s*(247|248|249|250|251|238|240)\s*,\s*(255|252|248|246|245)/.test(bg) || /rgba?\(\s*0\s*,\s*91\s*,\s*172\s*,\s*0\.[0-9]+\s*\)/.test(bg);
+      if ((!keepCard && !keepSwot) || (isBlueUnderlay && !/brief-data-card|metric-card|brief-kv|report-brand-row|hiyes-swot-card|advantage-card|resistance-card/.test(cls))) {
+        el.style.setProperty('background', 'transparent', 'important');
+        el.style.setProperty('background-color', 'transparent', 'important');
+        el.style.setProperty('background-image', 'none', 'important');
       }
-      if (/brief-data-card|metric-card|brief-kv|report-brand-row|hiyes-swot-card|advantage-card|resistance-card/.test(cls)) {
-        el.style.backgroundImage='none';
-      }
+      if (/brief-data-card|metric-card|brief-kv|report-brand-row|hiyes-swot-card|advantage-card|resistance-card/.test(cls)) el.style.setProperty('background-image', 'none', 'important');
+      if (/市場行情總結/.test(text) && /競案/.test(cls) && el.querySelector('.brief-card-eyebrow')) el.classList.add('hiyes-market-summary-card');
     });
   }
 
