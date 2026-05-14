@@ -1,0 +1,502 @@
+/*
+  海悅土地評估系統｜正式業主版報告視覺優化
+  Scope: UI / PDF visual hierarchy only.
+  Does not change submitReport, summary JSON, field mapping or API flow.
+*/
+
+:root {
+  --hiyes-primary: #0B5C6B;
+  --hiyes-primary-2: #1C7180;
+  --hiyes-bg: #FAFAF7;
+  --hiyes-card: #FFFFFF;
+  --hiyes-soft: #F5FAFB;
+  --hiyes-soft-2: #EAF4F6;
+  --hiyes-line: #D8E8EC;
+  --hiyes-line-2: #E3EEF1;
+  --hiyes-text: #1F2A2E;
+  --hiyes-muted: #6B777C;
+  --hiyes-faint: #879399;
+  --hiyes-adv: #E4F3EF;
+  --hiyes-res: #F7E7D2;
+  --hiyes-warn: #A66A1F;
+}
+
+body {
+  background: var(--hiyes-bg) !important;
+  color: var(--hiyes-text) !important;
+}
+
+/* Report canvas */
+.card-report.readable-report.briefing-report,
+.report-paper {
+  background: var(--hiyes-bg) !important;
+  border: 1px solid var(--hiyes-line) !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 28px rgba(11, 92, 107, 0.08) !important;
+}
+
+/* Header */
+.report-brand-row {
+  min-height: 52px !important;
+  padding: 12px 22px !important;
+  background: var(--hiyes-primary) !important;
+  color: #fff !important;
+  align-items: center !important;
+}
+.report-brand-mark {
+  width: 36px !important;
+  height: 36px !important;
+  border-radius: 12px !important;
+  color: var(--hiyes-primary) !important;
+}
+.report-brand-title {
+  font-size: 12px !important;
+  letter-spacing: .2em !important;
+}
+.report-brand-subtitle,
+.report-brand-side {
+  font-size: 10px !important;
+}
+
+/* Section title */
+.section-heading.briefing-heading {
+  gap: 8px !important;
+  margin-bottom: 14px !important;
+  break-after: avoid !important;
+  page-break-after: avoid !important;
+}
+.section-heading.briefing-heading > span {
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: var(--hiyes-soft-2) !important;
+  color: var(--hiyes-primary) !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+}
+.section-heading.briefing-heading h2 {
+  font-size: 18px !important;
+  line-height: 1.35 !important;
+  font-weight: 800 !important;
+  color: var(--hiyes-text) !important;
+  letter-spacing: 0 !important;
+}
+.section-heading.briefing-heading p {
+  font-size: 11px !important;
+  line-height: 1.5 !important;
+  color: var(--hiyes-muted) !important;
+  margin-top: 2px !important;
+}
+
+/* Report spacing */
+.report-section,
+.report-section.cover-section,
+.report-section.briefing-main {
+  padding: 28px 42px !important;
+  background: var(--hiyes-bg) !important;
+}
+.briefing-main > .section-heading.briefing-heading:first-child {
+  margin-bottom: 20px !important;
+}
+
+/* Summary page */
+.briefing-summary {
+  background: var(--hiyes-bg) !important;
+}
+.briefing-summary-grid,
+.summary-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 12px !important;
+}
+.metric-card {
+  background: var(--hiyes-card) !important;
+  border: 1px solid var(--hiyes-line) !important;
+  border-radius: 12px !important;
+  padding: 14px 16px !important;
+  min-height: auto !important;
+  box-shadow: 0 2px 6px rgba(11, 92, 107, 0.04) !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+.metric-card small {
+  font-size: 11px !important;
+  line-height: 1.45 !important;
+  font-weight: 800 !important;
+  color: var(--hiyes-muted) !important;
+  margin-bottom: 6px !important;
+}
+.metric-card strong {
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+  font-weight: 700 !important;
+  color: var(--hiyes-text) !important;
+}
+.metric-card.priority-high {
+  border-color: rgba(11, 92, 107, 0.28) !important;
+  background: var(--hiyes-soft) !important;
+}
+.metric-card.priority-high small {
+  color: var(--hiyes-primary) !important;
+}
+.metric-card.priority-high strong {
+  font-size: 18px !important;
+  color: var(--hiyes-primary) !important;
+  font-weight: 800 !important;
+}
+.briefing-summary-grid .metric-card:nth-child(6),
+.briefing-summary-grid .metric-card:nth-child(8) {
+  grid-column: span 2 !important;
+}
+
+/* General section cards */
+.info-card.accent.briefing-section,
+.briefing-section {
+  background: var(--hiyes-card) !important;
+  border: 1px solid var(--hiyes-line) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 2px 6px rgba(11, 92, 107, 0.04) !important;
+  padding: 16px 18px !important;
+  margin-bottom: 14px !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+.briefing-section::before {
+  display: none !important;
+}
+.briefing-section .section-heading.briefing-heading {
+  margin-bottom: 12px !important;
+}
+.brief-body-text {
+  font-size: 11px !important;
+  line-height: 1.62 !important;
+  color: var(--hiyes-text) !important;
+  margin-bottom: 7px !important;
+}
+.brief-subtitle {
+  display: block !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-left: 3px solid var(--hiyes-primary) !important;
+  border-radius: 0 !important;
+  color: var(--hiyes-primary) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  line-height: 1.45 !important;
+  padding: 1px 0 1px 8px !important;
+  margin: 12px 0 6px !important;
+}
+
+/* Key-value rows */
+.brief-kv {
+  background: var(--hiyes-card) !important;
+  border: 1px solid var(--hiyes-line-2) !important;
+  border-radius: 10px !important;
+  box-shadow: none !important;
+  grid-template-columns: 108px 1fr !important;
+  padding: 9px 10px !important;
+  margin: 6px 0 !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+.brief-kv-label {
+  font-size: 10px !important;
+  line-height: 1.45 !important;
+  font-weight: 800 !important;
+  color: var(--hiyes-muted) !important;
+}
+.brief-kv-value {
+  font-size: 11px !important;
+  line-height: 1.58 !important;
+  font-weight: 500 !important;
+  color: var(--hiyes-text) !important;
+}
+.brief-kv.priority-high {
+  background: var(--hiyes-soft) !important;
+  border-color: rgba(11, 92, 107, 0.22) !important;
+}
+.brief-kv.priority-high .brief-kv-label {
+  color: var(--hiyes-primary) !important;
+}
+.brief-kv.priority-high .brief-kv-value {
+  color: var(--hiyes-primary) !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+}
+
+/* Tables */
+.brief-table-wrap {
+  border: 1px solid var(--hiyes-line) !important;
+  border-radius: 10px !important;
+  overflow: hidden !important;
+  margin: 10px 0 14px !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+.brief-table {
+  font-size: 10px !important;
+  line-height: 1.5 !important;
+  background: #fff !important;
+}
+.brief-table td {
+  border: 0 !important;
+  border-bottom: 1px solid var(--hiyes-line-2) !important;
+  padding: 8px !important;
+  vertical-align: top !important;
+  font-weight: 500 !important;
+  color: var(--hiyes-text) !important;
+}
+.brief-table .table-head-cell {
+  background: var(--hiyes-soft-2) !important;
+  color: var(--hiyes-primary) !important;
+  font-weight: 800 !important;
+}
+
+/* Competitor, price, product, SWOT cards */
+.brief-card-grid,
+.case-grid,
+.price-grid,
+.swot-brief-grid {
+  gap: 12px !important;
+}
+.case-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+.price-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+}
+.swot-brief-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+.brief-data-card {
+  background: var(--hiyes-card) !important;
+  border: 1px solid var(--hiyes-line) !important;
+  border-radius: 12px !important;
+  padding: 14px !important;
+  box-shadow: 0 2px 6px rgba(11, 92, 107, 0.04) !important;
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+.brief-data-card h4 {
+  color: var(--hiyes-text) !important;
+  font-size: 14px !important;
+  line-height: 1.38 !important;
+  font-weight: 800 !important;
+  margin: 4px 0 10px !important;
+}
+.brief-card-eyebrow {
+  color: var(--hiyes-primary) !important;
+  font-size: 9px !important;
+  line-height: 1.4 !important;
+  letter-spacing: .12em !important;
+  font-weight: 800 !important;
+}
+.brief-data-card.case {
+  background: #fff !important;
+}
+.brief-data-card.price {
+  background: var(--hiyes-soft) !important;
+  border-color: rgba(11, 92, 107, 0.22) !important;
+  text-align: left !important;
+}
+.brief-data-card.price h4,
+.brief-data-card.price .brief-kv.priority-high .brief-kv-value {
+  color: var(--hiyes-primary) !important;
+}
+.brief-data-card.swot:nth-child(-n+3) {
+  background: var(--hiyes-adv) !important;
+  border-color: rgba(11, 92, 107, 0.16) !important;
+}
+.brief-data-card.swot:nth-child(n+4) {
+  background: var(--hiyes-res) !important;
+  border-color: rgba(166, 106, 31, 0.18) !important;
+}
+
+/* Keep cards together */
+.card,
+.metric-card,
+.info-card,
+.briefing-section,
+.brief-data-card,
+.brief-kv,
+.brief-table-wrap,
+.competition-card,
+.price-card,
+.product-card,
+.advantage-card,
+.resistance-card,
+.conclusion-card,
+.section-block {
+  break-inside: avoid !important;
+  page-break-inside: avoid !important;
+}
+
+/* Remove empty/system-looking artifacts when possible */
+.brief-data-card:empty,
+.metric-card:empty,
+.brief-kv:empty {
+  display: none !important;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  html,
+  body {
+    background: var(--hiyes-bg) !important;
+    width: 210mm !important;
+    min-height: 297mm !important;
+    overflow: visible !important;
+  }
+
+  .app-shell {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    background: var(--hiyes-bg) !important;
+  }
+
+  .hero-panel,
+  .input-panel,
+  .preview-header,
+  .paste-area,
+  .report-tabs,
+  .no-print,
+  .designer-credit {
+    display: none !important;
+  }
+
+  .workflow-grid,
+  .preview-panel,
+  .panel {
+    display: block !important;
+    position: static !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  .card-report.readable-report.briefing-report {
+    width: 210mm !important;
+    max-width: 210mm !important;
+    margin: 0 auto !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    background: var(--hiyes-bg) !important;
+  }
+
+  .report-brand-row {
+    min-height: 52px !important;
+    padding: 11px 52px !important;
+    border-radius: 0 !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .report-section,
+  .report-section.cover-section,
+  .report-section.briefing-main {
+    padding: 28px 52px 36px !important;
+    border-bottom: 0 !important;
+    background: var(--hiyes-bg) !important;
+    break-inside: auto !important;
+    page-break-inside: auto !important;
+  }
+
+  .section-heading.briefing-heading h2 {
+    font-size: 17px !important;
+  }
+
+  .section-heading.briefing-heading > span {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 11px !important;
+  }
+
+  .summary-grid,
+  .briefing-summary-grid {
+    gap: 10px !important;
+  }
+
+  .metric-card {
+    padding: 12px 14px !important;
+    box-shadow: none !important;
+  }
+
+  .metric-card small {
+    font-size: 10px !important;
+  }
+
+  .metric-card strong {
+    font-size: 12px !important;
+  }
+
+  .metric-card.priority-high strong {
+    font-size: 16px !important;
+  }
+
+  .briefing-section,
+  .info-card.accent.briefing-section {
+    padding: 14px 16px !important;
+    margin-bottom: 12px !important;
+    box-shadow: none !important;
+  }
+
+  .brief-body-text,
+  .brief-kv-value {
+    font-size: 10.5px !important;
+    line-height: 1.55 !important;
+  }
+
+  .brief-kv-label {
+    font-size: 9.5px !important;
+  }
+
+  .brief-kv {
+    grid-template-columns: 86px 1fr !important;
+    padding: 7px 8px !important;
+  }
+
+  .case-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .price-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  .swot-brief-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .brief-data-card {
+    padding: 12px !important;
+    box-shadow: none !important;
+  }
+
+  .brief-data-card h4 {
+    font-size: 13px !important;
+  }
+
+  .print-fixed-footer {
+    display: flex !important;
+    position: fixed !important;
+    left: 52px !important;
+    right: 52px !important;
+    bottom: 18px !important;
+    z-index: 9999 !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    border-top: 1px solid var(--hiyes-line) !important;
+    padding-top: 8px !important;
+    background: var(--hiyes-bg) !important;
+    color: var(--hiyes-muted) !important;
+    font-size: 8px !important;
+    letter-spacing: .08em !important;
+  }
+}
