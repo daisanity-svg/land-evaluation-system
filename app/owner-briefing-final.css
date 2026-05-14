@@ -26,13 +26,11 @@ body {
   color: var(--hiyes-text) !important;
 }
 
-/* Export target */
 #report-export-area,
 .card-report.readable-report.briefing-report {
   background: var(--hiyes-bg) !important;
 }
 
-/* Report canvas */
 .card-report.readable-report.briefing-report,
 .report-paper {
   background: var(--hiyes-bg) !important;
@@ -41,7 +39,6 @@ body {
   box-shadow: 0 8px 28px rgba(11, 92, 107, 0.08) !important;
 }
 
-/* Header */
 .report-brand-row {
   min-height: 52px !important;
   padding: 12px 22px !important;
@@ -64,7 +61,6 @@ body {
   font-size: 10px !important;
 }
 
-/* Section title */
 .section-heading.briefing-heading {
   gap: 8px !important;
   margin-bottom: 14px !important;
@@ -94,7 +90,6 @@ body {
   margin-top: 2px !important;
 }
 
-/* Report spacing */
 .report-section,
 .report-section.cover-section,
 .report-section.briefing-main {
@@ -105,7 +100,6 @@ body {
   margin-bottom: 20px !important;
 }
 
-/* Summary page */
 .briefing-summary {
   background: var(--hiyes-bg) !important;
   break-after: page !important;
@@ -156,7 +150,6 @@ body {
   grid-column: span 2 !important;
 }
 
-/* General section cards */
 .info-card.accent.briefing-section,
 .briefing-section {
   background: var(--hiyes-card) !important;
@@ -194,7 +187,6 @@ body {
   margin: 12px 0 6px !important;
 }
 
-/* Key-value rows */
 .brief-kv {
   background: var(--hiyes-card) !important;
   border: 1px solid var(--hiyes-line-2) !important;
@@ -231,7 +223,6 @@ body {
   font-weight: 800 !important;
 }
 
-/* Tables */
 .brief-table-wrap {
   border: 1px solid var(--hiyes-line) !important;
   border-radius: 10px !important;
@@ -259,7 +250,6 @@ body {
   font-weight: 800 !important;
 }
 
-/* Competitor, price, product, SWOT cards */
 .brief-card-grid,
 .case-grid,
 .price-grid,
@@ -331,7 +321,6 @@ body {
   border-color: rgba(166, 106, 31, 0.18) !important;
 }
 
-/* Section pagination hints */
 .section-02,
 .section-07,
 .section-09,
@@ -347,7 +336,6 @@ body {
   min-height: 210mm !important;
 }
 
-/* Keep cards together */
 .card,
 .metric-card,
 .info-card,
@@ -366,7 +354,6 @@ body {
   page-break-inside: avoid !important;
 }
 
-/* Remove empty/system-looking artifacts when possible */
 .brief-data-card:empty,
 .metric-card:empty,
 .brief-kv:empty {
@@ -392,43 +379,21 @@ body {
     overflow: visible !important;
   }
 
-  body * {
-    visibility: hidden !important;
-  }
-
-  #report-export-area,
-  #report-export-area * {
-    visibility: visible !important;
-  }
-
   .no-print,
-  .no-print *,
   .system-panel,
-  .system-panel *,
   .input-panel,
-  .input-panel *,
   .operation-panel,
-  .operation-panel *,
   .return-status,
-  .return-status *,
   .action-buttons,
-  .action-buttons *,
   .copy-command-area,
-  .copy-command-area *,
   .hero-panel,
-  .hero-panel *,
   .preview-header,
-  .preview-header *,
   .paste-area,
-  .paste-area *,
   .report-tabs,
-  .report-tabs *,
   .designer-credit,
-  .designer-credit *,
   textarea,
   button {
     display: none !important;
-    visibility: hidden !important;
   }
 
   .app-shell {
@@ -452,9 +417,7 @@ body {
   #report-export-area,
   .card-report.readable-report.briefing-report {
     display: block !important;
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
+    position: relative !important;
     width: 210mm !important;
     max-width: 210mm !important;
     margin: 0 auto !important;
@@ -466,11 +429,14 @@ body {
   }
 
   .report-brand-row {
+    display: flex !important;
     min-height: 52px !important;
     padding: 11px 52px !important;
     border-radius: 0 !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+    background: var(--hiyes-primary) !important;
+    color: #fff !important;
   }
 
   .report-section,
@@ -577,10 +543,5 @@ body {
     color: var(--hiyes-muted) !important;
     font-size: 8px !important;
     letter-spacing: .08em !important;
-    visibility: visible !important;
-  }
-
-  .print-fixed-footer * {
-    visibility: visible !important;
   }
 }
