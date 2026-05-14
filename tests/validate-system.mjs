@@ -39,6 +39,22 @@ const checks = [
     pass: layout.includes('section-14') && layout.includes('section-12') && layout.includes('結論'),
   },
   {
+    name: 'Base land section can rebuild area table',
+    pass: layout.includes('rebuildBaseLandTable') && layout.includes('land-area-table') && layout.includes("['地號','面積㎡','面積坪','備註']"),
+  },
+  {
+    name: 'Competition card cleanup removes placeholder cards',
+    pass: layout.includes('cleanCompetitionCards') && layout.includes('競案資料十三') && layout.includes('hasRealCase') && layout.includes('competition-card'),
+  },
+  {
+    name: 'Price section uses whitelist cleanup',
+    pass: layout.includes('cleanPriceSection') && layout.includes("['二樓以上住宅','店面','坡道平面車位'") && layout.includes('priceForbidden'),
+  },
+  {
+    name: 'Product section uses whitelist cleanup',
+    pass: layout.includes('cleanProductSection') && layout.includes("['兩房','三房','不建議產品'") && layout.includes('productForbidden'),
+  },
+  {
     name: 'Competitor section renders as data cards',
     pass: page.includes("sectionId==='08'") && page.includes('競案資料卡') && page.includes('case-grid'),
   },
