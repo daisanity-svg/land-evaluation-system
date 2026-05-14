@@ -74,18 +74,14 @@
   background: transparent !important;
 }
 .card-report.readable-report.briefing-report,
-#hiyes-print-report-clone {
-  background: #fff !important;
-}
+#hiyes-print-report-clone { background: #fff !important; }
 
-/* Clean owner-report card rhythm. */
 .briefing-summary-grid,
 .summary-grid { gap: 10px !important; align-items: stretch !important; }
 .metric-card { background: #fff !important; border-color: #B9D8F4 !important; }
 .metric-card.priority-high { background: #EEF7FF !important; }
 .metric-card small { letter-spacing: 0 !important; }
 
-/* First page summary layout: make long fields full width for cleaner A4 composition. */
 .briefing-summary-grid .metric-card:nth-child(5),
 .briefing-summary-grid .metric-card:nth-child(6),
 .briefing-summary-grid .metric-card:nth-child(7),
@@ -108,6 +104,11 @@
 .manual-price-actions button.secondary { background: #DDEEFF; color: #005BAC; }
 .manual-price-output { display: none !important; }
 
+.hiyes-case-repaired { display: block !important; }
+.hiyes-case-card { display: block !important; width: 100% !important; margin: 0 0 12px !important; }
+.hiyes-case-card .brief-card-content { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 8px 10px !important; }
+.hiyes-case-card .brief-body-text { grid-column: 1 / -1 !important; }
+
 .hiyes-price-repaired { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 12px !important; align-items: start !important; }
 .hiyes-price-summary-card { grid-column: 1 / -1 !important; }
 .hiyes-price-card .brief-kv { grid-template-columns: 1fr !important; }
@@ -124,18 +125,7 @@
   body > *:not(#hiyes-print-report-clone):not(.print-fixed-footer) { display: none !important; }
   #hiyes-print-report-clone,
   #hiyes-print-report-clone * { visibility: visible !important; }
-  #hiyes-print-report-clone {
-    display: block !important;
-    position: static !important;
-    transform: none !important;
-    width: 185mm !important;
-    max-width: 185mm !important;
-    margin: 0 auto !important;
-    border: 0 !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
-    background: #fff !important;
-  }
+  #hiyes-print-report-clone { display: block !important; position: static !important; transform: none !important; width: 185mm !important; max-width: 185mm !important; margin: 0 auto !important; border: 0 !important; border-radius: 0 !important; box-shadow: none !important; background: #fff !important; }
   .card-report.readable-report.briefing-report:not(#hiyes-print-report-clone) { display: none !important; }
 
   #hiyes-print-report-clone,
@@ -153,11 +143,7 @@
   #hiyes-print-report-clone .swot-brief-grid,
   #hiyes-print-report-clone .hiyes-price-repaired,
   #hiyes-print-report-clone .hiyes-case-repaired,
-  #hiyes-print-report-clone .hiyes-swot-two-card {
-    background: transparent !important;
-    background-color: transparent !important;
-    background-image: none !important;
-  }
+  #hiyes-print-report-clone .hiyes-swot-two-card { background: transparent !important; background-color: transparent !important; background-image: none !important; }
   #hiyes-print-report-clone .report-section::before,
   #hiyes-print-report-clone .report-section::after,
   #hiyes-print-report-clone .briefing-section::before,
@@ -199,6 +185,11 @@
   #hiyes-print-report-clone .metric-card { padding: 10px 13px !important; min-height: auto !important; }
   #hiyes-print-report-clone .metric-card strong { font-size: 12px !important; line-height: 1.45 !important; }
   #hiyes-print-report-clone .metric-card.priority-high strong { font-size: 14px !important; }
+
+  #hiyes-print-report-clone .hiyes-case-repaired { display: block !important; }
+  #hiyes-print-report-clone .hiyes-case-card { display: block !important; width: 100% !important; margin: 0 0 10px !important; }
+  #hiyes-print-report-clone .hiyes-case-card .brief-card-content { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 6px 8px !important; }
+  #hiyes-print-report-clone .hiyes-case-card .brief-body-text { grid-column: 1 / -1 !important; }
 
   #hiyes-print-report-clone .briefing-section,
   #hiyes-print-report-clone .brief-data-card,
