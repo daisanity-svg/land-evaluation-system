@@ -1,6 +1,7 @@
 import './globals.css';
 import './print-fix.css';
 import './owner-briefing-final.css';
+import './hiyes-cis-price-adjust.css';
 
 export const metadata = {
   title: '海悅廣告｜土地評估系統',
@@ -10,7 +11,10 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="zh-Hant">
-      <body>{children}</body>
+      <body>
+        {children}
+        <script src="/hiyes-price-adjust.js" defer></script>
+      </body>
     </html>
   );
 }
