@@ -17,6 +17,7 @@ const ownerReportSanitizer = `
   function remove(el) { if (el && el.parentNode) el.parentNode.removeChild(el); }
   function normalizeValue(value) { return String(value || '').trim(); }
   function isObject(value) { return value && typeof value === 'object' && !Array.isArray(value); }
+  function createEl(tag, className, text) { var el = document.createElement(tag); if (className) el.className = className; if (text != null) el.textContent = text; return el; }
 
   function normalizeSummary(summary) {
     if (!isObject(summary)) return null;
@@ -101,14 +102,130 @@ const ownerReportSanitizer = `
   var forbidden = [
     '代銷判斷','代銷處理方式','學區銷售權重','學區權重','主力訴求','輔助訴求','基本配備','不宜主打',
     '風險分級','資料來源','待補資料','複核清單','建議表價','首波成交帶','高樓層拉價空間','內部價格策略',
-    'debug','placeholder','暫無資料','競案資料十一','競案資料十二','競案資料十三','系統操作流程','複製指令',
+    'debug','placeholder','暫無資料','競案資料十一','競案資料十二','競案資料十三','競案資料十四','競案資料十五','競案資料十六','系統操作流程','複製指令',
     '啟動調研','檢查／載入回傳','檢查 / 載入回傳','prompt','Prompt','JSON','程式碼區塊'
   ];
   var lawForbidden = ['可建築面積','法定容積','樓地板面積','法定容積樓地板面積','初步規劃方向','初步可規劃方向','對產品與總價的影響','對代銷規劃的影響','內部量體試算'];
   var lawAllowed = ['土地使用分區','建蔽率','容積率'];
   var roadForbidden = ['待確認事項','出口／車道／次要說明'];
-  var priceForbidden = ['判斷理由','價格判斷','總價帶推估','低樓層價格','高樓層價格','建議表價','首波成交帶','高樓層拉價空間','內部價格策略','價格可信度','產品坪數推估'];
+  var priceForbidden = ['判斷理由','價格判斷','總價帶推估','低樓層價格','高樓層價格','建議表價','首波成交帶','高樓層拉價空間','內部價格策略','價格可信度','產品坪數推估','人流動線判斷','區域接受度','本案價格建議'];
   var productForbidden = ['2+1房','2＋1房','彈性房','四房','店面產品'];
+
+  function kvParts(kv) {
+    return {
+      label: textOf(kv.querySelector('.brief-kv-label')),
+      value: textOf(kv.querySelector('.brief-kv-value'))
+    };
+  }
+
+  function rebuildBaseLandTable(report) {
+    var section = report.querySelector('.section-02');
+    if (!section || section.dataset.tableRebuilt === 'done') return;
+    var kvs = Array.from(section.querySelectorAll('.brief-kv'));
+    if (kvs.length < 8) return;
+
+    var rows = [];
+    var current = null;
+    kvs.forEach(function (kv) {
+      var parts = kvParts(kv);
+      if (!parts.label) return;
+      if (parts.label.indexOf('地號') !== -1 && parts.label.indexOf('標的') === -1) {
+        if (current && (current.land || current.m2 || current.ping || current.note)) rows.push(current);
+        current = { land: parts.value, m2: '', ping: '', note: '' };
+      } else if (current && parts.label.indexOf('面積㎡') !== -1) {
+        current.m2 = parts.value;
+      } else if (current && parts.label.indexOf('面積坪') !== -1) {
+        current.ping = parts.value;
+      } else if (current && parts.label.indexOf('備註') !== -1) {
+        current.note = parts.value;
+      }
+    });
+    if (current && (current.land || current.m2 || current.ping || current.note)) rows.push(current);
+    rows = rows.filter(function (row) { return row.land && (row.m2 || row.ping); });
+    if (!rows.length) return;
+
+    var wrap = createEl('div', 'brief-table-wrap land-area-table');
+    var table = createEl('table', 'brief-table');
+    var tbody = document.createElement('tbody');
+    var head = document.createElement('tr');
+    ['地號','面積㎡','面積坪','備註'].forEach(function (label) {
+      var td = createEl('td', 'table-head-cell', label);
+      head.appendChild(td);
+    });
+    tbody.appendChild(head);
+    rows.forEach(function (row) {
+      var tr = document.createElement('tr');
+      [row.land, row.m2, row.ping, row.note || ''].forEach(function (value) {
+        tr.appendChild(createEl('td', '', value));
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    wrap.appendChild(table);
+
+    var heading = section.querySelector('.section-heading');
+    if (heading && heading.parentNode) heading.insertAdjacentElement('afterend', wrap);
+    kvs.forEach(function (kv) {
+      var label = kvParts(kv).label;
+      if (includesAny(label, ['地號','面積㎡','面積坪','備註'])) remove(kv);
+    });
+    section.dataset.tableRebuilt = 'done';
+  }
+
+  function cleanCompetitionCards(report) {
+    var comp = report.querySelector('.section-08');
+    if (!comp) return;
+    comp.querySelectorAll('.brief-data-card').forEach(function (card) {
+      var t = textOf(card);
+      var isPlaceholder = /^競案資料卡[一二三四五六七八九十百0-9]*$/.test(t) || /^競案[一二三四五六七八九十百0-9]*$/.test(t);
+      var isBadNumbered = /競案資料(十一|十二|十三|十四|十五|十六|17|18|19|20)/.test(t);
+      var hasRealCase = includesAny(t, ['案名','案子規劃','屋齡','成交價格','參考價值']) && t.length > 45;
+      var hasMarketSummary = t.indexOf('市場行情總結') !== -1;
+      if (!t || isPlaceholder || isBadNumbered || (!hasRealCase && !hasMarketSummary)) {
+        remove(card);
+        return;
+      }
+      card.classList.add('competition-card');
+      var eyebrow = card.querySelector('.brief-card-eyebrow');
+      if (eyebrow && eyebrow.textContent.indexOf('競案') === -1) eyebrow.textContent = '競案資料';
+    });
+  }
+
+  function cleanPriceSection(report) {
+    var price = report.querySelector('.section-09');
+    if (!price) return;
+    var allowed = ['二樓以上住宅','店面','坡道平面車位','坡道平面','車位','價格判斷摘要'];
+    price.querySelectorAll('.brief-data-card').forEach(function (card) {
+      var t = textOf(card);
+      if (!includesAny(t, allowed) || includesAny(t, priceForbidden)) {
+        remove(card);
+        return;
+      }
+      card.classList.add('price-card');
+    });
+    price.querySelectorAll('.brief-kv,.brief-body-text').forEach(function (el) {
+      var t = textOf(el);
+      if (includesAny(t, priceForbidden)) remove(el);
+    });
+  }
+
+  function cleanProductSection(report) {
+    var product = report.querySelector('.section-10');
+    if (!product) return;
+    var allowed = ['兩房','三房','不建議產品','建議坪數','對應客群','總價控制','規劃理由'];
+    product.querySelectorAll('.brief-data-card').forEach(function (card) {
+      var t = textOf(card);
+      if (includesAny(t, productForbidden) || !includesAny(t, allowed)) {
+        remove(card);
+        return;
+      }
+      card.classList.add('product-card');
+    });
+    product.querySelectorAll('.brief-kv,.brief-body-text').forEach(function (el) {
+      var t = textOf(el);
+      if (includesAny(t, productForbidden)) remove(el);
+    });
+  }
 
   function sanitizeReport() {
     installManualJsonImport();
@@ -139,6 +256,8 @@ const ownerReportSanitizer = `
       if (includesAny(title, ['風險','資料來源','複核事項','待補資料'])) remove(section);
     });
 
+    rebuildBaseLandTable(report);
+
     report.querySelectorAll('.brief-kv,.brief-body-text,.brief-data-card,.metric-card').forEach(function (el) {
       var t = textOf(el);
       if (!t || includesAny(t, forbidden)) remove(el);
@@ -168,32 +287,9 @@ const ownerReportSanitizer = `
       });
     }
 
-    var comp = report.querySelector('.section-08');
-    if (comp) {
-      comp.querySelectorAll('.brief-data-card').forEach(function (el) {
-        var t = textOf(el);
-        if (!t || includesAny(t, ['競案資料十一','競案資料十二','競案資料十三','空白競案','暫無資料'])) remove(el);
-        else el.classList.add('competition-card');
-      });
-    }
-
-    var price = report.querySelector('.section-09');
-    if (price) {
-      price.querySelectorAll('.brief-data-card,.brief-kv,.brief-body-text').forEach(function (el) {
-        var t = textOf(el);
-        if (includesAny(t, priceForbidden)) remove(el);
-        else if (el.classList.contains('brief-data-card')) el.classList.add('price-card');
-      });
-    }
-
-    var product = report.querySelector('.section-10');
-    if (product) {
-      product.querySelectorAll('.brief-data-card,.brief-kv,.brief-body-text').forEach(function (el) {
-        var t = textOf(el);
-        if (includesAny(t, productForbidden)) remove(el);
-        else if (el.classList.contains('brief-data-card')) el.classList.add('product-card');
-      });
-    }
+    cleanCompetitionCards(report);
+    cleanPriceSection(report);
+    cleanProductSection(report);
 
     var swot = report.querySelector('.section-11');
     if (swot) {
