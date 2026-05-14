@@ -36,6 +36,56 @@
 .briefing-section,
 .brief-data-card { box-shadow: 0 6px 20px rgba(0, 91, 172, 0.06) !important; }
 
+/* Final visual cleanup: remove decorative floating blocks/stripes that overlap cards in PDF. */
+.card-report.readable-report.briefing-report,
+.card-report.readable-report.briefing-report .report-section,
+.card-report.readable-report.briefing-report .report-section.cover-section,
+.card-report.readable-report.briefing-report .report-section.briefing-main,
+.card-report.readable-report.briefing-report .briefing-summary,
+.card-report.readable-report.briefing-report .briefing-section,
+.card-report.readable-report.briefing-report .brief-card-grid,
+.card-report.readable-report.briefing-report .summary-grid,
+.card-report.readable-report.briefing-summary-grid,
+.card-report.readable-report.briefing-report .briefing-summary-grid,
+.card-report.readable-report.briefing-report .price-grid,
+.card-report.readable-report.briefing-report .case-grid,
+.card-report.readable-report.briefing-report .product-grid,
+.card-report.readable-report.briefing-report .swot-brief-grid {
+  background-image: none !important;
+}
+.card-report.readable-report.briefing-report .report-section::before,
+.card-report.readable-report.briefing-report .report-section::after,
+.card-report.readable-report.briefing-report .briefing-section::before,
+.card-report.readable-report.briefing-report .briefing-section::after,
+.card-report.readable-report.briefing-report .brief-card-grid::before,
+.card-report.readable-report.briefing-report .brief-card-grid::after,
+.card-report.readable-report.briefing-report .summary-grid::before,
+.card-report.readable-report.briefing-report .summary-grid::after,
+.card-report.readable-report.briefing-report .metric-card::before,
+.card-report.readable-report.briefing-report .metric-card::after,
+.card-report.readable-report.briefing-report .brief-data-card::before,
+.card-report.readable-report.briefing-report .brief-data-card::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Clean owner-report card rhythm. */
+.briefing-summary-grid,
+.summary-grid { gap: 10px !important; align-items: stretch !important; }
+.metric-card { background: #fff !important; border-color: #B9D8F4 !important; }
+.metric-card.priority-high { background: #EEF7FF !important; }
+.metric-card small { letter-spacing: 0 !important; }
+
+/* First page summary layout: make long fields full width for cleaner A4 composition. */
+.briefing-summary-grid .metric-card:nth-child(5),
+.briefing-summary-grid .metric-card:nth-child(6),
+.briefing-summary-grid .metric-card:nth-child(7),
+.briefing-summary-grid .metric-card:nth-child(8),
+.summary-grid .metric-card:nth-child(5),
+.summary-grid .metric-card:nth-child(6),
+.summary-grid .metric-card:nth-child(7),
+.summary-grid .metric-card:nth-child(8) { grid-column: 1 / -1 !important; }
+
 .manual-price-panel { margin: 16px 0; padding: 16px; border: 1px solid #CFE3F8; border-radius: 16px; background: #fff; box-shadow: 0 8px 22px rgba(0, 91, 172, 0.08); }
 .manual-price-panel h3 { margin: 0 0 4px; color: #005BAC; font-size: 16px; font-weight: 900; }
 .manual-price-panel p { margin: 0 0 12px; color: #5F6F80; font-size: 12px; line-height: 1.55; }
@@ -80,21 +130,68 @@
     background: #F7FBFF !important;
   }
   .card-report.readable-report.briefing-report:not(#hiyes-print-report-clone) { display: none !important; }
+
+  #hiyes-print-report-clone,
   #hiyes-print-report-clone .report-section,
   #hiyes-print-report-clone .report-section.cover-section,
-  #hiyes-print-report-clone .report-section.briefing-main { padding: 18px 24px 24px !important; }
-  #hiyes-print-report-clone .briefing-summary { break-after: auto !important; page-break-after: auto !important; }
+  #hiyes-print-report-clone .report-section.briefing-main,
+  #hiyes-print-report-clone .briefing-summary,
+  #hiyes-print-report-clone .briefing-section,
+  #hiyes-print-report-clone .brief-card-grid,
+  #hiyes-print-report-clone .summary-grid,
+  #hiyes-print-report-clone .briefing-summary-grid,
+  #hiyes-print-report-clone .price-grid,
+  #hiyes-print-report-clone .case-grid,
+  #hiyes-print-report-clone .product-grid,
+  #hiyes-print-report-clone .swot-brief-grid { background-image: none !important; }
+  #hiyes-print-report-clone .report-section::before,
+  #hiyes-print-report-clone .report-section::after,
+  #hiyes-print-report-clone .briefing-section::before,
+  #hiyes-print-report-clone .briefing-section::after,
+  #hiyes-print-report-clone .brief-card-grid::before,
+  #hiyes-print-report-clone .brief-card-grid::after,
+  #hiyes-print-report-clone .summary-grid::before,
+  #hiyes-print-report-clone .summary-grid::after,
+  #hiyes-print-report-clone .metric-card::before,
+  #hiyes-print-report-clone .metric-card::after,
+  #hiyes-print-report-clone .brief-data-card::before,
+  #hiyes-print-report-clone .brief-data-card::after { display: none !important; content: none !important; }
+
+  #hiyes-print-report-clone .report-section,
+  #hiyes-print-report-clone .report-section.cover-section,
+  #hiyes-print-report-clone .report-section.briefing-main { padding: 14px 24px 20px !important; }
+  #hiyes-print-report-clone .report-brand-row { margin-bottom: 0 !important; }
+  #hiyes-print-report-clone .briefing-summary,
   #hiyes-print-report-clone .section-06,
   #hiyes-print-report-clone .section-07,
-  #hiyes-print-report-clone .section-09 { break-before: auto !important; page-break-before: auto !important; }
+  #hiyes-print-report-clone .section-08,
+  #hiyes-print-report-clone .section-09 { break-before: auto !important; page-break-before: auto !important; break-after: auto !important; page-break-after: auto !important; }
+
+  /* Keep only major content groups on fresh pages; let short chapters naturally connect. */
   #hiyes-print-report-clone .section-02,
   #hiyes-print-report-clone .section-10,
   #hiyes-print-report-clone .section-11,
   #hiyes-print-report-clone .section-12 { break-before: page !important; page-break-before: always !important; }
-  #hiyes-print-report-clone .section-08 { break-before: auto !important; page-break-before: auto !important; }
+
+  #hiyes-print-report-clone .summary-grid,
+  #hiyes-print-report-clone .briefing-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 9px !important; }
+  #hiyes-print-report-clone .briefing-summary-grid .metric-card:nth-child(5),
+  #hiyes-print-report-clone .briefing-summary-grid .metric-card:nth-child(6),
+  #hiyes-print-report-clone .briefing-summary-grid .metric-card:nth-child(7),
+  #hiyes-print-report-clone .briefing-summary-grid .metric-card:nth-child(8),
+  #hiyes-print-report-clone .summary-grid .metric-card:nth-child(5),
+  #hiyes-print-report-clone .summary-grid .metric-card:nth-child(6),
+  #hiyes-print-report-clone .summary-grid .metric-card:nth-child(7),
+  #hiyes-print-report-clone .summary-grid .metric-card:nth-child(8) { grid-column: 1 / -1 !important; }
+  #hiyes-print-report-clone .metric-card { padding: 10px 13px !important; min-height: auto !important; }
+  #hiyes-print-report-clone .metric-card strong { font-size: 12px !important; line-height: 1.45 !important; }
+  #hiyes-print-report-clone .metric-card.priority-high strong { font-size: 14px !important; }
+
+  #hiyes-print-report-clone .briefing-section,
+  #hiyes-print-report-clone .brief-data-card,
+  #hiyes-print-report-clone .brief-kv,
+  #hiyes-print-report-clone .metric-card { break-inside: avoid !important; page-break-inside: avoid !important; }
   #hiyes-print-report-clone .hiyes-price-repaired { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 10px !important; }
   #hiyes-print-report-clone .hiyes-price-summary-card { grid-column: 1 / -1 !important; }
   #hiyes-print-report-clone .hiyes-swot-two-card { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-  #hiyes-print-report-clone .metric-card strong { font-size: 12px !important; }
-  #hiyes-print-report-clone .metric-card.priority-high strong { font-size: 14px !important; }
 }
