@@ -26,6 +26,12 @@ body {
   color: var(--hiyes-text) !important;
 }
 
+/* Export target */
+#report-export-area,
+.card-report.readable-report.briefing-report {
+  background: var(--hiyes-bg) !important;
+}
+
 /* Report canvas */
 .card-report.readable-report.briefing-report,
 .report-paper {
@@ -102,6 +108,8 @@ body {
 /* Summary page */
 .briefing-summary {
   background: var(--hiyes-bg) !important;
+  break-after: page !important;
+  page-break-after: always !important;
 }
 .briefing-summary-grid,
 .summary-grid {
@@ -302,13 +310,33 @@ body {
 .brief-data-card.price .brief-kv.priority-high .brief-kv-value {
   color: var(--hiyes-primary) !important;
 }
-.brief-data-card.swot:nth-child(-n+3) {
+.brief-data-card.swot:nth-child(-n+3),
+.advantage-card {
   background: var(--hiyes-adv) !important;
   border-color: rgba(11, 92, 107, 0.16) !important;
 }
-.brief-data-card.swot:nth-child(n+4) {
+.brief-data-card.swot:nth-child(n+4),
+.resistance-card {
   background: var(--hiyes-res) !important;
   border-color: rgba(166, 106, 31, 0.18) !important;
+}
+
+/* Section pagination hints */
+.section-02,
+.section-07,
+.section-09,
+.section-10,
+.section-11,
+.section-12,
+.section-14,
+.conclusion-section {
+  break-before: page !important;
+  page-break-before: always !important;
+}
+.section-12,
+.section-14,
+.conclusion-section {
+  min-height: 210mm !important;
 }
 
 /* Keep cards together */
@@ -351,21 +379,26 @@ body {
     overflow: visible !important;
   }
 
+  .no-print,
+  .system-panel,
+  .input-panel,
+  .operation-panel,
+  .return-status,
+  .action-buttons,
+  .copy-command-area,
+  .hero-panel,
+  .preview-header,
+  .paste-area,
+  .report-tabs,
+  .designer-credit {
+    display: none !important;
+  }
+
   .app-shell {
     padding: 0 !important;
     margin: 0 !important;
     max-width: none !important;
     background: var(--hiyes-bg) !important;
-  }
-
-  .hero-panel,
-  .input-panel,
-  .preview-header,
-  .paste-area,
-  .report-tabs,
-  .no-print,
-  .designer-credit {
-    display: none !important;
   }
 
   .workflow-grid,
@@ -379,7 +412,9 @@ body {
     overflow: visible !important;
   }
 
+  #report-export-area,
   .card-report.readable-report.briefing-report {
+    display: block !important;
     width: 210mm !important;
     max-width: 210mm !important;
     margin: 0 auto !important;
