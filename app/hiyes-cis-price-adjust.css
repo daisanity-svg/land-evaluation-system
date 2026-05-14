@@ -27,8 +27,7 @@
 .brief-data-card.price .brief-kv.priority-high .brief-kv-value { color: #005BAC !important; }
 .metric-card.priority-high,
 .brief-data-card.price,
-.price-card,
-.manual-price-output { background: #EEF7FF !important; border-color: rgba(0, 91, 172, 0.26) !important; }
+.price-card { background: #EEF7FF !important; border-color: rgba(0, 91, 172, 0.26) !important; }
 .card-report.readable-report.briefing-report,
 .report-paper,
 .metric-card,
@@ -36,7 +35,7 @@
 .briefing-section,
 .brief-data-card { box-shadow: 0 6px 20px rgba(0, 91, 172, 0.06) !important; }
 
-/* Final visual cleanup: remove decorative floating blocks/stripes that overlap cards in PDF. */
+/* Remove all large decorative underlay blocks. Keep only individual cards and borders. */
 .card-report.readable-report.briefing-report,
 .card-report.readable-report.briefing-report .report-section,
 .card-report.readable-report.briefing-report .report-section.cover-section,
@@ -50,7 +49,12 @@
 .card-report.readable-report.briefing-report .price-grid,
 .card-report.readable-report.briefing-report .case-grid,
 .card-report.readable-report.briefing-report .product-grid,
-.card-report.readable-report.briefing-report .swot-brief-grid {
+.card-report.readable-report.briefing-report .swot-brief-grid,
+.card-report.readable-report.briefing-report .hiyes-price-repaired,
+.card-report.readable-report.briefing-report .hiyes-case-repaired,
+.card-report.readable-report.briefing-report .hiyes-swot-two-card {
+  background: transparent !important;
+  background-color: transparent !important;
   background-image: none !important;
 }
 .card-report.readable-report.briefing-report .report-section::before,
@@ -67,6 +71,11 @@
 .card-report.readable-report.briefing-report .brief-data-card::after {
   display: none !important;
   content: none !important;
+  background: transparent !important;
+}
+.card-report.readable-report.briefing-report,
+#hiyes-print-report-clone {
+  background: #fff !important;
 }
 
 /* Clean owner-report card rhythm. */
@@ -97,9 +106,7 @@
 .manual-price-actions { display: flex; gap: 8px; margin-top: 12px; }
 .manual-price-actions button { border: 0; border-radius: 999px; padding: 9px 14px; background: #005BAC; color: #fff; font-size: 12px; font-weight: 900; cursor: pointer; }
 .manual-price-actions button.secondary { background: #DDEEFF; color: #005BAC; }
-.manual-price-output { margin-top: 12px !important; }
-.manual-price-output .brief-kv-value,
-.manual-price-output strong { color: #005BAC !important; font-weight: 900 !important; }
+.manual-price-output { display: none !important; }
 
 .hiyes-price-repaired { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 12px !important; align-items: start !important; }
 .hiyes-price-summary-card { grid-column: 1 / -1 !important; }
@@ -110,9 +117,9 @@
 .hiyes-swot-card .brief-body-text { padding: 8px 10px !important; background: #fff !important; border-radius: 10px !important; }
 
 @media print {
-  .manual-price-panel { display: none !important; }
+  .manual-price-panel,
+  .manual-price-output { display: none !important; }
   .report-brand-row { background: #005BAC !important; }
-  .manual-price-output { break-inside: avoid !important; page-break-inside: avoid !important; }
 
   body > *:not(#hiyes-print-report-clone):not(.print-fixed-footer) { display: none !important; }
   #hiyes-print-report-clone,
@@ -127,7 +134,7 @@
     border: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    background: #F7FBFF !important;
+    background: #fff !important;
   }
   .card-report.readable-report.briefing-report:not(#hiyes-print-report-clone) { display: none !important; }
 
@@ -143,7 +150,14 @@
   #hiyes-print-report-clone .price-grid,
   #hiyes-print-report-clone .case-grid,
   #hiyes-print-report-clone .product-grid,
-  #hiyes-print-report-clone .swot-brief-grid { background-image: none !important; }
+  #hiyes-print-report-clone .swot-brief-grid,
+  #hiyes-print-report-clone .hiyes-price-repaired,
+  #hiyes-print-report-clone .hiyes-case-repaired,
+  #hiyes-print-report-clone .hiyes-swot-two-card {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+  }
   #hiyes-print-report-clone .report-section::before,
   #hiyes-print-report-clone .report-section::after,
   #hiyes-print-report-clone .briefing-section::before,
@@ -155,7 +169,7 @@
   #hiyes-print-report-clone .metric-card::before,
   #hiyes-print-report-clone .metric-card::after,
   #hiyes-print-report-clone .brief-data-card::before,
-  #hiyes-print-report-clone .brief-data-card::after { display: none !important; content: none !important; }
+  #hiyes-print-report-clone .brief-data-card::after { display: none !important; content: none !important; background: transparent !important; }
 
   #hiyes-print-report-clone .report-section,
   #hiyes-print-report-clone .report-section.cover-section,
@@ -167,7 +181,6 @@
   #hiyes-print-report-clone .section-08,
   #hiyes-print-report-clone .section-09 { break-before: auto !important; page-break-before: auto !important; break-after: auto !important; page-break-after: auto !important; }
 
-  /* Keep only major content groups on fresh pages; let short chapters naturally connect. */
   #hiyes-print-report-clone .section-02,
   #hiyes-print-report-clone .section-10,
   #hiyes-print-report-clone .section-11,
