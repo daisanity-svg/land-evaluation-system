@@ -63,6 +63,24 @@
     setMetric('建議價格', summary);
   }
 
+  function setPriceCardValue(title, value) {
+    if (!value) return;
+    const cards = $all('.hiyes-price-card, .brief-data-card.price');
+    const card = cards.find((c) => clean(c.querySelector('h4')?.textContent).includes(title));
+    const target = card?.querySelector('.brief-kv-value');
+    if (target) {
+      target.textContent = value;
+      card.classList.add('manual-price-overridden');
+    }
+  }
+
+  function applyManualValuesToPriceCards(data) {
+    setPriceCardValue('二樓以上住宅', data.residential);
+    setPriceCardValue('店面', data.shop);
+    setPriceCardValue('坡道平面車位', data.parking);
+    $all('.manual-price-output').forEach((node) => node.remove());
+  }
+
   function repairCases() {
     const section = $('.section-08'); const grid = section?.querySelector('.case-grid,.brief-card-grid');
     if (!grid || grid.dataset.hiyesRepaired === '2') return;
@@ -99,12 +117,13 @@
       pairs(card).forEach(([l, v]) => { if (/價格判斷摘要|價格摘要|判斷摘要|價格判斷依據/.test(l) && v) summaryTexts.push(v); });
       $all('.brief-body-text', card).forEach((p) => { const t = clean(p.textContent).replace(/^價格判斷摘要[：:]?/, '').replace(/^價格判斷依據[：:]?/, ''); if (/價格/.test(p.textContent) && t) summaryTexts.push(t); });
     });
+    const data = load();
     const rebuilt = document.createElement('div'); rebuilt.className = `${grid.className} hiyes-price-repaired`; rebuilt.dataset.hiyesPriceRepaired = '3';
-    [['二樓以上住宅','二樓以上住宅'],['店面','店面'],['坡道平面車位','坡道平面車位']].forEach(([title, key]) => {
+    [['二樓以上住宅','二樓以上住宅','residential'],['店面','店面','shop'],['坡道平面車位','坡道平面車位','parking']].forEach(([title, key, field]) => {
       const card = document.createElement('div'); card.className = 'brief-data-card price hiyes-price-card';
       card.innerHTML = '<div class="brief-card-eyebrow">價格重點</div><h4></h4><div class="brief-card-content"></div>';
       card.querySelector('h4').textContent = title;
-      card.querySelector('.brief-card-content').appendChild(makeKv('建議成交價格', findPrice(key) || '待複核', true));
+      card.querySelector('.brief-card-content').appendChild(makeKv('建議成交價格', data[field] || findPrice(key) || '待複核', true));
       rebuilt.appendChild(card);
     });
     const sCard = document.createElement('div'); sCard.className = 'brief-data-card price hiyes-price-summary-card';
@@ -140,16 +159,11 @@
     grid.dataset.hiyesSwotRepaired = '3';
   }
 
-  function manualOutput(data) {
-    const section = $('.section-09'); if (!section) return;
-    let output = section.querySelector('.manual-price-output');
-    if (!output) { output = document.createElement('div'); output.className='brief-kv priority-high manual-price-output'; output.innerHTML='<div class="brief-kv-label">手動調整後建議價格</div><div class="brief-kv-value"></div>'; const grid=section.querySelector('.hiyes-price-repaired,.price-grid,.brief-card-grid')||section; grid.parentNode.insertBefore(output, grid); }
-    const summary = makePriceSummary(data);
-    output.style.display = summary || data.note ? '' : 'none';
-    output.querySelector('.brief-kv-value').textContent = [summary, data.note ? `調整說明：${data.note}` : ''].filter(Boolean).join('。');
+  function applyManualPrice(data) {
+    if (!hasReport()) return;
+    cleanSummaryPrice(data);
+    applyManualValuesToPriceCards(data);
   }
-
-  function applyManualPrice(data) { if (!hasReport()) return; cleanSummaryPrice(data); manualOutput(data); }
 
   function buildPanel() {
     if ($('#manual-price-panel')) return; const preview = $('.preview-panel'); if (!preview) return; const data = load();
@@ -157,12 +171,12 @@
     panel.innerHTML = `<h3>價格手動調整</h3><p>當客觀成交行情需要依市場狀況上調或下修時，可在此覆蓋 PDF 顯示價格。此功能只影響前端閱讀版與 PDF，不會改動 submitReport、summary JSON 或資料庫 mapping。</p><div class="manual-price-grid"><label>二樓以上住宅<input data-price-field="residential" placeholder="例如：62～66 萬／坪" value="${data.residential||''}"></label><label>店面<input data-price-field="shop" placeholder="例如：110～135 萬／坪" value="${data.shop||''}"></label><label>坡道平面車位<input data-price-field="parking" placeholder="例如：220～260 萬／位" value="${data.parking||''}"></label><label style="grid-column:1/-1;">價格調整說明<textarea data-price-field="note" placeholder="例如：考量區域新案銷售速度與主力總價承受度，住宅建議成交價格較客觀行情上修 1～2 萬／坪。">${data.note||''}</textarea></label></div><div class="manual-price-actions"><button type="button" data-price-action="apply">套用到 PDF</button><button type="button" class="secondary" data-price-action="clear">清除調整</button></div>`;
     const tabs = $('.report-tabs', preview); if (tabs) tabs.parentNode.insertBefore(panel, tabs.nextSibling); else preview.insertBefore(panel, preview.firstChild);
     panel.addEventListener('input', () => { const d=readPanel(panel); save(d); applyManualPrice(d); });
-    panel.addEventListener('click', (e) => { const a=e.target?.dataset?.priceAction; if(!a)return; if(a==='apply'){const d=readPanel(panel); save(d); applyManualPrice(d);} if(a==='clear'){save({}); panel.querySelectorAll('[data-price-field]').forEach(i=>i.value=''); applyManualPrice({});} });
+    panel.addEventListener('click', (e) => { const a=e.target?.dataset?.priceAction; if(!a)return; if(a==='apply'){const d=readPanel(panel); save(d); applyManualPrice(d);} if(a==='clear'){save({}); panel.querySelectorAll('[data-price-field]').forEach(i=>i.value=''); repairPrices(); applyManualPrice({});} });
   }
   function readPanel(panel) { const d={}; panel.querySelectorAll('[data-price-field]').forEach(i => d[i.dataset.priceField]=clean(i.value)); return d; }
 
   function removePrintClone() { const old = document.getElementById(PRINT_CLONE_ID); if (old) old.remove(); }
-  function createPrintClone() { removePrintClone(); const report = $('.card-report.readable-report.briefing-report'); if (!report) return; const clone = report.cloneNode(true); clone.id = PRINT_CLONE_ID; clone.classList.add('hiyes-print-clone'); document.body.appendChild(clone); }
+  function createPrintClone() { removePrintClone(); const report = $('.card-report.readable-report.briefing-report'); if (!report) return; applyManualPrice(load()); const clone = report.cloneNode(true); clone.id = PRINT_CLONE_ID; clone.classList.add('hiyes-print-clone'); $all('.manual-price-output', clone).forEach((node) => node.remove()); document.body.appendChild(clone); }
 
   function init() { buildPanel(); repairCases(); repairPrices(); repairSwot(); applyManualPrice(load()); }
   window.addEventListener('beforeprint', () => { init(); createPrintClone(); });
