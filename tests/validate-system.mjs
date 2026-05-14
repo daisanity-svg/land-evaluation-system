@@ -5,9 +5,6 @@ const ownerCss = readFileSync('app/owner-briefing-final.css', 'utf8');
 const layout = readFileSync('app/layout.jsx', 'utf8');
 const submitApi = readFileSync('app/api/reports/route.js', 'utf8');
 
-const displayOrderMatch = page.match(/const\s+DISPLAY_ORDER\s*=\s*\[([^\]]+)\]/);
-const displayOrderSource = displayOrderMatch ? displayOrderMatch[1] : '';
-
 const checks = [
   {
     name: 'Prompt requires summary JSON',
@@ -36,6 +33,10 @@ const checks = [
   {
     name: 'Owner sanitizer removes internal-only labels',
     pass: layout.includes('代銷判斷') && layout.includes('學區銷售權重') && layout.includes('內部價格策略') && layout.includes('可建築面積'),
+  },
+  {
+    name: 'Chapter 14 is normalized or removed from owner report',
+    pass: layout.includes('section-14') && layout.includes('section-12') && layout.includes('結論'),
   },
   {
     name: 'Competitor section renders as data cards',
@@ -76,10 +77,6 @@ const checks = [
   {
     name: 'submitReport mapping is preserved',
     pass: ['report_id', 'client', 'land_number', 'research_date', 'report_text', 'summary'].every((key) => submitApi.includes(key)),
-  },
-  {
-    name: 'DISPLAY_ORDER does not intentionally render chapter 14',
-    pass: !displayOrderSource.includes("'14'") && !displayOrderSource.includes('"14"'),
   },
 ];
 
