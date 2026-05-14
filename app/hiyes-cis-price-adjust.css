@@ -15,9 +15,7 @@
   --hiyes-adv: #E8F4FF !important;
 }
 
-.report-brand-row {
-  background: #005BAC !important;
-}
+.report-brand-row { background: #005BAC !important; }
 .report-brand-mark,
 .section-heading.briefing-heading > span,
 .metric-card.priority-high small,
@@ -26,110 +24,77 @@
 .brief-card-eyebrow,
 .brief-data-card.price h4,
 .price-card h4,
-.brief-data-card.price .brief-kv.priority-high .brief-kv-value {
-  color: #005BAC !important;
-}
+.brief-data-card.price .brief-kv.priority-high .brief-kv-value { color: #005BAC !important; }
 .metric-card.priority-high,
 .brief-data-card.price,
 .price-card,
-.manual-price-output {
-  background: #EEF7FF !important;
-  border-color: rgba(0, 91, 172, 0.26) !important;
-}
+.manual-price-output { background: #EEF7FF !important; border-color: rgba(0, 91, 172, 0.26) !important; }
 .card-report.readable-report.briefing-report,
 .report-paper,
 .metric-card,
 .info-card.accent.briefing-section,
 .briefing-section,
-.brief-data-card {
-  box-shadow: 0 6px 20px rgba(0, 91, 172, 0.06) !important;
-}
+.brief-data-card { box-shadow: 0 6px 20px rgba(0, 91, 172, 0.06) !important; }
 
-.manual-price-panel {
-  margin: 16px 0;
-  padding: 16px;
-  border: 1px solid #CFE3F8;
-  border-radius: 16px;
-  background: #fff;
-  box-shadow: 0 8px 22px rgba(0, 91, 172, 0.08);
-}
-.manual-price-panel h3 {
-  margin: 0 0 4px;
-  color: #005BAC;
-  font-size: 16px;
-  font-weight: 900;
-}
-.manual-price-panel p {
-  margin: 0 0 12px;
-  color: #5F6F80;
-  font-size: 12px;
-  line-height: 1.55;
-}
-.manual-price-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-}
-.manual-price-panel label {
-  display: grid;
-  gap: 5px;
-  font-size: 12px;
-  font-weight: 800;
-  color: #17324D;
-}
+.manual-price-panel { margin: 16px 0; padding: 16px; border: 1px solid #CFE3F8; border-radius: 16px; background: #fff; box-shadow: 0 8px 22px rgba(0, 91, 172, 0.08); }
+.manual-price-panel h3 { margin: 0 0 4px; color: #005BAC; font-size: 16px; font-weight: 900; }
+.manual-price-panel p { margin: 0 0 12px; color: #5F6F80; font-size: 12px; line-height: 1.55; }
+.manual-price-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.manual-price-panel label { display: grid; gap: 5px; font-size: 12px; font-weight: 800; color: #17324D; }
 .manual-price-panel input,
-.manual-price-panel textarea {
-  width: 100%;
-  border: 1px solid #CFE3F8;
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-size: 13px;
-  outline: none;
-  background: #EEF7FF;
-  color: #17324D;
-}
-.manual-price-panel textarea {
-  grid-column: 1 / -1;
-  min-height: 62px;
-  resize: vertical;
-}
-.manual-price-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
-}
-.manual-price-actions button {
-  border: 0;
-  border-radius: 999px;
-  padding: 9px 14px;
-  background: #005BAC;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 900;
-  cursor: pointer;
-}
-.manual-price-actions button.secondary {
-  background: #DDEEFF;
-  color: #005BAC;
-}
-.manual-price-output {
-  margin-top: 12px !important;
-}
+.manual-price-panel textarea { width: 100%; border: 1px solid #CFE3F8; border-radius: 10px; padding: 10px 12px; font-size: 13px; outline: none; background: #EEF7FF; color: #17324D; }
+.manual-price-panel textarea { grid-column: 1 / -1; min-height: 62px; resize: vertical; }
+.manual-price-actions { display: flex; gap: 8px; margin-top: 12px; }
+.manual-price-actions button { border: 0; border-radius: 999px; padding: 9px 14px; background: #005BAC; color: #fff; font-size: 12px; font-weight: 900; cursor: pointer; }
+.manual-price-actions button.secondary { background: #DDEEFF; color: #005BAC; }
+.manual-price-output { margin-top: 12px !important; }
 .manual-price-output .brief-kv-value,
-.manual-price-output strong {
-  color: #005BAC !important;
-  font-weight: 900 !important;
-}
+.manual-price-output strong { color: #005BAC !important; font-weight: 900 !important; }
+
+.hiyes-price-repaired { display: grid !important; grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 12px !important; align-items: start !important; }
+.hiyes-price-summary-card { grid-column: 1 / -1 !important; }
+.hiyes-price-card .brief-kv { grid-template-columns: 1fr !important; }
+.hiyes-price-card .brief-kv-label { font-size: 10px !important; }
+.hiyes-price-card .brief-kv-value { font-size: 17px !important; color: #005BAC !important; font-weight: 900 !important; line-height: 1.35 !important; }
+.hiyes-swot-two-card { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 14px !important; align-items: start !important; }
+.hiyes-swot-card .brief-body-text { padding: 8px 10px !important; background: #fff !important; border-radius: 10px !important; }
 
 @media print {
-  .manual-price-panel {
-    display: none !important;
+  .manual-price-panel { display: none !important; }
+  .report-brand-row { background: #005BAC !important; }
+  .manual-price-output { break-inside: avoid !important; page-break-inside: avoid !important; }
+
+  body > *:not(#hiyes-print-report-clone):not(.print-fixed-footer) { display: none !important; }
+  #hiyes-print-report-clone,
+  #hiyes-print-report-clone * { visibility: visible !important; }
+  #hiyes-print-report-clone {
+    display: block !important;
+    position: static !important;
+    transform: none !important;
+    width: 185mm !important;
+    max-width: 185mm !important;
+    margin: 0 auto !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #F7FBFF !important;
   }
-  .report-brand-row {
-    background: #005BAC !important;
-  }
-  .manual-price-output {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
+  .card-report.readable-report.briefing-report:not(#hiyes-print-report-clone) { display: none !important; }
+  #hiyes-print-report-clone .report-section,
+  #hiyes-print-report-clone .report-section.cover-section,
+  #hiyes-print-report-clone .report-section.briefing-main { padding: 18px 24px 24px !important; }
+  #hiyes-print-report-clone .briefing-summary { break-after: auto !important; page-break-after: auto !important; }
+  #hiyes-print-report-clone .section-06,
+  #hiyes-print-report-clone .section-07,
+  #hiyes-print-report-clone .section-09 { break-before: auto !important; page-break-before: auto !important; }
+  #hiyes-print-report-clone .section-02,
+  #hiyes-print-report-clone .section-10,
+  #hiyes-print-report-clone .section-11,
+  #hiyes-print-report-clone .section-12 { break-before: page !important; page-break-before: always !important; }
+  #hiyes-print-report-clone .section-08 { break-before: auto !important; page-break-before: auto !important; }
+  #hiyes-print-report-clone .hiyes-price-repaired { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; gap: 10px !important; }
+  #hiyes-print-report-clone .hiyes-price-summary-card { grid-column: 1 / -1 !important; }
+  #hiyes-print-report-clone .hiyes-swot-two-card { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+  #hiyes-print-report-clone .metric-card strong { font-size: 12px !important; }
+  #hiyes-print-report-clone .metric-card.priority-high strong { font-size: 14px !important; }
 }
