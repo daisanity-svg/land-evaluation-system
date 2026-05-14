@@ -16,14 +16,13 @@ const ownerReportSanitizer = `
   };
   var ORDER = ['02','03','04','05','06','07','08','09','10','11','12'];
 
-  function textOf(el) { return (el && el.textContent ? el.textContent : '').replace(/\s+/g, ' ').trim(); }
   function cleanText(v) { return String(v || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\n{3,}/g, '\n\n').trim(); }
   function compact(v) { return String(v || '').replace(/\s+/g, ' ').trim(); }
   function isObj(v) { return v && typeof v === 'object' && !Array.isArray(v); }
   function el(tag, cls, text) { var node = document.createElement(tag); if (cls) node.className = cls; if (text != null) node.textContent = text; return node; }
-  function remove(node) { if (node && node.parentNode) node.parentNode.removeChild(node); }
-  function splitKV(line) { var idx = String(line || '').indexOf('：'); if (idx < 1) idx = String(line || '').indexOf(':'); if (idx < 1) return null; return [line.slice(0, idx).trim(), line.slice(idx + 1).trim()]; }
   function strip(line) { return String(line || '').replace(/^\s*#{1,6}\s*/, '').replace(/^\s*[-*]\s+/, '').replace(/\*\*/g, '').replace(/`/g, '').replace(/^\s*(主標|次標|說明)\s*[：:]\s*/, '').replace(/代銷結論/g, '結論').trim(); }
+  function splitKV(line) { var s = String(line || ''); var idx = s.indexOf('：'); if (idx < 1) idx = s.indexOf(':'); if (idx < 1) return null; return [strip(s.slice(0, idx)), strip(s.slice(idx + 1))]; }
+  function hasAny(text, list) { return list.some(function (word) { return text.indexOf(word) !== -1; }); }
 
   function readStoredDraft() {
     try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; } catch (e) { return {}; }
@@ -118,7 +117,7 @@ const ownerReportSanitizer = `
       };
     }).filter(function (section) {
       var t = section.title || '';
-      return section.id !== '13' && section.id !== '14' && !/風險|資料來源|複核|待補/.test(t);
+      return ORDER.indexOf(section.id) !== -1 && !/風險|資料來源|複核|待補/.test(t);
     });
   }
 
@@ -193,7 +192,27 @@ const ownerReportSanitizer = `
     return box;
   }
 
-  function splitBlocks(lines, starters) {
+  function dataCard(lines, type, index, titleFallback) {
+    var clean = lines.map(strip).filter(Boolean);
+    if (!clean.length) return null;
+    var text = clean.join(' ');
+    if (/^競案資料卡[一二三四五六七八九十0-9]*$/.test(text)) return null;
+    var card = el('div', 'brief-data-card ' + type);
+    card.appendChild(el('div', 'brief-card-eyebrow', type.indexOf('case') !== -1 ? '競案 ' + index : type.indexOf('price') !== -1 ? '價格重點' : type.indexOf('product') !== -1 ? '產品建議' : type.indexOf('swot') !== -1 ? '銷售判斷' : '重點資料'));
+    var titleLine = clean.find(function (l) { return /^案名[:：]/.test(l); }) || clean.find(function (l) { return /二樓以上住宅|店面|坡道平面|兩房|三房|不建議|優勢|抗性/.test(l); }) || clean[0] || titleFallback;
+    var titlePair = splitKV(titleLine);
+    card.appendChild(el('h4', '', titlePair ? (titlePair[1] || titlePair[0]) : titleLine));
+    var content = el('div', 'brief-card-content');
+    clean.forEach(function (line) {
+      if (/^競案資料卡/.test(line)) return;
+      var pair = splitKV(line);
+      if (pair) content.appendChild(kv(pair[0], pair[1])); else content.appendChild(paragraph(line));
+    });
+    card.appendChild(content);
+    return card;
+  }
+
+  function splitByStarters(lines, starters) {
     var blocks = [];
     var current = [];
     lines.forEach(function (line) {
@@ -204,39 +223,24 @@ const ownerReportSanitizer = `
     return blocks;
   }
 
-  function dataCard(lines, type, index, titleFallback) {
-    var text = lines.join(' ');
-    if (!text || /競案資料卡[一二三四五六七八九十0-9]*$/.test(text)) return null;
-    var card = el('div', 'brief-data-card ' + type);
-    card.appendChild(el('div', 'brief-card-eyebrow', type === 'case' ? '競案 ' + index : type === 'price' ? '價格重點' : type === 'product' ? '產品建議' : '重點資料'));
-    var titleLine = lines.find(function (l) { return /案名|二樓以上住宅|店面|坡道平面|兩房|三房|不建議/.test(l); }) || lines[0] || titleFallback;
-    var titlePair = splitKV(titleLine);
-    card.appendChild(el('h4', '', titlePair ? (titlePair[1] || titlePair[0]) : titleLine));
-    var content = el('div', 'brief-card-content');
-    lines.forEach(function (line) {
-      if (/^競案資料卡/.test(line)) return;
-      var pair = splitKV(line);
-      if (pair) content.appendChild(kv(pair[0], pair[1])); else content.appendChild(paragraph(line));
-    });
-    card.appendChild(content);
-    return card;
-  }
-
   function renderCases(body) {
     var box = el('div', 'brief-card-grid case-grid');
-    var lines = lineList(body).filter(function (line) { return !/^競案資料卡/.test(line); });
+    var lines = lineList(body).filter(function (line) { return !/^競案資料卡/.test(line) && !/本次競案依|以下每案/.test(line); });
     var summaryLines = [];
     var caseLines = [];
     var inSummary = false;
     lines.forEach(function (line) {
-      if (line.indexOf('市場行情總結') !== -1) inSummary = true;
+      if (line.indexOf('市場行情總結') !== -1 || line.indexOf('區域成交帶') !== -1 || line.indexOf('本案合理成交帶') !== -1) inSummary = true;
       if (inSummary) summaryLines.push(line); else caseLines.push(line);
     });
-    var blocks = splitBlocks(caseLines, ['競案一｜','競案二｜','競案三｜','競案四｜','競案五｜','案名：','案名:']);
+    var blocks = splitByStarters(caseLines, ['競案一｜','競案二｜','競案三｜','競案四｜','競案五｜','案名：','案名:']);
+    if (blocks.length <= 1) blocks = splitByStarters(caseLines, ['競案等級：','競案等級:']);
     var count = 0;
     blocks.forEach(function (block) {
-      var t = block.join(' ');
-      if (!/案名|案子規劃|屋齡|成交價格|參考價值/.test(t) || t.length < 50) return;
+      var text = block.join(' ');
+      var hasCaseFields = hasAny(text, ['案名','案子規劃','屋齡','成交價格','成交筆數','參考價值','競案等級']);
+      var onlyIntro = /市場參考價值分為|以下每案|資料卡呈現/.test(text);
+      if (!hasCaseFields || onlyIntro || text.length < 45) return;
       count += 1;
       var card = dataCard(block, 'case competition-card', count, '競案');
       if (card) box.appendChild(card);
@@ -245,15 +249,16 @@ const ownerReportSanitizer = `
       var summary = dataCard(summaryLines, 'case competition-card market-summary-card', count + 1, '市場行情總結');
       if (summary) box.appendChild(summary);
     }
+    if (!box.children.length) box.appendChild(paragraph('本章競案資料格式不足，請回原文確認競案資訊。'));
     return box;
   }
 
-  function blockByLabel(lines, label) {
-    var start = lines.findIndex(function (line) { return line.indexOf(label) === 0; });
+  function extractBlock(lines, starts, stops) {
+    var start = lines.findIndex(function (line) { return starts.some(function (s) { return line.indexOf(s) === 0; }); });
     if (start < 0) return [];
     var out = [lines[start]];
     for (var i = start + 1; i < lines.length; i++) {
-      if (/^(二樓以上住宅|店面|坡道平面車位|坡道平面|價格判斷摘要)[:：]?/.test(lines[i])) break;
+      if (stops.some(function (s) { return lines[i].indexOf(s) === 0; })) break;
       out.push(lines[i]);
     }
     return out;
@@ -262,14 +267,18 @@ const ownerReportSanitizer = `
   function renderPrice(body) {
     var lines = lineList(body).filter(function (line) { return !/建議表價|首波成交帶|高樓層拉價空間|價格可信度|總價帶推估|人流動線判斷|區域接受度|本案價格建議/.test(line); });
     var box = el('div', 'brief-card-grid price-grid');
-    [['二樓以上住宅','二樓以上住宅'], ['店面','店面'], ['坡道平面車位','坡道平面車位']].forEach(function (item, idx) {
-      var block = blockByLabel(lines, item[0]);
-      if (!block.length && item[0] === '坡道平面車位') block = blockByLabel(lines, '坡道平面');
-      if (!block.length) block = [item[1] + '：待複核'];
-      var card = dataCard(block, 'price price-card', idx + 1, item[1]);
+    var stops = ['二樓以上住宅','住宅','店面','坡道平面車位','坡道平面','車位','價格判斷摘要'];
+    [
+      ['二樓以上住宅', ['二樓以上住宅','住宅']],
+      ['店面', ['店面']],
+      ['坡道平面車位', ['坡道平面車位','坡道平面','車位']]
+    ].forEach(function (item, idx) {
+      var block = extractBlock(lines, item[1], stops);
+      if (!block.length) block = [item[0] + '：待複核'];
+      var card = dataCard(block, 'price price-card', idx + 1, item[0]);
       if (card) box.appendChild(card);
     });
-    var summary = blockByLabel(lines, '價格判斷摘要');
+    var summary = extractBlock(lines, ['價格判斷摘要'], stops);
     if (summary.length) {
       var card = dataCard(summary, 'price price-card', 4, '價格判斷摘要');
       if (card) box.appendChild(card);
@@ -280,16 +289,32 @@ const ownerReportSanitizer = `
   function renderProduct(body) {
     var lines = lineList(body).filter(function (line) { return !/2\+1房|2＋1房|彈性房|四房|店面產品/.test(line); });
     var box = el('div', 'brief-card-grid product-grid');
-    [['兩房產品','兩房產品'], ['三房產品','三房產品'], ['不建議產品','不建議產品']].forEach(function (item, idx) {
-      var block = blockByLabel(lines, item[0]);
-      if (!block.length && item[0] === '兩房產品') block = blockByLabel(lines, '兩房');
-      if (!block.length && item[0] === '三房產品') block = blockByLabel(lines, '三房');
-      if (!block.length && item[0] === '不建議產品') block = blockByLabel(lines, '不建議');
+    var stops = ['兩房產品','兩房','三房產品','三房','不建議產品','不建議'];
+    [['兩房產品',['兩房產品','兩房']], ['三房產品',['三房產品','三房']], ['不建議產品',['不建議產品','不建議']]].forEach(function (item, idx) {
+      var block = extractBlock(lines, item[1], stops);
+      if (!block.length && idx < 2) block = [item[0] + '：待複核'];
       if (block.length) {
-        var card = dataCard(block, 'product product-card', idx + 1, item[1]);
+        var card = dataCard(block, 'product product-card', idx + 1, item[0]);
         if (card) box.appendChild(card);
       }
     });
+    return box;
+  }
+
+  function renderSwot(body) {
+    var lines = lineList(body).filter(function (line) { return !/代銷處理方式|代銷判斷/.test(line); });
+    var box = el('div', 'brief-card-grid swot-brief-grid');
+    var blocks = splitByStarters(lines, ['銷售優勢','優勢一','優勢二','優勢三','1.','2.','3.','銷售抗性','抗性一','抗性二','抗性三']);
+    var count = 0;
+    blocks.forEach(function (block) {
+      var text = block.join(' ');
+      if (text.length < 12) return;
+      count += 1;
+      var type = /抗性|劣勢|風險/.test(text) ? 'swot resistance-card' : 'swot advantage-card';
+      var card = dataCard(block, type, count, '銷售判斷');
+      if (card) box.appendChild(card);
+    });
+    if (!box.children.length) box.appendChild(renderGeneric(body));
     return box;
   }
 
@@ -300,6 +325,7 @@ const ownerReportSanitizer = `
     else if (section.id === '08') wrapper.appendChild(renderCases(section.body));
     else if (section.id === '09') wrapper.appendChild(renderPrice(section.body));
     else if (section.id === '10') wrapper.appendChild(renderProduct(section.body));
+    else if (section.id === '11') wrapper.appendChild(renderSwot(section.body));
     else wrapper.appendChild(renderGeneric(section.body));
     if (section.id === '12') wrapper.classList.add('conclusion-section', 'conclusion-card');
     return wrapper;
@@ -320,7 +346,7 @@ const ownerReportSanitizer = `
     if (!reportText) return;
     var target = document.querySelector('.card-report.readable-report.briefing-report');
     if (!target) return;
-    var hash = String(reportText.length) + ':' + reportText.slice(0, 40);
+    var hash = String(reportText.length) + ':' + reportText.slice(0, 80) + ':v3';
     if (target.dataset.ownerRebuilt === hash) return;
     target.dataset.ownerRebuilt = hash;
     target.id = 'report-export-area';
@@ -356,7 +382,10 @@ const ownerReportSanitizer = `
     var sections = parseSections(reportText);
     var byId = {};
     sections.forEach(function (s) { if (!byId[s.id]) byId[s.id] = s; });
-    ORDER.forEach(function (id) { if (byId[id]) main.appendChild(renderSection(byId[id])); });
+    ORDER.forEach(function (id) {
+      var section = byId[id] || { id: id, title: SECTION_TITLES[id], body: '' };
+      if (id === '09' || id === '10' || id === '11' || byId[id]) main.appendChild(renderSection(section));
+    });
     target.appendChild(main);
   }
 
