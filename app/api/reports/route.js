@@ -20,6 +20,10 @@ function json(payload, init = {}) {
   });
 }
 
+function actionJson(payload) {
+  return json(payload, { status: 200 });
+}
+
 export async function OPTIONS() {
   return new Response(null, { status: 204, headers: JSON_HEADERS });
 }
@@ -112,13 +116,15 @@ function looksLikeUniqueConflict(data) {
   return message.includes('duplicate key') || message.includes('23505');
 }
 
+function compact(data) {
+  const text = JSON.stringify(data || '');
+  return text.length > 700 ? `${text.slice(0, 700)}...` : text;
+}
+
 export async function POST(request) {
   try {
     if (missingConfig()) {
-      return json(
-        { ok: false, error: 'Supabase environment variables are not configured.' },
-        { status: 500 }
-      );
+      return actionJson({ ok: false, status: 'missing_config', error: 'Supabase environment variables are not configured.' });
     }
 
     const body = await readBody(request);
@@ -130,18 +136,18 @@ export async function POST(request) {
     const summary = normalizeSummary(body.summary);
 
     if (!report_id || !report_text) {
-      return json(
-        {
-          ok: false,
-          error: 'report_id and report_text are required.',
-          received: {
-            has_report_id: Boolean(report_id),
-            has_report_text: Boolean(report_text),
-            keys: Object.keys(body || {}),
-          },
-        },
-        { status: 400 }
-      );
+      return actionJson({
+        ok: false,
+        status: 'missing_required_fields',
+        error: 'report_id and report_text are required.',
+        report_id,
+        client,
+        land_number,
+        research_date,
+        has_report_id: Boolean(report_id),
+        has_report_text: Boolean(report_text),
+        keys: Object.keys(body || {}),
+      });
     }
 
     const basePayload = {
@@ -156,15 +162,13 @@ export async function POST(request) {
     let { supabaseResponse, data } = await writeReportToSupabase(payload);
     let saved_summary = Boolean(summary);
 
-    // 相容舊資料庫：若 reports 尚未新增 summary 欄位，先退回舊格式，避免 submitReport 中斷。
     if (!supabaseResponse.ok && summary && looksLikeMissingSummaryColumn(data)) {
       ({ supabaseResponse, data } = await writeReportToSupabase(basePayload));
       saved_summary = false;
     }
 
-    // 若資料庫唯一鍵未正確套用 upsert header，將 duplicate 視為可讀取既有報告的成功狀態，避免 GPT Action 中斷。
     if (!supabaseResponse.ok && looksLikeUniqueConflict(data)) {
-      return json({
+      return actionJson({
         ok: true,
         status: 'duplicate_treated_as_saved',
         report_id,
@@ -176,14 +180,21 @@ export async function POST(request) {
     }
 
     if (!supabaseResponse.ok) {
-      return json(
-        { ok: false, error: 'Failed to save report.', detail: data, supabase_path: '/rest/v1/reports' },
-        { status: supabaseResponse.status }
-      );
+      return actionJson({
+        ok: false,
+        status: 'supabase_save_failed',
+        error: 'Failed to save report.',
+        report_id,
+        client,
+        land_number,
+        research_date,
+        saved_summary,
+        supabase_status: supabaseResponse.status,
+        detail: compact(data),
+      });
     }
 
-    // 回給 GPT Action 的內容刻意保持精簡，避免 report_text 太大造成 ClientResponseError。
-    return json({
+    return actionJson({
       ok: true,
       status: 'saved',
       report_id,
@@ -193,6 +204,6 @@ export async function POST(request) {
       saved_summary,
     });
   } catch (error) {
-    return json({ ok: false, error: error.message || 'Server error.' }, { status: 500 });
+    return actionJson({ ok: false, status: 'server_error', error: error.message || 'Server error.' });
   }
 }
