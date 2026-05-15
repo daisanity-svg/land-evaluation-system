@@ -103,6 +103,7 @@
 
   function ensureCustomChrome(root) {
     removeCustomChrome();
+    if (!root) return;
 
     const header = document.createElement('div');
     header.className = 'hiyes-custom-print-header';
@@ -117,8 +118,11 @@
     setText(footer.querySelector('.hiyes-custom-footer-left'), `${formatDateTime()}　${reportTitle(root)}`);
     setText(footer.querySelector('.hiyes-custom-footer-right'), maker ? `報告製作人：${maker}` : '');
 
-    document.body.appendChild(header);
-    document.body.appendChild(footer);
+    // Append chrome INSIDE the print clone. The app hides non-clone body children during print,
+    // so body-level fixed elements may disappear. Clone-level fixed elements repeat correctly
+    // in Chrome print while keeping the existing report layout untouched.
+    root.prepend(header);
+    root.appendChild(footer);
 
     let style = document.getElementById('hiyes-custom-print-chrome-style');
     if (!style) {
@@ -129,10 +133,8 @@
     style.textContent = `
       @media print {
         @page { size: A4; margin: 15mm 10mm 18mm; }
-        body > .hiyes-custom-print-header,
-        body > .hiyes-custom-print-footer,
-        .hiyes-custom-print-header,
-        .hiyes-custom-print-footer {
+        #${CLONE_ID} .hiyes-custom-print-header,
+        #${CLONE_ID} .hiyes-custom-print-footer {
           display: flex !important;
           visibility: visible !important;
           position: fixed !important;
@@ -142,36 +144,36 @@
           justify-content: space-between !important;
           background: #fff !important;
           color: #111 !important;
-          font-family: 'Times New Roman', 'Noto Serif TC', serif !important;
+          font-family: 'Times New Roman', 'Noto Serif TC', 'PMingLiU', serif !important;
           font-size: 8.5px !important;
+          font-weight: 400 !important;
           line-height: 1 !important;
           letter-spacing: .01em !important;
           z-index: 2147483647 !important;
           pointer-events: none !important;
           box-shadow: none !important;
           border: 0 !important;
+          opacity: 1 !important;
         }
-        body > .hiyes-custom-print-header,
-        .hiyes-custom-print-header {
+        #${CLONE_ID} .hiyes-custom-print-header {
           top: 4mm !important;
         }
-        body > .hiyes-custom-print-footer,
-        .hiyes-custom-print-footer {
+        #${CLONE_ID} .hiyes-custom-print-footer {
           bottom: 5mm !important;
         }
-        .hiyes-custom-url {
+        #${CLONE_ID} .hiyes-custom-url {
           max-width: 55% !important;
           overflow: hidden !important;
           white-space: nowrap !important;
           text-overflow: ellipsis !important;
         }
-        .hiyes-custom-design,
-        .hiyes-custom-footer-right {
+        #${CLONE_ID} .hiyes-custom-design,
+        #${CLONE_ID} .hiyes-custom-footer-right {
           text-align: right !important;
           white-space: nowrap !important;
           letter-spacing: .08em !important;
         }
-        .hiyes-custom-footer-left {
+        #${CLONE_ID} .hiyes-custom-footer-left {
           max-width: 72% !important;
           overflow: hidden !important;
           white-space: nowrap !important;
@@ -224,7 +226,7 @@
     const clone = document.getElementById(CLONE_ID);
     if (!clone) return;
 
-    clone.querySelectorAll('.hiyes-pdf-page-header,.hiyes-pdf-page-footer').forEach((el) => el.remove());
+    clone.querySelectorAll('.hiyes-pdf-page-header,.hiyes-pdf-page-footer,.hiyes-custom-print-header,.hiyes-custom-print-footer').forEach((el) => el.remove());
 
     clone.querySelectorAll('*').forEach((el) => {
       clearVisualNoise(el);
