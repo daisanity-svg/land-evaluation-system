@@ -41,6 +41,14 @@
     return location.origin || 'https://land-evaluation-system.vercel.app';
   }
 
+  function cleanDocumentTitle() {
+    return clean(document.title)
+      .replace(/\.pdf$/i, '')
+      .replace(/\s+-\s*土地評估系統$/i, '')
+      .replace(/土地評估系統$/i, '')
+      .trim();
+  }
+
   function formatDateTime() {
     const d = new Date();
     const y = d.getFullYear();
@@ -64,9 +72,26 @@
 
   function reportTitle(root) {
     const land = findMetricValue(root, '標的地號');
-    const title = clean(document.title).replace(/\.pdf$/i, '');
+    const title = cleanDocumentTitle();
     if (title && !/土地評估系統|海悅廣告|localhost/.test(title)) return title;
     return land ? `${land}_土地評估報告` : '土地評估報告';
+  }
+
+  function footerCenterText(root) {
+    const title = cleanDocumentTitle();
+    const parts = title.split(/[＿_]/).map(clean).filter(Boolean);
+    const looksLikeDate = (text) => /^\d{4}[-/.年]\d{1,2}/.test(text);
+
+    if (parts.length >= 2) {
+      const client = parts[0];
+      const target = parts.slice(1).filter((part) => !looksLikeDate(part)).join('｜');
+      const result = [client, target].filter(Boolean).join('｜');
+      if (result) return result;
+    }
+
+    const client = clean(document.querySelector('[name="client"], [data-client-input], #client')?.value || '');
+    const target = findMetricValue(root, '標的地號') || findMetricValue(root, '目標地號');
+    return [client, target].filter(Boolean).join('｜') || reportTitle(root);
   }
 
   function injectReportMakerControl() {
@@ -113,14 +138,12 @@
 
     const footer = document.createElement('div');
     footer.className = 'hiyes-custom-print-footer';
-    footer.innerHTML = '<span class="hiyes-custom-footer-left"></span><span class="hiyes-custom-footer-right"></span>';
+    footer.innerHTML = '<span class="hiyes-custom-footer-left"></span><span class="hiyes-custom-footer-center"></span><span class="hiyes-custom-footer-right"></span>';
     const maker = makerName();
-    setText(footer.querySelector('.hiyes-custom-footer-left'), `${formatDateTime()}　${reportTitle(root)}`);
+    setText(footer.querySelector('.hiyes-custom-footer-left'), formatDateTime());
+    setText(footer.querySelector('.hiyes-custom-footer-center'), footerCenterText(root));
     setText(footer.querySelector('.hiyes-custom-footer-right'), maker ? `報告製作人：${maker}` : '');
 
-    // Append chrome INSIDE the print clone. The app hides non-clone body children during print,
-    // so body-level fixed elements may disappear. Clone-level fixed elements repeat correctly
-    // in Chrome print while keeping the existing report layout untouched.
     root.prepend(header);
     root.appendChild(footer);
 
@@ -135,13 +158,11 @@
         @page { size: A4; margin: 15mm 10mm 18mm; }
         #${CLONE_ID} .hiyes-custom-print-header,
         #${CLONE_ID} .hiyes-custom-print-footer {
-          display: flex !important;
           visibility: visible !important;
           position: fixed !important;
           left: 10mm !important;
           right: 10mm !important;
           align-items: center !important;
-          justify-content: space-between !important;
           background: #fff !important;
           color: #111 !important;
           font-family: 'Times New Roman', 'Noto Serif TC', 'PMingLiU', serif !important;
@@ -157,9 +178,14 @@
         }
         #${CLONE_ID} .hiyes-custom-print-header {
           top: 4mm !important;
+          display: flex !important;
+          justify-content: space-between !important;
         }
         #${CLONE_ID} .hiyes-custom-print-footer {
           bottom: 5mm !important;
+          display: grid !important;
+          grid-template-columns: 1fr 2.2fr 1fr !important;
+          column-gap: 8mm !important;
         }
         #${CLONE_ID} .hiyes-custom-url {
           max-width: 55% !important;
@@ -172,11 +198,19 @@
           text-align: right !important;
           white-space: nowrap !important;
           letter-spacing: .08em !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
         }
         #${CLONE_ID} .hiyes-custom-footer-left {
-          max-width: 72% !important;
-          overflow: hidden !important;
+          text-align: left !important;
           white-space: nowrap !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+        }
+        #${CLONE_ID} .hiyes-custom-footer-center {
+          text-align: center !important;
+          white-space: nowrap !important;
+          overflow: hidden !important;
           text-overflow: ellipsis !important;
         }
       }
