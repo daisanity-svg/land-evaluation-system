@@ -20,14 +20,8 @@ function json(payload, init = {}) {
   });
 }
 
-function okJson(payload) {
-  return json({ ok: true, status: 'saved', ...payload }, { status: 200 });
-}
-
-function softFailJson(payload) {
-  // GPT Actions are more stable when the HTTP layer stays 200 and the app-level
-  // status explains the issue. The UI can still read ok:false and show details.
-  return json({ ok: false, ...payload }, { status: 200 });
+function actionJson(payload) {
+  return json(payload, { status: 200 });
 }
 
 export async function OPTIONS() {
@@ -64,26 +58,13 @@ function normalizeSummary(summary) {
   };
 }
 
-function maybeParseJsonString(value) {
-  if (typeof value !== 'string') return value;
-  const text = value.trim();
-  if (!text || (!text.startsWith('{') && !text.startsWith('['))) return value;
-  try {
-    return JSON.parse(text);
-  } catch {
-    return value;
-  }
-}
-
 function flattenActionBody(body) {
-  let current = maybeParseJsonString(body);
-  for (let i = 0; i < 4; i += 1) {
-    if (!current || typeof current !== 'object' || Array.isArray(current)) return current || {};
-    const next = current.data || current.arguments || current.input || current.params || current.body || current.payload;
-    if (!next || typeof next !== 'object' || Array.isArray(next)) return current;
-    current = maybeParseJsonString(next);
-  }
-  return current;
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return body || {};
+  if (body.data && typeof body.data === 'object') return body.data;
+  if (body.arguments && typeof body.arguments === 'object') return body.arguments;
+  if (body.input && typeof body.input === 'object') return body.input;
+  if (body.params && typeof body.params === 'object') return body.params;
+  return body;
 }
 
 async function readBody(request) {
@@ -95,24 +76,11 @@ async function readBody(request) {
 
   const raw = await request.text();
   if (!raw) return {};
-  const parsed = maybeParseJsonString(raw);
-  if (parsed && typeof parsed === 'object') return flattenActionBody(parsed);
-  return { report_text: raw };
-}
-
-function buildReportText(body) {
-  const direct = value(body.report_text, body.reportText, body.report, body.text, body.content);
-  if (direct) return String(direct).trim();
-
-  if (Array.isArray(body.sections)) {
-    return body.sections.map((section) => {
-      if (typeof section === 'string') return section;
-      if (!section || typeof section !== 'object') return '';
-      return [section.title, section.content, section.text].filter(Boolean).join('\n');
-    }).filter(Boolean).join('\n\n').trim();
+  try {
+    return flattenActionBody(JSON.parse(raw));
+  } catch {
+    return { report_text: raw };
   }
-
-  return '';
 }
 
 async function writeReportToSupabase(payload) {
@@ -123,7 +91,7 @@ async function writeReportToSupabase(payload) {
       apikey: SUPABASE_SERVICE_ROLE_KEY,
       Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
       'Content-Type': 'application/json',
-      Prefer: 'resolution=merge-duplicates,return=representation',
+      Prefer: 'resolution=merge-duplicates,return=minimal',
     },
     body: JSON.stringify(payload),
   });
@@ -150,43 +118,26 @@ function looksLikeUniqueConflict(data) {
 
 function compact(data) {
   const text = JSON.stringify(data || '');
-  return text.length > 500 ? `${text.slice(0, 500)}...` : text;
-}
-
-function firstSavedRow(data) {
-  return Array.isArray(data) ? data[0] : data && typeof data === 'object' ? data : null;
-}
-
-async function verifyReportSaved(report_id) {
-  const supabaseBaseUrl = getSupabaseRestUrl();
-  const url = `${supabaseBaseUrl}/rest/v1/reports?report_id=eq.${encodeURIComponent(report_id)}&select=report_id,client,land_number,research_date`;
-  const response = await fetch(url, {
-    headers: {
-      apikey: SUPABASE_SERVICE_ROLE_KEY,
-      Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-    },
-    cache: 'no-store',
-  });
-  const data = await response.json().catch(() => null);
-  return response.ok && Array.isArray(data) && data.length > 0;
+  return text.length > 700 ? `${text.slice(0, 700)}...` : text;
 }
 
 export async function POST(request) {
   try {
     if (missingConfig()) {
-      return softFailJson({ status: 'missing_config', error: 'Supabase environment variables are not configured.' });
+      return actionJson({ ok: false, status: 'missing_config', error: 'Supabase environment variables are not configured.' });
     }
 
     const body = await readBody(request);
     const report_id = String(value(body.report_id, body.reportId, body.id) || '').trim();
-    const report_text = buildReportText(body);
-    const client = String(value(body.client, body.client_name, body.clientName, body.developer, body.company) || '').trim();
-    const land_number = String(value(body.land_number, body.landNumber, body.land_no, body.landNo, body.target_land, body.target) || '').trim();
+    const report_text = String(value(body.report_text, body.reportText, body.report, body.text) || '').trim();
+    const client = String(value(body.client, body.client_name, body.clientName) || '').trim();
+    const land_number = String(value(body.land_number, body.landNumber, body.land_no, body.landNo) || '').trim();
     const research_date = String(value(body.research_date, body.researchDate, body.date) || '').trim();
     const summary = normalizeSummary(body.summary);
 
     if (!report_id || !report_text) {
-      return softFailJson({
+      return actionJson({
+        ok: false,
         status: 'missing_required_fields',
         error: 'report_id and report_text are required.',
         report_id,
@@ -195,7 +146,7 @@ export async function POST(request) {
         research_date,
         has_report_id: Boolean(report_id),
         has_report_text: Boolean(report_text),
-        keys: Object.keys(body || {}).slice(0, 30),
+        keys: Object.keys(body || {}),
       });
     }
 
@@ -217,20 +168,20 @@ export async function POST(request) {
     }
 
     if (!supabaseResponse.ok && looksLikeUniqueConflict(data)) {
-      const verified = await verifyReportSaved(report_id).catch(() => false);
-      return okJson({
-        status: verified ? 'duplicate_verified_saved' : 'duplicate_treated_as_saved',
+      return actionJson({
+        ok: true,
+        status: 'duplicate_treated_as_saved',
         report_id,
         client,
         land_number,
         research_date,
         saved_summary,
-        verified,
       });
     }
 
     if (!supabaseResponse.ok) {
-      return softFailJson({
+      return actionJson({
+        ok: false,
         status: 'supabase_save_failed',
         error: 'Failed to save report.',
         report_id,
@@ -243,26 +194,16 @@ export async function POST(request) {
       });
     }
 
-    const savedRow = firstSavedRow(data);
-    const verified = savedRow ? true : await verifyReportSaved(report_id).catch(() => false);
-
-    return okJson({
+    return actionJson({
+      ok: true,
+      status: 'saved',
       report_id,
       client,
       land_number,
       research_date,
       saved_summary,
-      verified,
-      report: savedRow
-        ? {
-            report_id: savedRow.report_id,
-            client: savedRow.client,
-            land_number: savedRow.land_number,
-            research_date: savedRow.research_date,
-          }
-        : null,
     });
   } catch (error) {
-    return softFailJson({ status: 'server_error', error: error.message || 'Server error.' });
+    return actionJson({ ok: false, status: 'server_error', error: error.message || 'Server error.' });
   }
 }
