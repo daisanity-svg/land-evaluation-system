@@ -1,7 +1,5 @@
 (function () {
   const CLONE_ID = 'hiyes-print-report-clone';
-  const MAKER_STORAGE_KEY = 'hiyes-report-maker-name';
-  const DEFAULT_MAKER = 'DAI YI SYUAN';
 
   function setStyle(el, prop, value) {
     if (!el || !el.style) return;
@@ -36,11 +34,7 @@
   }
 
   function makerName() {
-    return clean(localStorage.getItem(MAKER_STORAGE_KEY)) || DEFAULT_MAKER;
-  }
-
-  function saveMakerName(value) {
-    localStorage.setItem(MAKER_STORAGE_KEY, clean(value) || DEFAULT_MAKER);
+    return clean(document.querySelector('[data-report-maker-input]')?.value);
   }
 
   function cleanSiteUrl() {
@@ -85,10 +79,10 @@
     panel.className = 'manual-price-panel no-print';
     panel.innerHTML = `
       <h3>PDF 署名設定</h3>
-      <p>此欄位只影響 PDF 頁尾右側署名，不影響 report_text、summary JSON、submitReport 或欄位 mapping。</p>
+      <p>此欄位只影響 PDF 頁尾右側署名，不影響 report_text、summary JSON、submitReport 或欄位 mapping。未輸入時，頁尾右側維持空白。</p>
       <div class="manual-price-grid">
         <label style="grid-column:1/-1;">報告製作人
-          <input data-report-maker-input placeholder="例如：DAI YI SYUAN" value="${makerName()}">
+          <input data-report-maker-input placeholder="請輸入報告製作人姓名" value="">
         </label>
       </div>
     `;
@@ -101,9 +95,6 @@
       if (tabs?.parentNode) tabs.parentNode.insertBefore(panel, tabs);
       else preview.prepend(panel);
     }
-
-    const input = panel.querySelector('[data-report-maker-input]');
-    input?.addEventListener('input', () => saveMakerName(input.value));
   }
 
   function removeCustomChrome() {
@@ -122,8 +113,9 @@
     const footer = document.createElement('div');
     footer.className = 'hiyes-custom-print-footer';
     footer.innerHTML = '<span class="hiyes-custom-footer-left"></span><span class="hiyes-custom-footer-right"></span>';
+    const maker = makerName();
     setText(footer.querySelector('.hiyes-custom-footer-left'), `${formatDateTime()}　${reportTitle(root)}`);
-    setText(footer.querySelector('.hiyes-custom-footer-right'), `報告製作人：${makerName()}`);
+    setText(footer.querySelector('.hiyes-custom-footer-right'), maker ? `報告製作人：${maker}` : '');
 
     document.body.appendChild(header);
     document.body.appendChild(footer);
@@ -232,21 +224,14 @@
     const clone = document.getElementById(CLONE_ID);
     if (!clone) return;
 
-    // Remove the previous experimental in-clone fixed header/footer.
-    // It was rendered by Chrome PDF in the wrong margin and created the ugly URL / 0/0 line.
     clone.querySelectorAll('.hiyes-pdf-page-header,.hiyes-pdf-page-footer').forEach((el) => el.remove());
 
-    // Hard reset every visual effect first. This targets the PDF-only pale blue blocks
-    // produced by shadows/filters/background layers in Chrome print rendering.
     clone.querySelectorAll('*').forEach((el) => {
       clearVisualNoise(el);
     });
     clearVisualNoise(clone);
-
-    // Keep the PDF page itself white.
     whiteBackground(clone);
 
-    // Remove only outer/wrapper backgrounds; do not change layout, dimensions or data.
     clone.querySelectorAll([
       '.report-section',
       '.cover-section',
@@ -268,8 +253,6 @@
       clearVisualNoise(el);
     });
 
-    // Data cards stay white with their existing borders/text. This avoids large color fields
-    // while preserving the current card arrangement.
     clone.querySelectorAll([
       '.metric-card',
       '.metric-card.priority-high',
@@ -299,7 +282,6 @@
 
     cleanupCompetitionCards(clone);
 
-    // Restore the elegant H mark in the header. The earlier clone cleanup made this transparent.
     const brandRow = clone.querySelector('.report-brand-row');
     if (brandRow) {
       setStyle(brandRow, 'display', 'flex');
@@ -353,7 +335,6 @@
 
     ensureCustomChrome(clone);
 
-    // Remove pseudo visual layers by class-level CSS injected directly into the clone.
     let style = clone.querySelector('style[data-pdf-cleanup="true"]');
     if (!style) {
       style = document.createElement('style');
@@ -398,8 +379,6 @@
 
   window.addEventListener('beforeprint', () => {
     cleanupClone();
-    // Chrome sometimes builds the print snapshot just after beforeprint listeners.
-    // Run one extra micro cleanup pass without changing layout.
     setTimeout(cleanupClone, 0);
   });
 
