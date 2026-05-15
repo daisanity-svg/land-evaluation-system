@@ -29,6 +29,53 @@
     setStyle(el, 'background-image', 'none');
   }
 
+  function formatPrintDate() {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    const day = d.getDate();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    return `${y}/${m}/${day} ${hh}:${mm}`;
+  }
+
+  function getPrintTitle() {
+    const title = clean(document.title || '海悅廣告｜土地評估系統');
+    if (!title || title === 'land-evaluation-system') return '海悅廣告｜土地評估系統';
+    return title.replace(/\s*-\s*Google Chrome$/i, '').slice(0, 80);
+  }
+
+  function removeExistingPrintChrome(root) {
+    const selector = '.hiyes-pdf-page-header,.hiyes-pdf-page-footer,.hiyes-custom-print-header,.hiyes-custom-print-footer,.hiyes-native-safe-print-header,.hiyes-native-safe-print-footer';
+    document.querySelectorAll(selector).forEach((el) => el.remove());
+    if (root) root.querySelectorAll(selector).forEach((el) => el.remove());
+  }
+
+  function ensurePrintChrome(clone) {
+    removeExistingPrintChrome(clone);
+
+    const header = document.createElement('div');
+    header.className = 'hiyes-native-safe-print-header';
+    header.innerHTML = `
+      <span class="hiyes-print-header-left"></span>
+      <span class="hiyes-print-header-center"></span>
+      <span class="hiyes-print-header-right"></span>
+    `;
+    header.querySelector('.hiyes-print-header-left').textContent = formatPrintDate();
+    header.querySelector('.hiyes-print-header-center').textContent = getPrintTitle();
+
+    const footer = document.createElement('div');
+    footer.className = 'hiyes-native-safe-print-footer';
+    footer.innerHTML = `
+      <span class="hiyes-print-footer-left">https://land-evaluation-system.vercel.app</span>
+      <span class="hiyes-print-footer-center">海悅廣告｜土地評估系統</span>
+      <span class="hiyes-print-footer-right hiyes-print-page-number"></span>
+    `;
+
+    document.body.appendChild(header);
+    document.body.appendChild(footer);
+  }
+
   function isCaseDuplicateLine(text) {
     return /^競案\s*[一二三四五六七八九十0-9]+\s*[｜|]\s*.+/.test(clean(text));
   }
@@ -68,7 +115,7 @@
     });
   }
 
-  function installNativeChromeSafeAreaStyle(clone) {
+  function installPrintSafeAreaStyle(clone) {
     let style = clone.querySelector('style[data-pdf-cleanup="true"]');
     if (!style) {
       style = document.createElement('style');
@@ -78,9 +125,10 @@
 
     style.textContent = `
       @media print {
-        /* Use Chrome native print header/footer only.
-           This margin is the safe area between the browser's own header/footer and the report body. */
-        @page { size: A4; margin: 20mm 10mm 20mm; }
+        /* Keep report content inside a safe print area and place the app-controlled
+           header/footer in the page margin. Do not rely on Chrome native headers,
+           because the app's PDF export path does not always embed them. */
+        @page { size: A4; margin: 18mm 10mm 16mm; }
 
         html, body {
           -webkit-print-color-adjust: exact !important;
@@ -93,18 +141,63 @@
           box-sizing: border-box !important;
         }
 
-        /* Remove all custom page chrome previously injected by this app.
-           Chrome's native header/footer is controlled by the print dialog option. */
-        #${CLONE_ID} .hiyes-pdf-page-header,
-        #${CLONE_ID} .hiyes-pdf-page-footer,
-        #${CLONE_ID} .hiyes-custom-print-header,
-        #${CLONE_ID} .hiyes-custom-print-footer,
-        .hiyes-pdf-page-header,
-        .hiyes-pdf-page-footer,
-        .hiyes-custom-print-header,
-        .hiyes-custom-print-footer {
-          display: none !important;
-          visibility: hidden !important;
+        .hiyes-native-safe-print-header,
+        .hiyes-native-safe-print-footer {
+          position: fixed !important;
+          left: 0 !important;
+          right: 0 !important;
+          z-index: 2147483647 !important;
+          display: grid !important;
+          grid-template-columns: 1fr 2fr 1fr !important;
+          align-items: center !important;
+          height: 8mm !important;
+          padding: 0 2mm !important;
+          box-sizing: border-box !important;
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+          color: #111 !important;
+          font-family: 'Times New Roman', 'PMingLiU', '新細明體', serif !important;
+          font-size: 10px !important;
+          font-weight: 400 !important;
+          line-height: 1 !important;
+          box-shadow: none !important;
+          filter: none !important;
+          pointer-events: none !important;
+        }
+
+        .hiyes-native-safe-print-header {
+          top: -14mm !important;
+        }
+
+        .hiyes-native-safe-print-footer {
+          bottom: -12mm !important;
+        }
+
+        .hiyes-print-header-left,
+        .hiyes-print-footer-left {
+          text-align: left !important;
+          white-space: nowrap !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+        }
+
+        .hiyes-print-header-center,
+        .hiyes-print-footer-center {
+          text-align: center !important;
+          white-space: nowrap !important;
+          overflow: hidden !important;
+          text-overflow: ellipsis !important;
+        }
+
+        .hiyes-print-header-right,
+        .hiyes-print-footer-right {
+          text-align: right !important;
+          white-space: nowrap !important;
+        }
+
+        .hiyes-print-page-number::after {
+          content: counter(page) '/' counter(pages) !important;
         }
 
         #${CLONE_ID} *,
@@ -144,9 +237,7 @@
     const clone = document.getElementById(CLONE_ID);
     if (!clone) return;
 
-    // Remove all app-created page chrome. The user wants Chrome's native print header/footer.
-    document.querySelectorAll('.hiyes-pdf-page-header,.hiyes-pdf-page-footer,.hiyes-custom-print-header,.hiyes-custom-print-footer').forEach((el) => el.remove());
-    clone.querySelectorAll('.hiyes-pdf-page-header,.hiyes-pdf-page-footer,.hiyes-custom-print-header,.hiyes-custom-print-footer').forEach((el) => el.remove());
+    removeExistingPrintChrome(clone);
 
     clone.querySelectorAll('*').forEach((el) => {
       clearVisualNoise(el);
@@ -255,7 +346,8 @@
       clearVisualNoise(side);
     }
 
-    installNativeChromeSafeAreaStyle(clone);
+    installPrintSafeAreaStyle(clone);
+    ensurePrintChrome(clone);
   }
 
   window.addEventListener('beforeprint', () => {
@@ -265,9 +357,9 @@
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-      document.querySelectorAll('.hiyes-custom-print-header,.hiyes-custom-print-footer').forEach((el) => el.remove());
+      removeExistingPrintChrome();
     });
   } else {
-    document.querySelectorAll('.hiyes-custom-print-header,.hiyes-custom-print-footer').forEach((el) => el.remove());
+    removeExistingPrintChrome();
   }
 })();
