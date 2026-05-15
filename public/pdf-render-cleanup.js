@@ -10,10 +10,6 @@
     return String(value || '').replace(/\s+/g, ' ').trim();
   }
 
-  function setText(el, value) {
-    if (el) el.textContent = value || '';
-  }
-
   function clearVisualNoise(el) {
     setStyle(el, 'box-shadow', 'none');
     setStyle(el, 'filter', 'none');
@@ -31,202 +27,6 @@
     setStyle(el, 'background', '#fff');
     setStyle(el, 'background-color', '#fff');
     setStyle(el, 'background-image', 'none');
-  }
-
-  function makerName() {
-    return clean(document.querySelector('[data-report-maker-input]')?.value);
-  }
-
-  function cleanSiteUrl() {
-    return location.origin || 'https://land-evaluation-system.vercel.app';
-  }
-
-  function cleanDocumentTitle() {
-    return clean(document.title)
-      .replace(/\.pdf$/i, '')
-      .replace(/\s+-\s*土地評估系統$/i, '')
-      .replace(/土地評估系統$/i, '')
-      .trim();
-  }
-
-  function formatDateTime() {
-    const d = new Date();
-    const y = d.getFullYear();
-    const m = d.getMonth() + 1;
-    const day = d.getDate();
-    const h = d.getHours();
-    const min = String(d.getMinutes()).padStart(2, '0');
-    const period = h < 6 ? '凌晨' : h < 12 ? '上午' : h < 18 ? '下午' : '晚上';
-    const hour12 = h % 12 || 12;
-    return `${y}/${m}/${day} ${period}${hour12}:${min}`;
-  }
-
-  function findMetricValue(root, label) {
-    const cards = Array.from(root.querySelectorAll('.metric-card'));
-    for (const card of cards) {
-      const small = clean(card.querySelector('small')?.textContent);
-      if (small.includes(label)) return clean(card.querySelector('strong')?.textContent);
-    }
-    return '';
-  }
-
-  function reportTitle(root) {
-    const land = findMetricValue(root, '標的地號');
-    const title = cleanDocumentTitle();
-    if (title && !/土地評估系統|海悅廣告|localhost/.test(title)) return title;
-    return land ? `${land}_土地評估報告` : '土地評估報告';
-  }
-
-  function footerCenterText(root) {
-    const title = cleanDocumentTitle();
-    const parts = title.split(/[＿_]/).map(clean).filter(Boolean);
-    const looksLikeDate = (text) => /^\d{4}[-/.年]\d{1,2}/.test(text);
-
-    if (parts.length >= 2) {
-      const client = parts[0];
-      const target = parts.slice(1).filter((part) => !looksLikeDate(part)).join('｜');
-      const result = [client, target].filter(Boolean).join('｜');
-      if (result) return result;
-    }
-
-    const client = clean(document.querySelector('[name="client"], [data-client-input], #client')?.value || '');
-    const target = findMetricValue(root, '標的地號') || findMetricValue(root, '目標地號');
-    return [client, target].filter(Boolean).join('｜') || reportTitle(root);
-  }
-
-  function injectReportMakerControl() {
-    if (document.getElementById('hiyes-report-maker-panel')) return;
-    const preview = document.querySelector('.preview-panel');
-    if (!preview) return;
-
-    const panel = document.createElement('section');
-    panel.id = 'hiyes-report-maker-panel';
-    panel.className = 'manual-price-panel no-print';
-    panel.innerHTML = `
-      <h3>PDF 署名設定</h3>
-      <p>此欄位只影響 PDF 頁首右側署名，不影響 report_text、summary JSON、submitReport 或欄位 mapping。未輸入時，頁首右側維持空白。</p>
-      <div class="manual-price-grid">
-        <label style="grid-column:1/-1;">報告製作人
-          <input data-report-maker-input placeholder="請輸入報告製作人姓名" value="">
-        </label>
-      </div>
-    `;
-
-    const manualPanel = document.getElementById('manual-price-panel');
-    if (manualPanel?.parentNode) {
-      manualPanel.parentNode.insertBefore(panel, manualPanel.nextSibling);
-    } else {
-      const tabs = document.querySelector('.report-tabs', preview);
-      if (tabs?.parentNode) tabs.parentNode.insertBefore(panel, tabs);
-      else preview.prepend(panel);
-    }
-  }
-
-  function removeCustomChrome() {
-    document.querySelectorAll('.hiyes-custom-print-header,.hiyes-custom-print-footer').forEach((el) => el.remove());
-  }
-
-  function ensureCustomChrome(root) {
-    removeCustomChrome();
-    if (!root) return;
-
-    const maker = makerName();
-
-    const header = document.createElement('div');
-    header.className = 'hiyes-custom-print-header';
-    header.innerHTML = '<span class="hiyes-custom-header-left"></span><span class="hiyes-custom-header-center"></span><span class="hiyes-custom-header-right"></span>';
-    setText(header.querySelector('.hiyes-custom-header-left'), formatDateTime());
-    setText(header.querySelector('.hiyes-custom-header-center'), footerCenterText(root));
-    setText(header.querySelector('.hiyes-custom-header-right'), maker ? `報告製作人：${maker}` : '');
-
-    const footer = document.createElement('div');
-    footer.className = 'hiyes-custom-print-footer';
-    footer.innerHTML = '<span class="hiyes-custom-url"></span><span class="hiyes-custom-design"></span>';
-    setText(footer.querySelector('.hiyes-custom-url'), cleanSiteUrl());
-    setText(footer.querySelector('.hiyes-custom-design'), 'Designed by DAI YI SYUAN');
-
-    root.prepend(header);
-    root.appendChild(footer);
-
-    let style = document.getElementById('hiyes-custom-print-chrome-style');
-    if (!style) {
-      style = document.createElement('style');
-      style.id = 'hiyes-custom-print-chrome-style';
-      document.head.appendChild(style);
-    }
-    style.textContent = `
-      @media print {
-        /* Place chrome at the true paper edges. Keep it out of the report area. */
-        @page { size: A4; margin: 12mm 10mm 18mm; }
-        html, body {
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        #${CLONE_ID} {
-          transform: none !important;
-          zoom: 1 !important;
-          box-sizing: border-box !important;
-        }
-        #${CLONE_ID} .hiyes-custom-print-header,
-        #${CLONE_ID} .hiyes-custom-print-footer {
-          visibility: visible !important;
-          position: fixed !important;
-          left: 10mm !important;
-          right: 10mm !important;
-          align-items: center !important;
-          background: transparent !important;
-          color: #111 !important;
-          font-family: 'Times New Roman', 'Noto Serif TC', 'PMingLiU', serif !important;
-          font-size: 7.2px !important;
-          font-weight: 400 !important;
-          line-height: 1 !important;
-          letter-spacing: .01em !important;
-          z-index: 2147483647 !important;
-          pointer-events: none !important;
-          box-shadow: none !important;
-          border: 0 !important;
-          opacity: 1 !important;
-        }
-        #${CLONE_ID} .hiyes-custom-print-header {
-          top: .8mm !important;
-          display: grid !important;
-          grid-template-columns: 1fr 2.2fr 1fr !important;
-          column-gap: 8mm !important;
-        }
-        #${CLONE_ID} .hiyes-custom-print-footer {
-          bottom: .8mm !important;
-          display: flex !important;
-          justify-content: space-between !important;
-        }
-        #${CLONE_ID} .hiyes-custom-header-left,
-        #${CLONE_ID} .hiyes-custom-header-center,
-        #${CLONE_ID} .hiyes-custom-header-right,
-        #${CLONE_ID} .hiyes-custom-url,
-        #${CLONE_ID} .hiyes-custom-design {
-          overflow: hidden !important;
-          white-space: nowrap !important;
-          text-overflow: ellipsis !important;
-        }
-        #${CLONE_ID} .hiyes-custom-header-left {
-          text-align: left !important;
-        }
-        #${CLONE_ID} .hiyes-custom-header-center {
-          text-align: center !important;
-        }
-        #${CLONE_ID} .hiyes-custom-header-right {
-          text-align: right !important;
-          letter-spacing: .08em !important;
-        }
-        #${CLONE_ID} .hiyes-custom-url {
-          max-width: 55% !important;
-          text-align: left !important;
-        }
-        #${CLONE_ID} .hiyes-custom-design {
-          text-align: right !important;
-          letter-spacing: .08em !important;
-        }
-      }
-    `;
   }
 
   function isCaseDuplicateLine(text) {
@@ -268,10 +68,84 @@
     });
   }
 
+  function installNativeChromeSafeAreaStyle(clone) {
+    let style = clone.querySelector('style[data-pdf-cleanup="true"]');
+    if (!style) {
+      style = document.createElement('style');
+      style.setAttribute('data-pdf-cleanup', 'true');
+      clone.prepend(style);
+    }
+
+    style.textContent = `
+      @media print {
+        /* Use Chrome native print header/footer only.
+           This margin is the safe area between the browser's own header/footer and the report body. */
+        @page { size: A4; margin: 20mm 10mm 20mm; }
+
+        html, body {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        #${CLONE_ID} {
+          transform: none !important;
+          zoom: 1 !important;
+          box-sizing: border-box !important;
+        }
+
+        /* Remove all custom page chrome previously injected by this app.
+           Chrome's native header/footer is controlled by the print dialog option. */
+        #${CLONE_ID} .hiyes-pdf-page-header,
+        #${CLONE_ID} .hiyes-pdf-page-footer,
+        #${CLONE_ID} .hiyes-custom-print-header,
+        #${CLONE_ID} .hiyes-custom-print-footer,
+        .hiyes-pdf-page-header,
+        .hiyes-pdf-page-footer,
+        .hiyes-custom-print-header,
+        .hiyes-custom-print-footer {
+          display: none !important;
+          visibility: hidden !important;
+        }
+
+        #${CLONE_ID} *,
+        #${CLONE_ID} *::before,
+        #${CLONE_ID} *::after {
+          box-shadow: none !important;
+          filter: none !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+        }
+
+        #${CLONE_ID} .report-section::before,
+        #${CLONE_ID} .report-section::after,
+        #${CLONE_ID} .briefing-section::before,
+        #${CLONE_ID} .briefing-section::after,
+        #${CLONE_ID} .brief-card-grid::before,
+        #${CLONE_ID} .brief-card-grid::after,
+        #${CLONE_ID} .summary-grid::before,
+        #${CLONE_ID} .summary-grid::after,
+        #${CLONE_ID} .metric-card::before,
+        #${CLONE_ID} .metric-card::after,
+        #${CLONE_ID} .brief-data-card::before,
+        #${CLONE_ID} .brief-data-card::after,
+        #${CLONE_ID} .brief-kv::before,
+        #${CLONE_ID} .brief-kv::after {
+          display: none !important;
+          content: none !important;
+          background: transparent !important;
+          background-color: transparent !important;
+          background-image: none !important;
+        }
+      }
+    `;
+  }
+
   function cleanupClone() {
     const clone = document.getElementById(CLONE_ID);
     if (!clone) return;
 
+    // Remove all app-created page chrome. The user wants Chrome's native print header/footer.
+    document.querySelectorAll('.hiyes-pdf-page-header,.hiyes-pdf-page-footer,.hiyes-custom-print-header,.hiyes-custom-print-footer').forEach((el) => el.remove());
     clone.querySelectorAll('.hiyes-pdf-page-header,.hiyes-pdf-page-footer,.hiyes-custom-print-header,.hiyes-custom-print-footer').forEach((el) => el.remove());
 
     clone.querySelectorAll('*').forEach((el) => {
@@ -381,48 +255,7 @@
       clearVisualNoise(side);
     }
 
-    ensureCustomChrome(clone);
-
-    let style = clone.querySelector('style[data-pdf-cleanup="true"]');
-    if (!style) {
-      style = document.createElement('style');
-      style.setAttribute('data-pdf-cleanup', 'true');
-      clone.prepend(style);
-    }
-    style.textContent = `
-      #${CLONE_ID} *,
-      #${CLONE_ID} *::before,
-      #${CLONE_ID} *::after {
-        box-shadow: none !important;
-        filter: none !important;
-        backdrop-filter: none !important;
-        -webkit-backdrop-filter: none !important;
-      }
-      #${CLONE_ID} .hiyes-pdf-page-header,
-      #${CLONE_ID} .hiyes-pdf-page-footer {
-        display: none !important;
-      }
-      #${CLONE_ID} .report-section::before,
-      #${CLONE_ID} .report-section::after,
-      #${CLONE_ID} .briefing-section::before,
-      #${CLONE_ID} .briefing-section::after,
-      #${CLONE_ID} .brief-card-grid::before,
-      #${CLONE_ID} .brief-card-grid::after,
-      #${CLONE_ID} .summary-grid::before,
-      #${CLONE_ID} .summary-grid::after,
-      #${CLONE_ID} .metric-card::before,
-      #${CLONE_ID} .metric-card::after,
-      #${CLONE_ID} .brief-data-card::before,
-      #${CLONE_ID} .brief-data-card::after,
-      #${CLONE_ID} .brief-kv::before,
-      #${CLONE_ID} .brief-kv::after {
-        display: none !important;
-        content: none !important;
-        background: transparent !important;
-        background-color: transparent !important;
-        background-image: none !important;
-      }
-    `;
+    installNativeChromeSafeAreaStyle(clone);
   }
 
   window.addEventListener('beforeprint', () => {
@@ -430,17 +263,11 @@
     setTimeout(cleanupClone, 0);
   });
 
-  window.addEventListener('afterprint', removeCustomChrome);
-
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', injectReportMakerControl);
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.hiyes-custom-print-header,.hiyes-custom-print-footer').forEach((el) => el.remove());
+    });
   } else {
-    injectReportMakerControl();
+    document.querySelectorAll('.hiyes-custom-print-header,.hiyes-custom-print-footer').forEach((el) => el.remove());
   }
-
-  const observer = new MutationObserver(() => {
-    clearTimeout(window.__hiyesReportMakerPanelTimer);
-    window.__hiyesReportMakerPanelTimer = setTimeout(injectReportMakerControl, 250);
-  });
-  observer.observe(document.documentElement, { childList: true, subtree: true });
 })();
