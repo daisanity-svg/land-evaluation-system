@@ -15,6 +15,7 @@ export default function RootLayout({ children }) {
       <body>
         {children}
         <script src="/hiyes-price-adjust.js" defer></script>
+        <script src="/pdf-render-cleanup.js" defer></script>
       </body>
     </html>
   );
