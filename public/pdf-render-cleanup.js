@@ -1,5 +1,7 @@
 (function () {
   const CLONE_ID = 'hiyes-print-report-clone';
+  const MAKER_STORAGE_KEY = 'hiyes-report-maker-name';
+  const DEFAULT_MAKER = 'DAI YI SYUAN';
 
   function setStyle(el, prop, value) {
     if (!el || !el.style) return;
@@ -33,6 +35,18 @@
     setStyle(el, 'background-image', 'none');
   }
 
+  function makerName() {
+    return clean(localStorage.getItem(MAKER_STORAGE_KEY)) || DEFAULT_MAKER;
+  }
+
+  function saveMakerName(value) {
+    localStorage.setItem(MAKER_STORAGE_KEY, clean(value) || DEFAULT_MAKER);
+  }
+
+  function cleanSiteUrl() {
+    return location.origin || 'https://land-evaluation-system.vercel.app';
+  }
+
   function formatDateTime() {
     const d = new Date();
     const y = d.getFullYear();
@@ -45,8 +59,8 @@
     return `${y}/${m}/${day} ${period}${hour12}:${min}`;
   }
 
-  function findMetricValue(clone, label) {
-    const cards = Array.from(clone.querySelectorAll('.metric-card'));
+  function findMetricValue(root, label) {
+    const cards = Array.from(root.querySelectorAll('.metric-card'));
     for (const card of cards) {
       const small = clean(card.querySelector('small')?.textContent);
       if (small.includes(label)) return clean(card.querySelector('strong')?.textContent);
@@ -54,29 +68,125 @@
     return '';
   }
 
-  function reportTitle(clone) {
-    const land = findMetricValue(clone, '標的地號');
+  function reportTitle(root) {
+    const land = findMetricValue(root, '標的地號');
     const title = clean(document.title).replace(/\.pdf$/i, '');
-    if (title && !/土地評估系統|海悅廣告/.test(title)) return title;
+    if (title && !/土地評估系統|海悅廣告|localhost/.test(title)) return title;
     return land ? `${land}_土地評估報告` : '土地評估報告';
   }
 
-  function ensureHeaderFooter(clone) {
-    clone.querySelectorAll('.hiyes-pdf-page-header,.hiyes-pdf-page-footer').forEach((el) => el.remove());
+  function injectReportMakerControl() {
+    if (document.getElementById('hiyes-report-maker-panel')) return;
+    const preview = document.querySelector('.preview-panel');
+    if (!preview) return;
+
+    const panel = document.createElement('section');
+    panel.id = 'hiyes-report-maker-panel';
+    panel.className = 'manual-price-panel no-print';
+    panel.innerHTML = `
+      <h3>PDF 署名設定</h3>
+      <p>此欄位只影響 PDF 頁尾右側署名，不影響 report_text、summary JSON、submitReport 或欄位 mapping。</p>
+      <div class="manual-price-grid">
+        <label style="grid-column:1/-1;">報告製作人
+          <input data-report-maker-input placeholder="例如：DAI YI SYUAN" value="${makerName()}">
+        </label>
+      </div>
+    `;
+
+    const manualPanel = document.getElementById('manual-price-panel');
+    if (manualPanel?.parentNode) {
+      manualPanel.parentNode.insertBefore(panel, manualPanel.nextSibling);
+    } else {
+      const tabs = document.querySelector('.report-tabs', preview);
+      if (tabs?.parentNode) tabs.parentNode.insertBefore(panel, tabs);
+      else preview.prepend(panel);
+    }
+
+    const input = panel.querySelector('[data-report-maker-input]');
+    input?.addEventListener('input', () => saveMakerName(input.value));
+  }
+
+  function removeCustomChrome() {
+    document.querySelectorAll('.hiyes-custom-print-header,.hiyes-custom-print-footer').forEach((el) => el.remove());
+  }
+
+  function ensureCustomChrome(root) {
+    removeCustomChrome();
 
     const header = document.createElement('div');
-    header.className = 'hiyes-pdf-page-header';
-    header.innerHTML = '<span class="hiyes-pdf-header-date"></span><span class="hiyes-pdf-header-title"></span><span></span>';
-    setText(header.querySelector('.hiyes-pdf-header-date'), formatDateTime());
-    setText(header.querySelector('.hiyes-pdf-header-title'), reportTitle(clone));
+    header.className = 'hiyes-custom-print-header';
+    header.innerHTML = '<span class="hiyes-custom-url"></span><span class="hiyes-custom-design"></span>';
+    setText(header.querySelector('.hiyes-custom-url'), cleanSiteUrl());
+    setText(header.querySelector('.hiyes-custom-design'), 'Designed by DAI YI SYUAN');
 
     const footer = document.createElement('div');
-    footer.className = 'hiyes-pdf-page-footer';
-    footer.innerHTML = '<span class="hiyes-pdf-footer-url"></span><span class="hiyes-pdf-footer-page"></span>';
-    setText(footer.querySelector('.hiyes-pdf-footer-url'), location.origin + '/?utm_source=chatgpt.com');
+    footer.className = 'hiyes-custom-print-footer';
+    footer.innerHTML = '<span class="hiyes-custom-footer-left"></span><span class="hiyes-custom-footer-right"></span>';
+    setText(footer.querySelector('.hiyes-custom-footer-left'), `${formatDateTime()}　${reportTitle(root)}`);
+    setText(footer.querySelector('.hiyes-custom-footer-right'), `報告製作人：${makerName()}`);
 
-    clone.prepend(header);
-    clone.appendChild(footer);
+    document.body.appendChild(header);
+    document.body.appendChild(footer);
+
+    let style = document.getElementById('hiyes-custom-print-chrome-style');
+    if (!style) {
+      style = document.createElement('style');
+      style.id = 'hiyes-custom-print-chrome-style';
+      document.head.appendChild(style);
+    }
+    style.textContent = `
+      @media print {
+        @page { size: A4; margin: 15mm 10mm 18mm; }
+        body > .hiyes-custom-print-header,
+        body > .hiyes-custom-print-footer,
+        .hiyes-custom-print-header,
+        .hiyes-custom-print-footer {
+          display: flex !important;
+          visibility: visible !important;
+          position: fixed !important;
+          left: 10mm !important;
+          right: 10mm !important;
+          align-items: center !important;
+          justify-content: space-between !important;
+          background: #fff !important;
+          color: #111 !important;
+          font-family: 'Times New Roman', 'Noto Serif TC', serif !important;
+          font-size: 8.5px !important;
+          line-height: 1 !important;
+          letter-spacing: .01em !important;
+          z-index: 2147483647 !important;
+          pointer-events: none !important;
+          box-shadow: none !important;
+          border: 0 !important;
+        }
+        body > .hiyes-custom-print-header,
+        .hiyes-custom-print-header {
+          top: 4mm !important;
+        }
+        body > .hiyes-custom-print-footer,
+        .hiyes-custom-print-footer {
+          bottom: 5mm !important;
+        }
+        .hiyes-custom-url {
+          max-width: 55% !important;
+          overflow: hidden !important;
+          white-space: nowrap !important;
+          text-overflow: ellipsis !important;
+        }
+        .hiyes-custom-design,
+        .hiyes-custom-footer-right {
+          text-align: right !important;
+          white-space: nowrap !important;
+          letter-spacing: .08em !important;
+        }
+        .hiyes-custom-footer-left {
+          max-width: 72% !important;
+          overflow: hidden !important;
+          white-space: nowrap !important;
+          text-overflow: ellipsis !important;
+        }
+      }
+    `;
   }
 
   function isCaseDuplicateLine(text) {
@@ -121,6 +231,10 @@
   function cleanupClone() {
     const clone = document.getElementById(CLONE_ID);
     if (!clone) return;
+
+    // Remove the previous experimental in-clone fixed header/footer.
+    // It was rendered by Chrome PDF in the wrong margin and created the ugly URL / 0/0 line.
+    clone.querySelectorAll('.hiyes-pdf-page-header,.hiyes-pdf-page-footer').forEach((el) => el.remove());
 
     // Hard reset every visual effect first. This targets the PDF-only pale blue blocks
     // produced by shadows/filters/background layers in Chrome print rendering.
@@ -237,7 +351,7 @@
       clearVisualNoise(side);
     }
 
-    ensureHeaderFooter(clone);
+    ensureCustomChrome(clone);
 
     // Remove pseudo visual layers by class-level CSS injected directly into the clone.
     let style = clone.querySelector('style[data-pdf-cleanup="true"]');
@@ -255,47 +369,9 @@
         backdrop-filter: none !important;
         -webkit-backdrop-filter: none !important;
       }
-      #${CLONE_ID} .hiyes-pdf-page-header {
-        position: fixed !important;
-        top: -9mm !important;
-        left: 0 !important;
-        right: 0 !important;
-        height: 6mm !important;
-        display: grid !important;
-        grid-template-columns: 1fr 2fr 1fr !important;
-        align-items: center !important;
-        background: #fff !important;
-        color: #111 !important;
-        font-size: 9px !important;
-        line-height: 1 !important;
-        z-index: 99999 !important;
-      }
-      #${CLONE_ID} .hiyes-pdf-header-date {
-        text-align: left !important;
-      }
-      #${CLONE_ID} .hiyes-pdf-header-title {
-        text-align: center !important;
-        white-space: nowrap !important;
-        overflow: hidden !important;
-        text-overflow: ellipsis !important;
-      }
+      #${CLONE_ID} .hiyes-pdf-page-header,
       #${CLONE_ID} .hiyes-pdf-page-footer {
-        position: fixed !important;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: -13mm !important;
-        height: 7mm !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: space-between !important;
-        background: #fff !important;
-        color: #111 !important;
-        font-size: 8px !important;
-        line-height: 1 !important;
-        z-index: 99999 !important;
-      }
-      #${CLONE_ID} .hiyes-pdf-footer-page::after {
-        content: counter(page) '/' counter(pages) !important;
+        display: none !important;
       }
       #${CLONE_ID} .report-section::before,
       #${CLONE_ID} .report-section::after,
@@ -326,4 +402,18 @@
     // Run one extra micro cleanup pass without changing layout.
     setTimeout(cleanupClone, 0);
   });
+
+  window.addEventListener('afterprint', removeCustomChrome);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', injectReportMakerControl);
+  } else {
+    injectReportMakerControl();
+  }
+
+  const observer = new MutationObserver(() => {
+    clearTimeout(window.__hiyesReportMakerPanelTimer);
+    window.__hiyesReportMakerPanelTimer = setTimeout(injectReportMakerControl, 250);
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
 })();
