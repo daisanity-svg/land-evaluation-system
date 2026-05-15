@@ -104,7 +104,7 @@
     panel.className = 'manual-price-panel no-print';
     panel.innerHTML = `
       <h3>PDF 署名設定</h3>
-      <p>此欄位只影響 PDF 頁尾右側署名，不影響 report_text、summary JSON、submitReport 或欄位 mapping。未輸入時，頁尾右側維持空白。</p>
+      <p>此欄位只影響 PDF 頁首右側署名，不影響 report_text、summary JSON、submitReport 或欄位 mapping。未輸入時，頁首右側維持空白。</p>
       <div class="manual-price-grid">
         <label style="grid-column:1/-1;">報告製作人
           <input data-report-maker-input placeholder="請輸入報告製作人姓名" value="">
@@ -130,19 +130,20 @@
     removeCustomChrome();
     if (!root) return;
 
+    const maker = makerName();
+
     const header = document.createElement('div');
     header.className = 'hiyes-custom-print-header';
-    header.innerHTML = '<span class="hiyes-custom-url"></span><span class="hiyes-custom-design"></span>';
-    setText(header.querySelector('.hiyes-custom-url'), cleanSiteUrl());
-    setText(header.querySelector('.hiyes-custom-design'), 'Designed by DAI YI SYUAN');
+    header.innerHTML = '<span class="hiyes-custom-header-left"></span><span class="hiyes-custom-header-center"></span><span class="hiyes-custom-header-right"></span>';
+    setText(header.querySelector('.hiyes-custom-header-left'), formatDateTime());
+    setText(header.querySelector('.hiyes-custom-header-center'), footerCenterText(root));
+    setText(header.querySelector('.hiyes-custom-header-right'), maker ? `報告製作人：${maker}` : '');
 
     const footer = document.createElement('div');
     footer.className = 'hiyes-custom-print-footer';
-    footer.innerHTML = '<span class="hiyes-custom-footer-left"></span><span class="hiyes-custom-footer-center"></span><span class="hiyes-custom-footer-right"></span>';
-    const maker = makerName();
-    setText(footer.querySelector('.hiyes-custom-footer-left'), formatDateTime());
-    setText(footer.querySelector('.hiyes-custom-footer-center'), footerCenterText(root));
-    setText(footer.querySelector('.hiyes-custom-footer-right'), maker ? `報告製作人：${maker}` : '');
+    footer.innerHTML = '<span class="hiyes-custom-url"></span><span class="hiyes-custom-design"></span>';
+    setText(footer.querySelector('.hiyes-custom-url'), cleanSiteUrl());
+    setText(footer.querySelector('.hiyes-custom-design'), 'Designed by DAI YI SYUAN');
 
     root.prepend(header);
     root.appendChild(footer);
@@ -155,7 +156,11 @@
     }
     style.textContent = `
       @media print {
-        @page { size: A4; margin: 15mm 10mm 18mm; }
+        @page { size: A4; margin: 22mm 10mm 24mm; }
+        #${CLONE_ID} {
+          transform: scale(.985) !important;
+          transform-origin: top center !important;
+        }
         #${CLONE_ID} .hiyes-custom-print-header,
         #${CLONE_ID} .hiyes-custom-print-footer {
           visibility: visible !important;
@@ -177,41 +182,42 @@
           opacity: 1 !important;
         }
         #${CLONE_ID} .hiyes-custom-print-header {
-          top: 4mm !important;
-          display: flex !important;
-          justify-content: space-between !important;
-        }
-        #${CLONE_ID} .hiyes-custom-print-footer {
-          bottom: 5mm !important;
+          top: 6mm !important;
           display: grid !important;
           grid-template-columns: 1fr 2.2fr 1fr !important;
           column-gap: 8mm !important;
         }
+        #${CLONE_ID} .hiyes-custom-print-footer {
+          bottom: 7mm !important;
+          display: flex !important;
+          justify-content: space-between !important;
+        }
+        #${CLONE_ID} .hiyes-custom-header-left,
+        #${CLONE_ID} .hiyes-custom-header-center,
+        #${CLONE_ID} .hiyes-custom-header-right,
+        #${CLONE_ID} .hiyes-custom-url,
+        #${CLONE_ID} .hiyes-custom-design {
+          overflow: hidden !important;
+          white-space: nowrap !important;
+          text-overflow: ellipsis !important;
+        }
+        #${CLONE_ID} .hiyes-custom-header-left {
+          text-align: left !important;
+        }
+        #${CLONE_ID} .hiyes-custom-header-center {
+          text-align: center !important;
+        }
+        #${CLONE_ID} .hiyes-custom-header-right {
+          text-align: right !important;
+          letter-spacing: .08em !important;
+        }
         #${CLONE_ID} .hiyes-custom-url {
           max-width: 55% !important;
-          overflow: hidden !important;
-          white-space: nowrap !important;
-          text-overflow: ellipsis !important;
-        }
-        #${CLONE_ID} .hiyes-custom-design,
-        #${CLONE_ID} .hiyes-custom-footer-right {
-          text-align: right !important;
-          white-space: nowrap !important;
-          letter-spacing: .08em !important;
-          overflow: hidden !important;
-          text-overflow: ellipsis !important;
-        }
-        #${CLONE_ID} .hiyes-custom-footer-left {
           text-align: left !important;
-          white-space: nowrap !important;
-          overflow: hidden !important;
-          text-overflow: ellipsis !important;
         }
-        #${CLONE_ID} .hiyes-custom-footer-center {
-          text-align: center !important;
-          white-space: nowrap !important;
-          overflow: hidden !important;
-          text-overflow: ellipsis !important;
+        #${CLONE_ID} .hiyes-custom-design {
+          text-align: right !important;
+          letter-spacing: .08em !important;
         }
       }
     `;
