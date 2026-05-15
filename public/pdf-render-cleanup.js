@@ -156,10 +156,8 @@
     }
     style.textContent = `
       @media print {
-        /* Reserve real print-safe margins for Chrome's fixed header/footer area.
-           Do not transform the clone: transform makes fixed elements position against the clone
-           and is the reason the header/footer previously overlapped the report body. */
-        @page { size: A4; margin: 30mm 10mm 28mm; }
+        /* Place chrome at the true paper edges. Keep it out of the report area. */
+        @page { size: A4; margin: 12mm 10mm 18mm; }
         html, body {
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
@@ -176,10 +174,10 @@
           left: 10mm !important;
           right: 10mm !important;
           align-items: center !important;
-          background: #fff !important;
+          background: transparent !important;
           color: #111 !important;
           font-family: 'Times New Roman', 'Noto Serif TC', 'PMingLiU', serif !important;
-          font-size: 8.5px !important;
+          font-size: 7.2px !important;
           font-weight: 400 !important;
           line-height: 1 !important;
           letter-spacing: .01em !important;
@@ -190,13 +188,13 @@
           opacity: 1 !important;
         }
         #${CLONE_ID} .hiyes-custom-print-header {
-          top: 8mm !important;
+          top: .8mm !important;
           display: grid !important;
           grid-template-columns: 1fr 2.2fr 1fr !important;
           column-gap: 8mm !important;
         }
         #${CLONE_ID} .hiyes-custom-print-footer {
-          bottom: 8mm !important;
+          bottom: .8mm !important;
           display: flex !important;
           justify-content: space-between !important;
         }
