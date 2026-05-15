@@ -156,10 +156,18 @@
     }
     style.textContent = `
       @media print {
-        @page { size: A4; margin: 22mm 10mm 24mm; }
+        /* Reserve real print-safe margins for Chrome's fixed header/footer area.
+           Do not transform the clone: transform makes fixed elements position against the clone
+           and is the reason the header/footer previously overlapped the report body. */
+        @page { size: A4; margin: 30mm 10mm 28mm; }
+        html, body {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
         #${CLONE_ID} {
-          transform: scale(.985) !important;
-          transform-origin: top center !important;
+          transform: none !important;
+          zoom: 1 !important;
+          box-sizing: border-box !important;
         }
         #${CLONE_ID} .hiyes-custom-print-header,
         #${CLONE_ID} .hiyes-custom-print-footer {
@@ -182,13 +190,13 @@
           opacity: 1 !important;
         }
         #${CLONE_ID} .hiyes-custom-print-header {
-          top: 6mm !important;
+          top: 8mm !important;
           display: grid !important;
           grid-template-columns: 1fr 2.2fr 1fr !important;
           column-gap: 8mm !important;
         }
         #${CLONE_ID} .hiyes-custom-print-footer {
-          bottom: 7mm !important;
+          bottom: 8mm !important;
           display: flex !important;
           justify-content: space-between !important;
         }
