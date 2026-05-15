@@ -1,0 +1,154 @@
+/*
+  Final PDF render cleanup
+  Scope: PDF visual rendering only.
+  Do not change submitReport, summary JSON, field mapping, report parsing or data flow.
+*/
+
+@media print {
+  /* Restore original HIYES owner-report header composition. */
+  #hiyes-print-report-clone .report-brand-row {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 14px !important;
+    text-align: left !important;
+    min-height: 50px !important;
+    padding: 10px 24px !important;
+    margin: 0 !important;
+    background: #005BAC !important;
+    background-color: #005BAC !important;
+    background-image: none !important;
+    color: #fff !important;
+  }
+
+  #hiyes-print-report-clone .report-brand-lockup {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 12px !important;
+    width: auto !important;
+    text-align: left !important;
+  }
+
+  #hiyes-print-report-clone .report-brand-mark {
+    display: grid !important;
+    place-items: center !important;
+    flex: 0 0 auto !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 12px !important;
+    background: #E8F4FF !important;
+    color: #005BAC !important;
+    font-size: 20px !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+  }
+
+  #hiyes-print-report-clone .report-brand-title {
+    display: block !important;
+    color: #fff !important;
+    font-size: 12px !important;
+    font-weight: 900 !important;
+    letter-spacing: .22em !important;
+    line-height: 1.15 !important;
+    text-align: left !important;
+  }
+
+  #hiyes-print-report-clone .report-brand-subtitle {
+    display: block !important;
+    color: rgba(255,255,255,.86) !important;
+    font-size: 10px !important;
+    line-height: 1.45 !important;
+    text-align: left !important;
+  }
+
+  #hiyes-print-report-clone .report-brand-side {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    width: auto !important;
+    margin-left: auto !important;
+    color: #fff !important;
+    text-align: right !important;
+    font-size: 10px !important;
+    font-weight: 900 !important;
+    letter-spacing: .16em !important;
+    line-height: 1.35 !important;
+  }
+
+  /* Remove source of visible pale blue underlay blocks in PDF. */
+  #hiyes-print-report-clone,
+  #hiyes-print-report-clone .report-section,
+  #hiyes-print-report-clone .report-section.cover-section,
+  #hiyes-print-report-clone .report-section.briefing-main,
+  #hiyes-print-report-clone .briefing-summary,
+  #hiyes-print-report-clone .briefing-main,
+  #hiyes-print-report-clone .briefing-section,
+  #hiyes-print-report-clone .summary-grid,
+  #hiyes-print-report-clone .briefing-summary-grid,
+  #hiyes-print-report-clone .brief-card-grid,
+  #hiyes-print-report-clone .case-grid,
+  #hiyes-print-report-clone .price-grid,
+  #hiyes-print-report-clone .product-grid,
+  #hiyes-print-report-clone .swot-brief-grid,
+  #hiyes-print-report-clone .hiyes-case-repaired,
+  #hiyes-print-report-clone .hiyes-price-repaired,
+  #hiyes-print-report-clone .hiyes-swot-two-card {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+  }
+
+  /* In the PDF, all data cards stay white. Borders and blue text carry the visual hierarchy. */
+  #hiyes-print-report-clone .metric-card,
+  #hiyes-print-report-clone .metric-card.priority-high,
+  #hiyes-print-report-clone .metric-card.priority-mid,
+  #hiyes-print-report-clone .info-card,
+  #hiyes-print-report-clone .info-card.accent,
+  #hiyes-print-report-clone .brief-data-card,
+  #hiyes-print-report-clone .brief-data-card.case,
+  #hiyes-print-report-clone .brief-data-card.price,
+  #hiyes-print-report-clone .brief-data-card.swot,
+  #hiyes-print-report-clone .brief-data-card.product-card,
+  #hiyes-print-report-clone .brief-data-card.advantage,
+  #hiyes-print-report-clone .brief-data-card.resistance,
+  #hiyes-print-report-clone .hiyes-case-card,
+  #hiyes-print-report-clone .hiyes-market-summary-card,
+  #hiyes-print-report-clone .hiyes-price-card,
+  #hiyes-print-report-clone .hiyes-price-summary-card,
+  #hiyes-print-report-clone .hiyes-swot-card,
+  #hiyes-print-report-clone .advantage-card,
+  #hiyes-print-report-clone .resistance-card,
+  #hiyes-print-report-clone .brief-kv,
+  #hiyes-print-report-clone .brief-kv.priority-high,
+  #hiyes-print-report-clone .brief-kv.priority-mid,
+  #hiyes-print-report-clone .brief-body-text {
+    background: #fff !important;
+    background-color: #fff !important;
+    background-image: none !important;
+  }
+
+  #hiyes-print-report-clone .report-section::before,
+  #hiyes-print-report-clone .report-section::after,
+  #hiyes-print-report-clone .briefing-section::before,
+  #hiyes-print-report-clone .briefing-section::after,
+  #hiyes-print-report-clone .summary-grid::before,
+  #hiyes-print-report-clone .summary-grid::after,
+  #hiyes-print-report-clone .brief-card-grid::before,
+  #hiyes-print-report-clone .brief-card-grid::after,
+  #hiyes-print-report-clone .metric-card::before,
+  #hiyes-print-report-clone .metric-card::after,
+  #hiyes-print-report-clone .brief-data-card::before,
+  #hiyes-print-report-clone .brief-data-card::after,
+  #hiyes-print-report-clone .brief-kv::before,
+  #hiyes-print-report-clone .brief-kv::after {
+    display: none !important;
+    content: none !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+  }
+}
