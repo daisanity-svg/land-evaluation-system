@@ -2,6 +2,7 @@ import './globals.css';
 import './print-fix.css';
 import './owner-briefing-final.css';
 import './hiyes-cis-price-adjust.css';
+import './pdf-render-final.css';
 
 export const metadata = {
   title: '海悅廣告｜土地評估系統',
