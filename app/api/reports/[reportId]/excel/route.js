@@ -17,6 +17,17 @@ function safeFileName(value) {
     .slice(0, 90);
 }
 
+function excelResponse(buffer, filename) {
+  return new Response(buffer, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(filename || '土地評估簡表.xlsx')}`,
+      'Cache-Control': 'no-store',
+    },
+  });
+}
+
 async function fetchReport(reportId) {
   const supabaseBaseUrl = getSupabaseRestUrl();
   const url = `${supabaseBaseUrl}/rest/v1/reports?report_id=eq.${encodeURIComponent(reportId)}&select=*`;
@@ -57,15 +68,32 @@ export async function GET(_request, { params }) {
 
     const buffer = await buildLandEvaluationExcelBuffer(report);
     const filename = safeFileName(`${report.client || '土地評估'}-${report.land_number || reportId}-土地評估簡表-${report.research_date || ''}.xlsx`);
+    return excelResponse(buffer, filename || `${reportId}.xlsx`);
+  } catch (error) {
+    return Response.json({ error: error.message || 'Excel export failed.' }, { status: 500 });
+  }
+}
 
-    return new Response(buffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(filename || `${reportId}.xlsx`)}`,
-        'Cache-Control': 'no-store',
-      },
-    });
+export async function POST(request, { params }) {
+  try {
+    const body = await request.json().catch(() => ({}));
+    const reportId = String(params.reportId || body.report_id || body.reportId || '').trim();
+    const report = {
+      report_id: reportId,
+      client: body.client || body.client_name || '',
+      land_number: body.land_number || body.landNumber || '',
+      research_date: body.research_date || body.researchDate || '',
+      summary: body.summary || null,
+      report_text: body.report_text || body.reportText || '',
+    };
+
+    if (!report.report_text || !String(report.report_text).trim()) {
+      return Response.json({ error: 'report_text is required for direct Excel export.' }, { status: 400 });
+    }
+
+    const buffer = await buildLandEvaluationExcelBuffer(report);
+    const filename = safeFileName(`${report.client || '土地評估'}-${report.land_number || reportId || '手動貼上'}-土地評估簡表-${report.research_date || ''}.xlsx`);
+    return excelResponse(buffer, filename || `${reportId || 'manual'}.xlsx`);
   } catch (error) {
     return Response.json({ error: error.message || 'Excel export failed.' }, { status: 500 });
   }
