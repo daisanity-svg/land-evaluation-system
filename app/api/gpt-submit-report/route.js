@@ -1,187 +1,109 @@
 export const runtime = 'nodejs';
 
-const RAW_SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const JSON_HEADERS = {
+const HEADERS = {
   'Cache-Control': 'no-store',
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
 };
 
-function json(payload, init = {}) {
-  return Response.json(payload, {
-    ...init,
-    headers: {
-      ...JSON_HEADERS,
-      ...(init.headers || {}),
-    },
-  });
-}
-
-function successPayload(extra) {
-  return {
-    success: true,
-    ok: true,
-    saved: true,
-    status: 'saved',
-    message: '報告已成功送回土地評估系統。',
-    ...extra,
-  };
-}
-
-function failPayload(status, extra) {
-  return {
-    success: false,
-    ok: false,
-    saved: false,
-    status,
-    message: '報告尚未成功送回土地評估系統。',
-    ...extra,
-  };
+function json(data) {
+  return Response.json(data, { status: 200, headers: HEADERS });
 }
 
 export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: JSON_HEADERS });
+  return new Response(null, { status: 204, headers: HEADERS });
 }
 
-function getSupabaseRestUrl() {
-  if (!RAW_SUPABASE_URL) return '';
-  return RAW_SUPABASE_URL
-    .trim()
-    .replace(/\/+$/, '')
-    .replace(/\/rest\/v1$/i, '');
+function baseUrl() {
+  return String(SUPABASE_URL || '').trim().replace(/\/+$/, '').replace(/\/rest\/v1$/i, '');
 }
 
-function value(...items) {
-  return items.find((item) => item !== undefined && item !== null && String(item).trim() !== '') ?? '';
-}
-
-function normalizeSummary(summary) {
-  if (!summary || typeof summary !== 'object' || Array.isArray(summary)) return null;
-  return {
-    location: String(value(summary.location, summary.positioning) || '').trim(),
-    land_number: String(value(summary.land_number, summary.landNumber) || '').trim(),
-    zoning: String(value(summary.zoning, summary.zone) || '').trim(),
-    area: String(value(summary.area, summary.base_area) || '').trim(),
-    road: String(value(summary.road, summary.road_frontage) || '').trim(),
-    price: String(value(summary.price, summary.suggested_price) || '').trim(),
-    product: String(value(summary.product, summary.product_recommendation, summary.recommended_products) || '').trim(),
-    conclusion: String(value(summary.conclusion) || '').trim(),
-  };
-}
-
-function unwrap(body) {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) return body || {};
-  if (body.data && typeof body.data === 'object') return body.data;
-  if (body.arguments && typeof body.arguments === 'object') return body.arguments;
-  if (body.input && typeof body.input === 'object') return body.input;
-  if (body.params && typeof body.params === 'object') return body.params;
-  if (body.payload && typeof body.payload === 'object') return body.payload;
-  return body;
+function pick(...values) {
+  return values.find((value) => value !== undefined && value !== null && String(value).trim() !== '') || '';
 }
 
 async function readBody(request) {
   const raw = await request.text();
   if (!raw) return {};
   try {
-    return unwrap(JSON.parse(raw));
+    const parsed = JSON.parse(raw);
+    return parsed.data || parsed.arguments || parsed.input || parsed.params || parsed.payload || parsed;
   } catch {
     return { report_text: raw };
   }
 }
 
-async function saveToSupabase(payload) {
-  const supabaseBaseUrl = getSupabaseRestUrl();
-  const response = await fetch(`${supabaseBaseUrl}/rest/v1/reports`, {
-    method: 'POST',
-    headers: {
-      apikey: SUPABASE_SERVICE_ROLE_KEY,
-      Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-      'Content-Type': 'application/json',
-      Prefer: 'resolution=merge-duplicates,return=minimal',
-    },
-    body: JSON.stringify(payload),
+function success(payload, mode = 'saved') {
+  return json({
+    success: true,
+    ok: true,
+    saved: true,
+    status: mode,
+    message: '報告已成功送回土地評估系統。',
+    report_id: payload.report_id,
+    client: payload.client,
+    land_number: payload.land_number,
+    research_date: payload.research_date
   });
+}
 
+async function save(path, method, payload) {
+  const response = await fetch(`${baseUrl()}${path}`, {
+    method,
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal'
+    },
+    body: JSON.stringify(payload)
+  });
   const text = await response.text().catch(() => '');
-  let detail = text;
-  try {
-    detail = text ? JSON.parse(text) : null;
-  } catch {}
-  return { response, detail };
-}
-
-function compact(detail) {
-  const text = typeof detail === 'string' ? detail : JSON.stringify(detail || '');
-  return text.length > 700 ? `${text.slice(0, 700)}...` : text;
-}
-
-function isSummaryColumnProblem(detail) {
-  const text = JSON.stringify(detail || '').toLowerCase();
-  return text.includes('summary') && (text.includes('column') || text.includes('schema cache'));
-}
-
-function isDuplicate(detail) {
-  const text = JSON.stringify(detail || '').toLowerCase();
-  return text.includes('duplicate key') || text.includes('23505');
+  return { response, text };
 }
 
 export async function POST(request) {
   try {
-    if (!RAW_SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      return json(failPayload('missing_config', { error: 'Supabase environment variables missing.' }), { status: 200 });
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      return json({ success: false, ok: false, saved: false, status: 'missing_config', message: 'Supabase config missing.' });
     }
 
     const body = await readBody(request);
-    const report_id = String(value(body.report_id, body.reportId, body.id) || '').trim();
-    const report_text = String(value(body.report_text, body.reportText, body.report, body.text, body.content) || '').trim();
-    const client = String(value(body.client, body.client_name, body.clientName, body.developer, body.company) || '').trim();
-    const land_number = String(value(body.land_number, body.landNumber, body.land_no, body.landNo, body.target_land, body.target) || '').trim();
-    const research_date = String(value(body.research_date, body.researchDate, body.date) || '').trim();
-    const summary = normalizeSummary(body.summary);
+    const payload = {
+      report_id: String(pick(body.report_id, body.reportId, body.id)).trim(),
+      client: String(pick(body.client, body.client_name, body.clientName)).trim(),
+      land_number: String(pick(body.land_number, body.landNumber, body.land_no, body.landNo)).trim(),
+      research_date: String(pick(body.research_date, body.researchDate, body.date)).trim(),
+      report_text: String(pick(body.report_text, body.reportText, body.report, body.text)).trim()
+    };
 
-    if (!report_id || !report_text) {
-      return json(failPayload('missing_required_fields', {
-        error: 'report_id and report_text are required.',
-        report_id,
-        has_report_id: Boolean(report_id),
-        has_report_text: Boolean(report_text),
-        keys: Object.keys(body || {}),
-      }), { status: 200 });
+    if (body.summary && typeof body.summary === 'object') payload.summary = body.summary;
+
+    if (!payload.report_id || !payload.report_text) {
+      return json({ success: false, ok: false, saved: false, status: 'missing_required_fields', message: 'report_id and report_text are required.', report_id: payload.report_id });
     }
 
-    const basePayload = { report_id, client, land_number, research_date, report_text };
-    const fullPayload = summary ? { ...basePayload, summary } : basePayload;
-
-    let { response, detail } = await saveToSupabase(fullPayload);
-    let saved_summary = Boolean(summary);
-
-    if (!response.ok && summary && isSummaryColumnProblem(detail)) {
-      ({ response, detail } = await saveToSupabase(basePayload));
-      saved_summary = false;
+    let result = await save('/rest/v1/reports', 'POST', payload);
+    if (!result.response.ok && result.text.toLowerCase().includes('summary')) {
+      delete payload.summary;
+      result = await save('/rest/v1/reports', 'POST', payload);
     }
 
-    if (!response.ok && isDuplicate(detail)) {
-      return json(successPayload({ status: 'duplicate_treated_as_saved', report_id, client, land_number, research_date, saved_summary }), { status: 200 });
+    if (!result.response.ok && (result.text.includes('23505') || result.text.toLowerCase().includes('duplicate key'))) {
+      await save(`/rest/v1/reports?report_id=eq.${encodeURIComponent(payload.report_id)}`, 'PATCH', payload);
+      return success(payload, 'updated');
     }
 
-    if (!response.ok) {
-      return json(failPayload('supabase_save_failed', {
-        error: 'Failed to save report.',
-        report_id,
-        client,
-        land_number,
-        research_date,
-        saved_summary,
-        supabase_status: response.status,
-        detail: compact(detail),
-      }), { status: 200 });
+    if (!result.response.ok) {
+      return json({ success: false, ok: false, saved: false, status: 'supabase_save_failed', message: 'Supabase save failed.', report_id: payload.report_id, detail: result.text.slice(0, 500) });
     }
 
-    return json(successPayload({ report_id, client, land_number, research_date, saved_summary }), { status: 200 });
+    return success(payload);
   } catch (error) {
-    return json(failPayload('server_error', { error: error.message || 'Server error.' }), { status: 200 });
+    return json({ success: false, ok: false, saved: false, status: 'server_error', message: error.message || 'Server error.' });
   }
 }
