@@ -24,6 +24,28 @@ function actionJson(payload) {
   return json(payload, { status: 200 });
 }
 
+function successPayload(extra) {
+  return {
+    success: true,
+    ok: true,
+    saved: true,
+    status: 'saved',
+    message: '報告已成功送回土地評估系統。',
+    ...extra,
+  };
+}
+
+function failPayload(status, extra) {
+  return {
+    success: false,
+    ok: false,
+    saved: false,
+    status,
+    message: '報告尚未成功送回土地評估系統。',
+    ...extra,
+  };
+}
+
 export async function OPTIONS() {
   return new Response(null, { status: 204, headers: JSON_HEADERS });
 }
@@ -124,7 +146,7 @@ function compact(data) {
 export async function POST(request) {
   try {
     if (missingConfig()) {
-      return actionJson({ ok: false, status: 'missing_config', error: 'Supabase environment variables are not configured.' });
+      return actionJson(failPayload('missing_config', { error: 'Supabase environment variables are not configured.' }));
     }
 
     const body = await readBody(request);
@@ -136,9 +158,7 @@ export async function POST(request) {
     const summary = normalizeSummary(body.summary);
 
     if (!report_id || !report_text) {
-      return actionJson({
-        ok: false,
-        status: 'missing_required_fields',
+      return actionJson(failPayload('missing_required_fields', {
         error: 'report_id and report_text are required.',
         report_id,
         client,
@@ -147,7 +167,7 @@ export async function POST(request) {
         has_report_id: Boolean(report_id),
         has_report_text: Boolean(report_text),
         keys: Object.keys(body || {}),
-      });
+      }));
     }
 
     const basePayload = {
@@ -168,21 +188,18 @@ export async function POST(request) {
     }
 
     if (!supabaseResponse.ok && looksLikeUniqueConflict(data)) {
-      return actionJson({
-        ok: true,
+      return actionJson(successPayload({
         status: 'duplicate_treated_as_saved',
         report_id,
         client,
         land_number,
         research_date,
         saved_summary,
-      });
+      }));
     }
 
     if (!supabaseResponse.ok) {
-      return actionJson({
-        ok: false,
-        status: 'supabase_save_failed',
+      return actionJson(failPayload('supabase_save_failed', {
         error: 'Failed to save report.',
         report_id,
         client,
@@ -191,19 +208,17 @@ export async function POST(request) {
         saved_summary,
         supabase_status: supabaseResponse.status,
         detail: compact(data),
-      });
+      }));
     }
 
-    return actionJson({
-      ok: true,
-      status: 'saved',
+    return actionJson(successPayload({
       report_id,
       client,
       land_number,
       research_date,
       saved_summary,
-    });
+    }));
   } catch (error) {
-    return actionJson({ ok: false, status: 'server_error', error: error.message || 'Server error.' });
+    return actionJson(failPayload('server_error', { error: error.message || 'Server error.' }));
   }
 }
