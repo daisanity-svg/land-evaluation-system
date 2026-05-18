@@ -20,6 +20,28 @@ function json(payload, init = {}) {
   });
 }
 
+function successPayload(extra) {
+  return {
+    success: true,
+    ok: true,
+    saved: true,
+    status: 'saved',
+    message: '報告已成功送回土地評估系統。',
+    ...extra,
+  };
+}
+
+function failPayload(status, extra) {
+  return {
+    success: false,
+    ok: false,
+    saved: false,
+    status,
+    message: '報告尚未成功送回土地評估系統。',
+    ...extra,
+  };
+}
+
 export async function OPTIONS() {
   return new Response(null, { status: 204, headers: JSON_HEADERS });
 }
@@ -109,7 +131,7 @@ function isDuplicate(detail) {
 export async function POST(request) {
   try {
     if (!RAW_SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      return json({ ok: false, status: 'missing_config', error: 'Supabase environment variables missing.' }, { status: 200 });
+      return json(failPayload('missing_config', { error: 'Supabase environment variables missing.' }), { status: 200 });
     }
 
     const body = await readBody(request);
@@ -121,15 +143,13 @@ export async function POST(request) {
     const summary = normalizeSummary(body.summary);
 
     if (!report_id || !report_text) {
-      return json({
-        ok: false,
-        status: 'missing_required_fields',
+      return json(failPayload('missing_required_fields', {
         error: 'report_id and report_text are required.',
         report_id,
         has_report_id: Boolean(report_id),
         has_report_text: Boolean(report_text),
         keys: Object.keys(body || {}),
-      }, { status: 200 });
+      }), { status: 200 });
     }
 
     const basePayload = { report_id, client, land_number, research_date, report_text };
@@ -144,13 +164,11 @@ export async function POST(request) {
     }
 
     if (!response.ok && isDuplicate(detail)) {
-      return json({ ok: true, status: 'duplicate_treated_as_saved', report_id, client, land_number, research_date, saved_summary }, { status: 200 });
+      return json(successPayload({ status: 'duplicate_treated_as_saved', report_id, client, land_number, research_date, saved_summary }), { status: 200 });
     }
 
     if (!response.ok) {
-      return json({
-        ok: false,
-        status: 'supabase_save_failed',
+      return json(failPayload('supabase_save_failed', {
         error: 'Failed to save report.',
         report_id,
         client,
@@ -159,11 +177,11 @@ export async function POST(request) {
         saved_summary,
         supabase_status: response.status,
         detail: compact(detail),
-      }, { status: 200 });
+      }), { status: 200 });
     }
 
-    return json({ ok: true, status: 'saved', report_id, client, land_number, research_date, saved_summary }, { status: 200 });
+    return json(successPayload({ report_id, client, land_number, research_date, saved_summary }), { status: 200 });
   } catch (error) {
-    return json({ ok: false, status: 'server_error', error: error.message || 'Server error.' }, { status: 200 });
+    return json(failPayload('server_error', { error: error.message || 'Server error.' }), { status: 200 });
   }
 }
