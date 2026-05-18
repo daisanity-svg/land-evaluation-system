@@ -6,6 +6,7 @@
     "test": "node tests/validate-system.mjs"
   },
   "dependencies": {
+    "exceljs": "^4.4.0",
     "next": "14.2.16",
     "react": "18.3.1",
     "react-dom": "18.3.1"
