@@ -10,6 +10,8 @@ const JSON_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 function json(payload, init = {}) {
   return Response.json(payload, {
     ...init,
@@ -86,6 +88,7 @@ function flattenActionBody(body) {
   if (body.arguments && typeof body.arguments === 'object') return body.arguments;
   if (body.input && typeof body.input === 'object') return body.input;
   if (body.params && typeof body.params === 'object') return body.params;
+  if (body.payload && typeof body.payload === 'object') return body.payload;
   return body;
 }
 
@@ -105,7 +108,7 @@ async function readBody(request) {
   }
 }
 
-async function writeReportToSupabase(payload) {
+async function writeReportToSupabaseOnce(payload) {
   const supabaseBaseUrl = getSupabaseRestUrl();
   const supabaseResponse = await fetch(`${supabaseBaseUrl}/rest/v1/reports`, {
     method: 'POST',
@@ -125,7 +128,27 @@ async function writeReportToSupabase(payload) {
   } catch {
     data = text;
   }
-  return { supabaseResponse, data };
+  return { supabaseResponse, data, error: null };
+}
+
+async function writeReportToSupabase(payload) {
+  const delays = [0, 800, 1600];
+  let lastResult = null;
+
+  for (let attempt = 0; attempt < delays.length; attempt += 1) {
+    if (delays[attempt]) await sleep(delays[attempt]);
+    try {
+      const result = await writeReportToSupabaseOnce(payload);
+      lastResult = { ...result, attempt: attempt + 1 };
+      if (result.supabaseResponse.ok) return lastResult;
+      const status = result.supabaseResponse.status;
+      if (status >= 400 && status < 500 && status !== 408 && status !== 409 && status !== 429) return lastResult;
+    } catch (error) {
+      lastResult = { supabaseResponse: null, data: null, error, attempt: attempt + 1 };
+    }
+  }
+
+  return lastResult;
 }
 
 function looksLikeMissingSummaryColumn(data) {
@@ -141,6 +164,12 @@ function looksLikeUniqueConflict(data) {
 function compact(data) {
   const text = JSON.stringify(data || '');
   return text.length > 700 ? `${text.slice(0, 700)}...` : text;
+}
+
+function failureDetail(result) {
+  if (!result) return 'No Supabase response.';
+  if (result.error) return result.error.message || 'fetch failed';
+  return compact(result.data);
 }
 
 export async function POST(request) {
@@ -179,15 +208,15 @@ export async function POST(request) {
     };
 
     const payload = summary ? { ...basePayload, summary } : basePayload;
-    let { supabaseResponse, data } = await writeReportToSupabase(payload);
+    let result = await writeReportToSupabase(payload);
     let saved_summary = Boolean(summary);
 
-    if (!supabaseResponse.ok && summary && looksLikeMissingSummaryColumn(data)) {
-      ({ supabaseResponse, data } = await writeReportToSupabase(basePayload));
+    if (result?.supabaseResponse && !result.supabaseResponse.ok && summary && looksLikeMissingSummaryColumn(result.data)) {
+      result = await writeReportToSupabase(basePayload);
       saved_summary = false;
     }
 
-    if (!supabaseResponse.ok && looksLikeUniqueConflict(data)) {
+    if (result?.supabaseResponse && !result.supabaseResponse.ok && looksLikeUniqueConflict(result.data)) {
       return actionJson(successPayload({
         status: 'duplicate_treated_as_saved',
         report_id,
@@ -195,19 +224,21 @@ export async function POST(request) {
         land_number,
         research_date,
         saved_summary,
+        attempts: result.attempt,
       }));
     }
 
-    if (!supabaseResponse.ok) {
+    if (!result?.supabaseResponse?.ok) {
       return actionJson(failPayload('supabase_save_failed', {
-        error: 'Failed to save report.',
+        error: 'Failed to save report after retries.',
         report_id,
         client,
         land_number,
         research_date,
         saved_summary,
-        supabase_status: supabaseResponse.status,
-        detail: compact(data),
+        attempts: result?.attempt || 0,
+        supabase_status: result?.supabaseResponse?.status || null,
+        detail: failureDetail(result),
       }));
     }
 
@@ -217,6 +248,7 @@ export async function POST(request) {
       land_number,
       research_date,
       saved_summary,
+      attempts: result.attempt,
     }));
   } catch (error) {
     return actionJson(failPayload('server_error', { error: error.message || 'Server error.' }));
