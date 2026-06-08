@@ -8,6 +8,39 @@ function getSupabaseRestUrl() {
   return RAW_SUPABASE_URL.trim().replace(/\/+$/, '').replace(/\/rest\/v1$/i, '');
 }
 
+function safeUrlInfo(rawUrl) {
+  try {
+    const url = new URL(getSupabaseRestUrl());
+    return {
+      protocol: url.protocol,
+      host: url.host,
+      pathname: url.pathname || '/',
+      looks_like_supabase: url.host.endsWith('.supabase.co') || url.host.includes('supabase')
+    };
+  } catch (error) {
+    return {
+      protocol: null,
+      host: null,
+      pathname: null,
+      looks_like_supabase: false,
+      url_error: error.message || 'Invalid URL'
+    };
+  }
+}
+
+function safeError(error) {
+  return {
+    name: error?.name || null,
+    message: error?.message || 'fetch failed',
+    cause_name: error?.cause?.name || null,
+    cause_code: error?.cause?.code || null,
+    cause_message: error?.cause?.message || null,
+    cause_errno: error?.cause?.errno || null,
+    cause_syscall: error?.cause?.syscall || null,
+    cause_hostname: error?.cause?.hostname || null
+  };
+}
+
 export async function GET() {
   const startedAt = Date.now();
   const result = {
@@ -15,11 +48,13 @@ export async function GET() {
     status: 'healthy',
     service: 'land-evaluation-system',
     timestamp: new Date().toISOString(),
+    supabase_url: safeUrlInfo(RAW_SUPABASE_URL),
     supabase: {
       configured: Boolean(RAW_SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY),
       ok: false,
       status: null,
-      detail: null
+      detail: null,
+      error: null
     }
   };
 
@@ -56,6 +91,7 @@ export async function GET() {
     result.ok = false;
     result.status = 'supabase_fetch_failed';
     result.supabase.detail = error.message || 'fetch failed';
+    result.supabase.error = safeError(error);
   }
 
   result.duration_ms = Date.now() - startedAt;
