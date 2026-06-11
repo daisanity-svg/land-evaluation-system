@@ -4,6 +4,7 @@
   const $ = (s, r = document) => r.querySelector(s);
   const $all = (s, r = document) => Array.from(r.querySelectorAll(s));
   const clean = (v) => String(v || '').replace(/\s+/g, ' ').trim();
+  const esc = (v) => String(v || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const hasReport = () => Boolean($('.card-report.readable-report.briefing-report'));
   const isMarketSummaryLabel = (v) => /市場行情總結|市場總結|區域行情總結|行情總結|市場分析總結/.test(clean(v));
 
@@ -84,6 +85,66 @@
     setPriceCardValue('店面', data.shop);
     setPriceCardValue('坡道平面車位', data.parking);
     $all('.manual-price-output').forEach((node) => node.remove());
+  }
+
+  function normalizePingPart(v) {
+    return clean(v).replace(/坪/g, '').replace(/[～~\-至].*$/, '').trim();
+  }
+  function makePingRange(min, max) {
+    const a = normalizePingPart(min);
+    const b = normalizePingPart(max);
+    if (a && b) return `${a}～${b}坪`;
+    if (a) return `${a}坪`;
+    if (b) return `${b}坪`;
+    return '';
+  }
+  function findProductPing(title) {
+    const section = $('.section-10'); if (!section) return '';
+    let active = false;
+    for (const node of $all('.brief-subtitle,.brief-kv', section)) {
+      if (node.classList.contains('brief-subtitle')) {
+        active = clean(node.textContent).includes(title);
+        continue;
+      }
+      if (!active) continue;
+      const label = clean(node.querySelector('.brief-kv-label')?.textContent);
+      const value = clean(node.querySelector('.brief-kv-value')?.textContent);
+      if (/建議坪數|坪數/.test(label) && value) return value;
+    }
+    return '';
+  }
+  function setProductPing(title, value) {
+    if (!value) return false;
+    const section = $('.section-10'); if (!section) return false;
+    let active = false;
+    for (const node of $all('.brief-subtitle,.brief-kv', section)) {
+      if (node.classList.contains('brief-subtitle')) {
+        active = clean(node.textContent).includes(title);
+        continue;
+      }
+      if (!active) continue;
+      const label = clean(node.querySelector('.brief-kv-label')?.textContent);
+      const target = node.querySelector('.brief-kv-value');
+      if (/建議坪數|坪數/.test(label) && target) {
+        target.textContent = value;
+        node.classList.add('manual-product-overridden');
+        return true;
+      }
+    }
+    return false;
+  }
+  function cleanSummaryProduct(data) {
+    const two = makePingRange(data.twoRoomMin, data.twoRoomMax) || findProductPing('兩房');
+    const three = makePingRange(data.threeRoomMin, data.threeRoomMax) || findProductPing('三房');
+    const summary = [two && `兩房 ${two}`, three && `三房 ${three}`].filter(Boolean).join('；');
+    setMetric('建議產品', summary);
+  }
+  function applyManualProduct(data) {
+    const two = makePingRange(data.twoRoomMin, data.twoRoomMax);
+    const three = makePingRange(data.threeRoomMin, data.threeRoomMax);
+    if (two) setProductPing('兩房', two);
+    if (three) setProductPing('三房', three);
+    cleanSummaryProduct(data);
   }
 
   function makeMarketSummaryCard(text) {
@@ -183,16 +244,48 @@
   }
 
   function applyManualPrice(data) { if (!hasReport()) return; cleanSummaryPrice(data); applyManualValuesToPriceCards(data); }
+  function applyManualValues(data) { applyManualPrice(data); applyManualProduct(data); }
+  function clearKeys(data, keys) { const next = { ...(data || {}) }; keys.forEach((key) => delete next[key]); return next; }
 
   function buildPanel() {
     if ($('#manual-price-panel')) return; const preview=$('.preview-panel'); if(!preview) return; const data=load();
     const panel=document.createElement('section'); panel.id='manual-price-panel'; panel.className='manual-price-panel no-print';
-    panel.innerHTML=`<h3>價格手動調整</h3><p>新案預設採用系統判斷價格；看完報告後如需上修或下修，再手動輸入並套用到 PDF。</p><div class="manual-price-grid"><label>二樓以上住宅<input data-price-field="residential" placeholder="例如：62～66 萬／坪" value="${data.residential||''}"></label><label>店面<input data-price-field="shop" placeholder="例如：110～135 萬／坪" value="${data.shop||''}"></label><label>坡道平面車位<input data-price-field="parking" placeholder="例如：220～260 萬／位" value="${data.parking||''}"></label><label style="grid-column:1/-1;">價格調整說明<textarea data-price-field="note" placeholder="僅供內部註記，不會另外新增到 PDF 價格章節。">${data.note||''}</textarea></label></div><div class="manual-price-actions"><button type="button" data-price-action="apply">套用到 PDF</button><button type="button" class="secondary" data-price-action="clear">清除調整</button></div>`;
+    panel.innerHTML=`
+      <h3>價格手動調整</h3>
+      <p>新案預設採用系統判斷價格；看完報告後如需上修或下修，再手動輸入並套用到 PDF。</p>
+      <div class="manual-price-grid">
+        <label>二樓以上住宅<input data-price-field="residential" placeholder="例如：62～66 萬／坪" value="${esc(data.residential)}"></label>
+        <label>店面<input data-price-field="shop" placeholder="例如：110～135 萬／坪" value="${esc(data.shop)}"></label>
+        <label>坡道平面車位<input data-price-field="parking" placeholder="例如：220～260 萬／位" value="${esc(data.parking)}"></label>
+        <label style="grid-column:1/-1;">價格調整說明<textarea data-price-field="note" placeholder="僅供內部註記，不會另外新增到 PDF 價格章節。">${esc(data.note)}</textarea></label>
+      </div>
+      <div class="manual-price-actions"><button type="button" data-price-action="apply">套用到 PDF</button><button type="button" class="secondary" data-price-action="clear">清除調整</button></div>
+      <h3 style="margin-top:28px;">產品規劃手動調整</h3>
+      <p>新案預設採用系統判斷產品規劃；看完報告後如需調整兩房、三房坪數，可手動輸入並套用到 PDF。</p>
+      <div class="manual-price-grid manual-product-grid">
+        <label>兩房產品｜最小坪數<input data-product-field="twoRoomMin" inputmode="decimal" placeholder="例如：23" value="${esc(data.twoRoomMin)}"></label>
+        <label>兩房產品｜最大坪數<input data-product-field="twoRoomMax" inputmode="decimal" placeholder="例如：26" value="${esc(data.twoRoomMax)}"></label>
+        <label>三房產品｜最小坪數<input data-product-field="threeRoomMin" inputmode="decimal" placeholder="例如：32" value="${esc(data.threeRoomMin)}"></label>
+        <label>三房產品｜最大坪數<input data-product-field="threeRoomMax" inputmode="decimal" placeholder="例如：36" value="${esc(data.threeRoomMax)}"></label>
+        <label style="grid-column:1/-1;">產品調整說明<textarea data-product-field="productNote" placeholder="僅供內部註記，不會另外新增到 PDF 產品章節。">${esc(data.productNote)}</textarea></label>
+      </div>
+      <div class="manual-price-actions"><button type="button" data-product-action="apply">套用到 PDF</button><button type="button" class="secondary" data-product-action="clear">清除調整</button></div>`;
     const tabs=$('.report-tabs', preview); if(tabs) tabs.parentNode.insertBefore(panel, tabs.nextSibling); else preview.insertBefore(panel, preview.firstChild);
-    panel.addEventListener('input',()=>{ const d=readPanel(panel); save(d); applyManualPrice(d); });
-    panel.addEventListener('click',(e)=>{ const a=e.target?.dataset?.priceAction; if(!a)return; if(a==='apply'){const d=readPanel(panel); save(d); applyManualPrice(d);} if(a==='clear'){save({}); panel.querySelectorAll('[data-price-field]').forEach(i=>i.value=''); location.reload();} });
+    panel.addEventListener('input',()=>{ const d=readPanel(panel); save(d); applyManualValues(d); });
+    panel.addEventListener('click',(e)=>{
+      const priceAction=e.target?.dataset?.priceAction; const productAction=e.target?.dataset?.productAction;
+      if(priceAction==='apply' || productAction==='apply'){const d=readPanel(panel); save(d); applyManualValues(d);}
+      if(priceAction==='clear'){
+        const next=clearKeys(load(), ['residential','shop','parking','note']); save(next);
+        panel.querySelectorAll('[data-price-field]').forEach(i=>i.value=''); location.reload();
+      }
+      if(productAction==='clear'){
+        const next=clearKeys(load(), ['twoRoomMin','twoRoomMax','threeRoomMin','threeRoomMax','productNote']); save(next);
+        panel.querySelectorAll('[data-product-field]').forEach(i=>i.value=''); location.reload();
+      }
+    });
   }
-  function readPanel(panel) { const d={}; panel.querySelectorAll('[data-price-field]').forEach(i=>d[i.dataset.priceField]=clean(i.value)); return d; }
+  function readPanel(panel) { const d={...load()}; panel.querySelectorAll('[data-price-field]').forEach(i=>d[i.dataset.priceField]=clean(i.value)); panel.querySelectorAll('[data-product-field]').forEach(i=>d[i.dataset.productField]=clean(i.value)); return d; }
 
   function hardCleanClone(clone) {
     $all('.manual-price-output', clone).forEach((node)=>node.remove());
@@ -216,9 +309,9 @@
   }
 
   function removePrintClone(){ const old=document.getElementById(PRINT_CLONE_ID); if(old) old.remove(); }
-  function createPrintClone(){ removePrintClone(); const report=$('.card-report.readable-report.briefing-report'); if(!report) return; applyManualPrice(load()); const clone=report.cloneNode(true); clone.id=PRINT_CLONE_ID; clone.classList.add('hiyes-print-clone'); hardCleanClone(clone); document.body.appendChild(clone); }
+  function createPrintClone(){ removePrintClone(); const report=$('.card-report.readable-report.briefing-report'); if(!report) return; applyManualValues(load()); const clone=report.cloneNode(true); clone.id=PRINT_CLONE_ID; clone.classList.add('hiyes-print-clone'); hardCleanClone(clone); document.body.appendChild(clone); }
 
-  function init(){ buildPanel(); repairCases(); repairPrices(); repairSwot(); applyManualPrice(load()); }
+  function init(){ buildPanel(); repairCases(); repairPrices(); repairSwot(); applyManualValues(load()); }
   window.addEventListener('beforeprint',()=>{ init(); createPrintClone(); });
   window.addEventListener('afterprint',removePrintClone);
   const observer=new MutationObserver(()=>{ clearTimeout(window.__hiyesPriceAdjustTimer); window.__hiyesPriceAdjustTimer=setTimeout(init,200); });
