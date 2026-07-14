@@ -113,7 +113,17 @@ async function upsertWithRetry(payload) {
 }
 
 function sameJson(a, b) {
-  return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+  const canonical = (input) => {
+    if (Array.isArray(input)) return input.map(canonical);
+    if (input && typeof input === 'object') {
+      return Object.keys(input).sort().reduce((result, key) => {
+        result[key] = canonical(input[key]);
+        return result;
+      }, {});
+    }
+    return input ?? null;
+  };
+  return JSON.stringify(canonical(a)) === JSON.stringify(canonical(b));
 }
 
 function completeAndMatching(row, payload) {
