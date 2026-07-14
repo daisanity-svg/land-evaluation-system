@@ -10,7 +10,7 @@ const base = {
   report_id: 'report-1', client: '和峻建設', land_number: '善捷段188、189地號', research_date: '2026-07-14',
   report_text: '01｜案件摘要\n完整報告', summary: { location: '桃園市龜山區', conclusion: '可評估' },
 };
-const row = (payload = base) => ({ ...payload, summary: { location: '桃園市龜山區', land_number: '', zoning: '', area: '', road: '', price: '', product: '', conclusion: '可評估' }, created_at: '2026-01-01', updated_at: '2026-01-02' });
+const row = (payload = base) => ({ ...payload, summary: { conclusion: '可評估', product: '', price: '', road: '', area: '', zoning: '', land_number: '', location: '桃園市龜山區' }, created_at: '2026-01-01', updated_at: '2026-01-02' });
 const response = (body, status = 200) => new Response(body === null ? '' : JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const request = (payload) => new Request('https://local/api/reports', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
 
