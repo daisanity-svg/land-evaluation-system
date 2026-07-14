@@ -79,8 +79,8 @@ const checks = [
     pass: ownerCss.includes('.case-grid') && ownerCss.includes('competition-card'),
   },
   {
-    name: 'submitReport API accepts summary and falls back for old schema',
-    pass: submitApi.includes('normalizeSummary') && submitApi.includes('looksLikeMissingSummaryColumn') && submitApi.includes('basePayload'),
+    name: 'submitReport API requires and verifies summary',
+    pass: submitApi.includes('normalizeSummary') && submitApi.includes('invalid_summary') && submitApi.includes('completeAndMatching'),
   },
   {
     name: 'submitReport accepts snake_case and camelCase payloads',
