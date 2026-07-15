@@ -70,8 +70,10 @@ for (const check of [
 ]) {
   assert.ok(preflight.includes(`'${check}'`), `${check} must appear in the consolidated preflight`);
 }
-assert.match(preflight, /select check_name, actual, expected, passed/i);
-assert.match(preflight, /then 'ready' else 'stop'/i);
+assert.match(preflight, /select check_name, actual, expected, passed, scope/i);
+assert.match(preflight, /ready_with_legacy_review/i);
+assert.match(preflight, /where scope = 'blocking'/i);
+assert.match(preflight, /where scope = 'legacy_data'/i);
 
 assert.equal((dataDiagnostic.match(/;/g) || []).length, 1, 'data diagnostic must return one Supabase result set');
 for (const diagnostic of [

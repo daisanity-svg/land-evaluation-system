@@ -105,49 +105,61 @@ security_checks as (
   from pg_class
   where oid = 'public.reports'::regclass
 ),
-checks(check_order, check_name, actual, expected, passed) as (
-  select 10, 'required_columns_found', required_columns_found::text, '8', required_columns_found = 8 from column_checks
-  union all select 11, 'schema_compatible', schema_compatible::text, 'true', schema_compatible from column_checks
-  union all select 12, 'report_id_type', coalesce(report_id_type, 'missing'), 'text or character varying', coalesce(report_id_type in ('text', 'character varying'), false) from column_checks
-  union all select 13, 'client_type', coalesce(client_type, 'missing'), 'text or character varying', coalesce(client_type in ('text', 'character varying'), false) from column_checks
-  union all select 14, 'land_number_type', coalesce(land_number_type, 'missing'), 'text or character varying', coalesce(land_number_type in ('text', 'character varying'), false) from column_checks
-  union all select 15, 'research_date_type', coalesce(research_date_type, 'missing'), 'text, character varying, or date', coalesce(research_date_type in ('text', 'character varying', 'date'), false) from column_checks
-  union all select 16, 'summary_type', coalesce(summary_type, 'missing'), 'jsonb', coalesce(summary_type = 'jsonb', false) from column_checks
-  union all select 17, 'report_text_type', coalesce(report_text_type, 'missing'), 'text or character varying', coalesce(report_text_type in ('text', 'character varying'), false) from column_checks
-  union all select 18, 'created_at_type', coalesce(created_at_type, 'missing'), 'timestamp with time zone', coalesce(created_at_type = 'timestamp with time zone', false) from column_checks
-  union all select 19, 'updated_at_type', coalesce(updated_at_type, 'missing'), 'timestamp with time zone', coalesce(updated_at_type = 'timestamp with time zone', false) from column_checks
-  union all select 20, 'total_reports', total_reports::text, 'informational', true from report_checks
-  union all select 21, 'missing_report_id', missing_report_id::text, '0', missing_report_id = 0 from report_checks
-  union all select 22, 'missing_client', missing_client::text, '0', missing_client = 0 from report_checks
-  union all select 23, 'missing_land_number', missing_land_number::text, '0', missing_land_number = 0 from report_checks
-  union all select 24, 'missing_research_date', missing_research_date::text, '0', missing_research_date = 0 from report_checks
-  union all select 25, 'missing_report_text', missing_report_text::text, '0', missing_report_text = 0 from report_checks
-  union all select 26, 'invalid_summary', invalid_summary::text, '0', invalid_summary = 0 from report_checks
-  union all select 30, 'duplicate_report_id_groups', duplicate_report_id_groups::text, '0', duplicate_report_id_groups = 0 from duplicate_checks
-  union all select 31, 'report_id_unique', report_id_unique::text, 'true', report_id_unique from structure_checks
-  union all select 32, 'created_at_index_exists', created_at_index_exists::text, 'true', created_at_index_exists from structure_checks
-  union all select 33, 'updated_at_trigger_exists', updated_at_trigger_exists::text, 'true', updated_at_trigger_exists from structure_checks
-  union all select 40, 'rls_enabled', rls_enabled::text, 'true', rls_enabled from security_checks
-  union all select 41, 'rls_forced', rls_forced::text, 'informational', true from security_checks
+checks(check_order, check_name, actual, expected, passed, scope) as (
+  select 10, 'required_columns_found', required_columns_found::text, '8', required_columns_found = 8, 'blocking' from column_checks
+  union all select 11, 'schema_compatible', schema_compatible::text, 'true', schema_compatible, 'blocking' from column_checks
+  union all select 12, 'report_id_type', coalesce(report_id_type, 'missing'), 'text or character varying', coalesce(report_id_type in ('text', 'character varying'), false), 'blocking' from column_checks
+  union all select 13, 'client_type', coalesce(client_type, 'missing'), 'text or character varying', coalesce(client_type in ('text', 'character varying'), false), 'blocking' from column_checks
+  union all select 14, 'land_number_type', coalesce(land_number_type, 'missing'), 'text or character varying', coalesce(land_number_type in ('text', 'character varying'), false), 'blocking' from column_checks
+  union all select 15, 'research_date_type', coalesce(research_date_type, 'missing'), 'text, character varying, or date', coalesce(research_date_type in ('text', 'character varying', 'date'), false), 'blocking' from column_checks
+  union all select 16, 'summary_type', coalesce(summary_type, 'missing'), 'jsonb', coalesce(summary_type = 'jsonb', false), 'blocking' from column_checks
+  union all select 17, 'report_text_type', coalesce(report_text_type, 'missing'), 'text or character varying', coalesce(report_text_type in ('text', 'character varying'), false), 'blocking' from column_checks
+  union all select 18, 'created_at_type', coalesce(created_at_type, 'missing'), 'timestamp with time zone', coalesce(created_at_type = 'timestamp with time zone', false), 'blocking' from column_checks
+  union all select 19, 'updated_at_type', coalesce(updated_at_type, 'missing'), 'timestamp with time zone', coalesce(updated_at_type = 'timestamp with time zone', false), 'blocking' from column_checks
+  union all select 20, 'total_reports', total_reports::text, 'informational', true, 'information' from report_checks
+  union all select 21, 'missing_report_id', missing_report_id::text, '0', missing_report_id = 0, 'blocking' from report_checks
+  union all select 22, 'missing_client', missing_client::text, '0', missing_client = 0, 'legacy_data' from report_checks
+  union all select 23, 'missing_land_number', missing_land_number::text, '0', missing_land_number = 0, 'legacy_data' from report_checks
+  union all select 24, 'missing_research_date', missing_research_date::text, '0', missing_research_date = 0, 'legacy_data' from report_checks
+  union all select 25, 'missing_report_text', missing_report_text::text, '0', missing_report_text = 0, 'blocking' from report_checks
+  union all select 26, 'invalid_summary', invalid_summary::text, '0', invalid_summary = 0, 'legacy_data' from report_checks
+  union all select 30, 'duplicate_report_id_groups', duplicate_report_id_groups::text, '0', duplicate_report_id_groups = 0, 'blocking' from duplicate_checks
+  union all select 31, 'report_id_unique', report_id_unique::text, 'true', report_id_unique, 'blocking' from structure_checks
+  union all select 32, 'created_at_index_exists', created_at_index_exists::text, 'true', created_at_index_exists, 'blocking' from structure_checks
+  union all select 33, 'updated_at_trigger_exists', updated_at_trigger_exists::text, 'true', updated_at_trigger_exists, 'blocking' from structure_checks
+  union all select 40, 'rls_enabled', rls_enabled::text, 'true', rls_enabled, 'blocking' from security_checks
+  union all select 41, 'rls_forced', rls_forced::text, 'informational', true, 'information' from security_checks
+),
+overall as (
+  select
+    bool_and(coalesce(passed, false)) filter (where scope = 'blocking') as blocking_ready,
+    bool_and(coalesce(passed, false)) filter (where scope = 'legacy_data') as legacy_clean
+  from checks
 )
-select check_name, actual, expected, passed
+select check_name, actual, expected, passed, scope
 from (
   select
     0 as check_order,
     'overall_preflight' as check_name,
-    case when bool_and(coalesce(passed, false)) then 'ready' else 'stop' end as actual,
-    'ready' as expected,
-    bool_and(coalesce(passed, false)) as passed
-  from checks
+    case
+      when not blocking_ready then 'stop'
+      when legacy_clean then 'ready'
+      else 'ready_with_legacy_review'
+    end as actual,
+    'ready or ready_with_legacy_review' as expected,
+    blocking_ready as passed,
+    'overall' as scope
+  from overall
   union all
-  select check_order, check_name, actual, expected, passed
+  select check_order, check_name, actual, expected, passed, scope
   from checks
 ) as final_checks
 order by
   case
     when check_order = 0 then 0
-    when passed = false then 1
-    else 2
+    when scope = 'blocking' and passed = false then 1
+    when scope = 'legacy_data' and passed = false then 2
+    else 3
   end,
   check_order,
   check_name;

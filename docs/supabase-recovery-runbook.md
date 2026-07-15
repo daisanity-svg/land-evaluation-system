@@ -64,18 +64,21 @@ supabase db dump --db-url "$SUPABASE_DB_URL" --schema public --data-only --use-c
 
 在 Supabase SQL Editor 開啟並執行 `supabase/verification/reports_preflight.sql`。檢查：
 
-- SQL Editor 只會顯示一個結果表，欄位為 `check_name`、`actual`、`expected`、`passed`。
-- 第一列 `overall_preflight` 的 `actual` 必須是 `ready`，且 `passed` 必須是 `true`。
-- 除 `total_reports` 與 `rls_forced` 是資訊列外，所有 `passed` 都必須是 `true`。
+- SQL Editor 只會顯示一個結果表，欄位為 `check_name`、`actual`、`expected`、`passed`、`scope`。
+- 第一列 `overall_preflight` 的 `actual` 必須是 `ready` 或 `ready_with_legacy_review`，且 `passed` 必須是 `true`。
+- `scope = blocking` 的所有 `passed` 都必須是 `true`；任何一項失敗都必須停止。
+- `scope = legacy_data` 代表早期版本留下、但本次非破壞性 migration 不會改寫的資料；失敗時需留下診斷紀錄，不得自動 backfill。
+- `scope = information` 是總筆數或非強制資訊。
 - 將 `total_reports` 記入變更紀錄，但不要公開客戶或報告資料。
 - 此查詢只回傳統計與結構檢查，不回傳客戶、地號、report_id、summary 或 report_text。
 
-若任何檢查的 `passed` 為 `false`，停止套用並人工確認；不得自動刪除、轉換或修補既有報告。
+若 `overall_preflight` 為 `stop` 或任何 `blocking` 檢查為 `false`，停止套用並人工確認；不得自動刪除、轉換或修補既有報告。
 
-若停止原因是 `invalid_summary` 或必要欄位缺漏，接著執行唯讀的
+若結果為 `ready_with_legacy_review`，接著執行唯讀的
 `supabase/verification/reports_data_diagnostic.sql`。此查詢只回傳彙總筆數，
 用來區分 SQL NULL、JSON null、string、array、object 與欄位缺漏的重疊情況；
-不回傳任何報告識別或內容。診斷完成前不得執行自動 backfill。
+不回傳任何報告識別或內容。舊報告由現有 report_text 相容流程繼續讀取，
+新版 submitReport 則持續強制並驗證 summary object；不得為了讓數字歸零而自動 backfill。
 
 ## 第 4 步：套用 migration
 
