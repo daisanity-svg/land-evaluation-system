@@ -143,4 +143,11 @@ from (
   select check_order, check_name, actual, expected, passed
   from checks
 ) as final_checks
-order by check_order, passed, check_name;
+order by
+  case
+    when check_order = 0 then 0
+    when passed = false then 1
+    else 2
+  end,
+  check_order,
+  check_name;
