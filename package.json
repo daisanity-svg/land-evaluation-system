@@ -5,7 +5,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node tests/validate-system.mjs && node tests/submit-report.mjs && node tests/next15-routes.mjs"
+    "test": "node tests/validate-system.mjs && node tests/submit-report.mjs && node tests/next15-routes.mjs && node tests/supabase-schema.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
