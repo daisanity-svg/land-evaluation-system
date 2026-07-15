@@ -9,7 +9,8 @@ function config() {
 }
 
 export async function GET(_request, { params }) {
-  const reportId = String(params?.reportId || '').trim();
+  const routeParams = await params;
+  const reportId = String(routeParams?.reportId || '').trim();
   if (!reportId) return Response.json({ exists: false, error: 'reportId is required.' }, { status: 400 });
   const { baseUrl, key } = config();
   if (!baseUrl || !key) return Response.json({ exists: false, report_id: reportId, error: 'Supabase is not configured.' }, { status: 500 });

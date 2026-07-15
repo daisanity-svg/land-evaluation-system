@@ -48,7 +48,8 @@ export async function GET(_request, { params }) {
       return Response.json({ error: 'Supabase environment variables are not configured.' }, { status: 500 });
     }
 
-    const reportId = String(params.reportId || '').trim();
+    const routeParams = await params;
+    const reportId = String(routeParams?.reportId || '').trim();
     if (!reportId) {
       return Response.json({ error: 'reportId is required.' }, { status: 400 });
     }
@@ -77,7 +78,8 @@ export async function GET(_request, { params }) {
 export async function POST(request, { params }) {
   try {
     const body = await request.json().catch(() => ({}));
-    const reportId = String(params.reportId || body.report_id || body.reportId || '').trim();
+    const routeParams = await params;
+    const reportId = String(routeParams?.reportId || body.report_id || body.reportId || '').trim();
     const report = {
       report_id: reportId,
       client: body.client || body.client_name || '',
