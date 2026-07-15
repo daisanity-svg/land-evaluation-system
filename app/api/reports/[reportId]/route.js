@@ -20,7 +20,8 @@ export async function GET(_request, { params }) {
       );
     }
 
-    const reportId = String(params.reportId || '').trim();
+    const routeParams = await params;
+    const reportId = String(routeParams?.reportId || '').trim();
     if (!reportId) {
       return Response.json({ error: 'reportId is required.' }, { status: 400 });
     }
