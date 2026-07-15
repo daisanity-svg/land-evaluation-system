@@ -56,3 +56,14 @@ PR Preview 驗收完成前不得合併 `main`。正式部署後還需驗證健�
 - 收斂 GitHub Pages 與 Vercel 的部署責任。
 - 分階段保護 submitReport、完整報告與 Excel endpoint。
 - 更新 README，使文件與正式架構一致。
+
+## 已停用的公開診斷
+
+下列舊診斷端點曾透過公開 `GET` 請求建立測試報告，已改為固定回傳 HTTP 410，且不得再呼叫 Supabase 或任何 submitReport handler：
+
+- `/api/diagnostics/action-submit`
+- `/api/diagnostics/full`
+- `/api/diagnostics/submit-report`
+- `/api/_diagnostics/submit-report`
+
+正式健康監控只能使用無寫入副作用的 `/api/health`、`/api/health-supabase`、`/api/openapi` 與 `/api/reports/{reportId}/status`。
