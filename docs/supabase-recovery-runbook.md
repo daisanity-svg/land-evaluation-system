@@ -64,14 +64,12 @@ supabase db dump --db-url "$SUPABASE_DB_URL" --schema public --data-only --use-c
 
 在 Supabase SQL Editor 開啟並執行 `supabase/verification/reports_preflight.sql`。檢查：
 
-- 有 8 個必要欄位。
-- `summary` 為 `jsonb`。
-- `created_at`、`updated_at` 為 `timestamp with time zone`。
-- `missing_report_id = 0`。
-- duplicate 查詢回傳 0 rows。
-- 將總筆數記入變更紀錄，但不要公開客戶或報告資料。
+- SQL Editor 只會顯示一個結果表，欄位為 `check_name`、`actual`、`expected`、`passed`。
+- 除 `total_reports` 與 `rls_forced` 是資訊列外，所有 `passed` 都必須是 `true`。
+- 將 `total_reports` 記入變更紀錄，但不要公開客戶或報告資料。
+- 此查詢只回傳統計與結構檢查，不回傳客戶、地號、report_id、summary 或 report_text。
 
-若空白／重複 `report_id` 不為 0，停止套用並人工確認資料；不得自動刪除其中一筆。
+若任何檢查的 `passed` 為 `false`，停止套用並人工確認；不得自動刪除、轉換或修補既有報告。
 
 ## 第 4 步：套用 migration
 

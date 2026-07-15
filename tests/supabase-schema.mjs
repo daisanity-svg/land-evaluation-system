@@ -56,6 +56,20 @@ for (const text of [migration, preflight, postflight, runbook]) {
   assert.doesNotMatch(text, /eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}/, 'must not contain a JWT-like secret');
 }
 
+assert.equal((preflight.match(/;/g) || []).length, 1, 'preflight must return one Supabase result set');
+for (const check of [
+  'required_columns_found',
+  'schema_compatible',
+  'duplicate_report_id_groups',
+  'report_id_unique',
+  'created_at_index_exists',
+  'updated_at_trigger_exists',
+  'rls_enabled',
+]) {
+  assert.ok(preflight.includes(`'${check}'`), `${check} must appear in the consolidated preflight`);
+}
+assert.match(preflight, /select check_name, actual, expected, passed/i);
+
 assert.match(runbook, /不要在正式專案使用 `db reset`/);
 assert.match(runbook, /不得進入 Git 歷史/);
 assert.match(runbook, /supabase db push --dry-run/);
