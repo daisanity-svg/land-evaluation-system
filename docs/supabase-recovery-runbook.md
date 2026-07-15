@@ -72,6 +72,11 @@ supabase db dump --db-url "$SUPABASE_DB_URL" --schema public --data-only --use-c
 
 若任何檢查的 `passed` 為 `false`，停止套用並人工確認；不得自動刪除、轉換或修補既有報告。
 
+若停止原因是 `invalid_summary` 或必要欄位缺漏，接著執行唯讀的
+`supabase/verification/reports_data_diagnostic.sql`。此查詢只回傳彙總筆數，
+用來區分 SQL NULL、JSON null、string、array、object 與欄位缺漏的重疊情況；
+不回傳任何報告識別或內容。診斷完成前不得執行自動 backfill。
+
 ## 第 4 步：套用 migration
 
 第一次建立版本基準時，建議先在 SQL Editor 完整貼上並執行 migration。確認檔名與即將執行的 commit 一致：
