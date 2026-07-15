@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 const migrationPath = 'supabase/migrations/20260715050000_reports_schema_baseline.sql';
 const migration = readFileSync(migrationPath, 'utf8');
 const preflight = readFileSync('supabase/verification/reports_preflight.sql', 'utf8');
+const dataDiagnostic = readFileSync('supabase/verification/reports_data_diagnostic.sql', 'utf8');
 const postflight = readFileSync('supabase/verification/reports_postflight.sql', 'utf8');
 const runbook = readFileSync('docs/supabase-recovery-runbook.md', 'utf8');
 
@@ -50,11 +51,46 @@ for (const pattern of forbidden) {
   assert.doesNotMatch(migration, pattern, `migration contains forbidden destructive SQL: ${pattern}`);
 }
 
-for (const text of [migration, preflight, postflight, runbook]) {
+for (const text of [migration, preflight, dataDiagnostic, postflight, runbook]) {
   assert.doesNotMatch(text, /SUPABASE_SERVICE_ROLE_KEY\s*=/i, 'must not contain a service role key value');
   assert.doesNotMatch(text, /Authorization:\s*Bearer\s+\S+/i, 'must not contain an Authorization value');
   assert.doesNotMatch(text, /eyJ[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}/, 'must not contain a JWT-like secret');
 }
+
+assert.equal((preflight.match(/;/g) || []).length, 1, 'preflight must return one Supabase result set');
+for (const check of [
+  'overall_preflight',
+  'required_columns_found',
+  'schema_compatible',
+  'duplicate_report_id_groups',
+  'report_id_unique',
+  'created_at_index_exists',
+  'updated_at_trigger_exists',
+  'rls_enabled',
+]) {
+  assert.ok(preflight.includes(`'${check}'`), `${check} must appear in the consolidated preflight`);
+}
+assert.match(preflight, /select check_name, actual, expected, passed, scope/i);
+assert.match(preflight, /ready_with_legacy_review/i);
+assert.match(preflight, /where scope = 'blocking'/i);
+assert.match(preflight, /where scope = 'legacy_data'/i);
+
+assert.equal((dataDiagnostic.match(/;/g) || []).length, 1, 'data diagnostic must return one Supabase result set');
+for (const diagnostic of [
+  'summary_sql_null',
+  'summary_json_null',
+  'summary_object',
+  'summary_string',
+  'missing_any_metadata',
+  'invalid_summary_and_missing_metadata',
+]) {
+  assert.ok(dataDiagnostic.includes(`'${diagnostic}'`), `${diagnostic} must appear in the data diagnostic`);
+}
+assert.match(dataDiagnostic, /select diagnostic_name, affected_rows, severity, explanation/i);
+assert.doesNotMatch(dataDiagnostic, /select\s+report_id\b/i, 'data diagnostic must not return report IDs');
+assert.doesNotMatch(dataDiagnostic, /select\s+client\b/i, 'data diagnostic must not return client names');
+assert.doesNotMatch(dataDiagnostic, /select\s+land_number\b/i, 'data diagnostic must not return land numbers');
+assert.doesNotMatch(dataDiagnostic, /select\s+report_text\b/i, 'data diagnostic must not return report text');
 
 assert.match(runbook, /不要在正式專案使用 `db reset`/);
 assert.match(runbook, /不得進入 Git 歷史/);
