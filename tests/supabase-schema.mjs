@@ -58,6 +58,7 @@ for (const text of [migration, preflight, postflight, runbook]) {
 
 assert.equal((preflight.match(/;/g) || []).length, 1, 'preflight must return one Supabase result set');
 for (const check of [
+  'overall_preflight',
   'required_columns_found',
   'schema_compatible',
   'duplicate_report_id_groups',
@@ -69,6 +70,7 @@ for (const check of [
   assert.ok(preflight.includes(`'${check}'`), `${check} must appear in the consolidated preflight`);
 }
 assert.match(preflight, /select check_name, actual, expected, passed/i);
+assert.match(preflight, /then 'ready' else 'stop'/i);
 
 assert.match(runbook, /不要在正式專案使用 `db reset`/);
 assert.match(runbook, /不得進入 Git 歷史/);

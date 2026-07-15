@@ -65,6 +65,7 @@ supabase db dump --db-url "$SUPABASE_DB_URL" --schema public --data-only --use-c
 在 Supabase SQL Editor 開啟並執行 `supabase/verification/reports_preflight.sql`。檢查：
 
 - SQL Editor 只會顯示一個結果表，欄位為 `check_name`、`actual`、`expected`、`passed`。
+- 第一列 `overall_preflight` 的 `actual` 必須是 `ready`，且 `passed` 必須是 `true`。
 - 除 `total_reports` 與 `rls_forced` 是資訊列外，所有 `passed` 都必須是 `true`。
 - 將 `total_reports` 記入變更紀錄，但不要公開客戶或報告資料。
 - 此查詢只回傳統計與結構檢查，不回傳客戶、地號、report_id、summary 或 report_text。

@@ -131,5 +131,16 @@ checks(check_order, check_name, actual, expected, passed) as (
   union all select 41, 'rls_forced', rls_forced::text, 'informational', true from security_checks
 )
 select check_name, actual, expected, passed
-from checks
-order by check_order;
+from (
+  select
+    0 as check_order,
+    'overall_preflight' as check_name,
+    case when bool_and(coalesce(passed, false)) then 'ready' else 'stop' end as actual,
+    'ready' as expected,
+    bool_and(coalesce(passed, false)) as passed
+  from checks
+  union all
+  select check_order, check_name, actual, expected, passed
+  from checks
+) as final_checks
+order by check_order, passed, check_name;
