@@ -1,0 +1,73 @@
+name: Monitor production
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: production-monitor
+  cancel-in-progress: false
+
+jobs:
+  smoke-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      PRODUCTION_BASE_URL: https://land-evaluation-system.vercel.app
+      MONITOR_REPORT_ID: hy-1783998431127-iairjp
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run read-only production checks
+        id: smoke
+        continue-on-error: true
+        run: node scripts/production-smoke-check.mjs
+
+      - name: Open or update failure issue
+        if: steps.smoke.outcome == 'failure'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title='[monitor] Production smoke check failed'
+          run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          checked_at="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+          body="The read-only production smoke check failed.
+
+          Checked at: ${checked_at}
+          Workflow run: ${run_url}
+
+          Review the workflow log for the failed check name. The monitor does not submit reports or include response bodies and credentials in this issue."
+          issue_number="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 100 --json number,title --jq ".[] | select(.title == \"${title}\") | .number" | head -n 1)"
+          if [ -n "$issue_number" ]; then
+            gh issue edit "$issue_number" --repo "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body "$body" --assignee daisanity-svg
+          fi
+
+      - name: Close recovered failure issue
+        if: steps.smoke.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          title='[monitor] Production smoke check failed'
+          run_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          issue_number="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --limit 100 --json number,title --jq ".[] | select(.title == \"${title}\") | .number" | head -n 1)"
+          if [ -n "$issue_number" ]; then
+            gh issue comment "$issue_number" --repo "$GITHUB_REPOSITORY" --body "Production checks recovered successfully. Workflow run: ${run_url}"
+            gh issue close "$issue_number" --repo "$GITHUB_REPOSITORY" --reason completed
+          fi
+
+      - name: Preserve failed workflow status
+        if: steps.smoke.outcome == 'failure'
+        run: exit 1
