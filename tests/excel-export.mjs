@@ -2,11 +2,11 @@ import assert from 'node:assert/strict';
 import ExcelJS from 'exceljs';
 import { buildLandEvaluationExcelBuffer } from '../lib/landEvaluationExcel.js';
 
-function competitor(index, name, builder, parking, count) {
+function competitor(index, name, builder, parking, count, age = '預售，2025年11月開案') {
   return `競案${index}｜${name}
 競案等級：直接競案
 案子規劃：${builder}，預售案，規劃2～3房、29～42坪
-屋齡：預售，2025年11月開案
+屋齡：${age}
 成交期間：近一年
 成交筆數：${count}筆
 成交價格：住宅約60萬／坪；坡道平面車位約${parking}萬元
@@ -30,9 +30,9 @@ ${competitor('一', '百達莊園', '偉築建設', 210, 167)}
 
 ${competitor('二', '義泰信', '義泰建設', 245, 89)}
 
-${competitor('三', '閱讀台灣', '丞石建築', 250, 16)}
+${competitor('三', '閱讀台灣', '丞石建築', 250, 16, '2022年7月開案，即將交屋')}
 
-${competitor('四', '明志書苑', '茂德建設', 280, 9)}
+${competitor('四', '明志書苑', '茂德建設', 280, 9, '2022年11月開案，新成屋')}
 
 ${competitor('五', '武泰臻愛', '武泰建設', 220, 2)}
 市場行情總結：住宅成交約55～67萬／坪。
@@ -72,6 +72,7 @@ assert.ok(sheet.getCell('F2').value instanceof Date, 'research date must be stor
 assert.equal(sheet.getCell('F2').numFmt, 'yyyy-mm-dd');
 assert.deepEqual(['B19', 'B20', 'B21', 'B22'].map((cell) => sheet.getCell(cell).value), ['偉築建設', '義泰建設', '丞石建築', '茂德建設']);
 assert.deepEqual(['C19', 'C20', 'C21', 'C22'].map((cell) => sheet.getCell(cell).value), ['百達莊園', '義泰信', '閱讀台灣', '明志書苑']);
+assert.deepEqual(['D19', 'D20', 'D21', 'D22'].map((cell) => sheet.getCell(cell).value), ['預售', '預售', '即將交屋', '新成屋']);
 assert.deepEqual(['H19', 'H20', 'H21', 'H22'].map((cell) => sheet.getCell(cell).value), ['210萬/位', '245萬/位', '250萬/位', '280萬/位']);
 assert.deepEqual(['I19', 'I20', 'I21', 'I22'].map((cell) => sheet.getCell(cell).value), ['實價登錄', '實價登錄', '實價登錄', '實價登錄']);
 assert.equal(sheet.getCell('J19').value, '114.11開案；近一年成交167筆');
