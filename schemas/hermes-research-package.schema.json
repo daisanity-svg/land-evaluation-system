@@ -1,0 +1,429 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://land-evaluation-system.vercel.app/schemas/hermes-research-package.schema.json",
+  "title": "Hermes 土地調研結構化查證包",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "package_id",
+    "case",
+    "fields",
+    "boundaries",
+    "ownership_and_adjacent",
+    "life_circle",
+    "competitors",
+    "pricing",
+    "quality_gate",
+    "audit"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0.0-phase2a" },
+    "package_id": { "type": "string", "minLength": 1 },
+    "case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "client",
+        "research_date",
+        "input_land_numbers",
+        "normalized_land_numbers",
+        "county",
+        "district",
+        "land_section",
+        "parcel_numbers"
+      ],
+      "properties": {
+        "client": { "type": "string" },
+        "research_date": { "type": "string", "format": "date" },
+        "input_land_numbers": { "type": "string" },
+        "normalized_land_numbers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "county": { "type": "string" },
+        "district": { "type": "string" },
+        "land_section": { "type": "string" },
+        "parcel_numbers": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^[0-9-]+$" }
+        }
+      }
+    },
+    "fields": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/evidenceField" },
+      "required": [
+        "parcel_area_each",
+        "parcel_area_total_sqm",
+        "parcel_area_total_ping",
+        "parcel_geometry",
+        "parcel_count",
+        "land_category",
+        "current_land_use",
+        "zoning",
+        "building_coverage_ratio",
+        "floor_area_ratio",
+        "urban_plan_name",
+        "zoning_control_reference",
+        "special_control_rules",
+        "legal_source"
+      ]
+    },
+    "boundaries": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["east", "south", "west", "north"],
+      "properties": {
+        "east": { "$ref": "#/$defs/boundary" },
+        "south": { "$ref": "#/$defs/boundary" },
+        "west": { "$ref": "#/$defs/boundary" },
+        "north": { "$ref": "#/$defs/boundary" }
+      }
+    },
+    "ownership_and_adjacent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["adjacent_parcel_numbers", "adjacent_land_use", "adjacent_owner_type"],
+      "properties": {
+        "adjacent_parcel_numbers": { "$ref": "#/$defs/evidenceField" },
+        "adjacent_land_use": { "$ref": "#/$defs/evidenceField" },
+        "adjacent_owner_type": {
+          "allOf": [
+            { "$ref": "#/$defs/evidenceField" },
+            {
+              "properties": {
+                "normalized_value": {
+                  "type": ["string", "null"],
+                  "enum": [
+                    "natural_person",
+                    "legal_entity",
+                    "public",
+                    "mixed",
+                    "unknown",
+                    "needs_manual_review",
+                    null
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "life_circle": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/evidenceField" },
+      "required": [
+        "village",
+        "school_district_elementary",
+        "school_district_junior_high",
+        "nearest_station",
+        "actual_station_distance",
+        "driving_connections",
+        "daily_living_area",
+        "medical_resources",
+        "major_employment_nodes"
+      ]
+    },
+    "competitors": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 5,
+      "items": { "$ref": "#/$defs/competitor" }
+    },
+    "pricing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "transaction_period",
+        "residential_valid_samples",
+        "storefront_valid_samples",
+        "parking_valid_samples",
+        "residential_price_range",
+        "storefront_price_range",
+        "parking_price_range",
+        "proposed_residential_price",
+        "proposed_storefront_price",
+        "proposed_parking_price",
+        "pricing_method",
+        "excluded_transactions",
+        "price_conflicts",
+        "pricing_status"
+      ],
+      "properties": {
+        "transaction_period": { "type": ["string", "null"] },
+        "residential_valid_samples": { "type": "integer", "minimum": 0 },
+        "storefront_valid_samples": { "type": "integer", "minimum": 0 },
+        "parking_valid_samples": { "type": "integer", "minimum": 0 },
+        "residential_price_range": { "type": ["string", "null"] },
+        "storefront_price_range": { "type": ["string", "null"] },
+        "parking_price_range": { "type": ["string", "null"] },
+        "proposed_residential_price": { "type": ["string", "null"] },
+        "proposed_storefront_price": { "type": ["string", "null"] },
+        "proposed_parking_price": { "type": ["string", "null"] },
+        "pricing_method": { "type": "string" },
+        "excluded_transactions": { "type": "array", "items": { "type": "string" } },
+        "price_conflicts": { "type": "array", "items": { "$ref": "#/$defs/conflict" } },
+        "pricing_status": { "$ref": "#/$defs/status" }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "pricing_status": {
+                "enum": ["conflict", "needs_manual_review", "unavailable"]
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "proposed_residential_price": { "type": "null" },
+              "proposed_storefront_price": { "type": "null" },
+              "proposed_parking_price": { "type": "null" }
+            }
+          }
+        }
+      ]
+    },
+    "quality_gate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "allow_formal_report",
+        "allow_definite_volume",
+        "allow_definite_legal_conclusion",
+        "allow_definite_price",
+        "blocking_reasons",
+        "manual_review_items"
+      ],
+      "properties": {
+        "allow_formal_report": { "type": "boolean" },
+        "allow_definite_volume": { "type": "boolean" },
+        "allow_definite_legal_conclusion": { "type": "boolean" },
+        "allow_definite_price": { "type": "boolean" },
+        "blocking_reasons": { "type": "array", "items": { "type": "string" } },
+        "manual_review_items": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hermes_run_ids",
+        "research_date_difference_is_defect",
+        "submitReport_called",
+        "supabase_written",
+        "production_modified",
+        "main_modified",
+        "formal_report_contract_modified",
+        "sensitive_data_present"
+      ],
+      "properties": {
+        "hermes_run_ids": { "type": "array", "items": { "type": "string" } },
+        "research_date_difference_is_defect": { "const": false },
+        "submitReport_called": { "const": false },
+        "supabase_written": { "const": false },
+        "production_modified": { "const": false },
+        "main_modified": { "const": false },
+        "formal_report_contract_modified": { "const": false },
+        "sensitive_data_present": { "const": false }
+      }
+    }
+  },
+  "$defs": {
+    "status": {
+      "type": "string",
+      "enum": [
+        "official_confirmed",
+        "corroborated",
+        "inferred",
+        "conflict",
+        "needs_manual_review",
+        "unavailable"
+      ]
+    },
+    "sourceType": {
+      "type": "string",
+      "enum": [
+        "government",
+        "first_party",
+        "market_platform",
+        "map_observation",
+        "user_provided",
+        "derived"
+      ]
+    },
+    "conflict": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "source_name", "source_type", "source_url"],
+      "properties": {
+        "value": {},
+        "source_name": { "type": "string" },
+        "source_type": { "$ref": "#/$defs/sourceType" },
+        "source_url": { "type": "string" },
+        "note": { "type": "string" }
+      }
+    },
+    "evidenceField": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field",
+        "raw_value",
+        "normalized_value",
+        "unit",
+        "status",
+        "source_type",
+        "source_name",
+        "source_url",
+        "source_date",
+        "retrieved_at",
+        "evidence",
+        "confidence",
+        "conflicts",
+        "manual_review_reason"
+      ],
+      "properties": {
+        "field": { "type": "string", "minLength": 1 },
+        "raw_value": {},
+        "normalized_value": {},
+        "unit": { "type": "string" },
+        "status": { "$ref": "#/$defs/status" },
+        "source_type": { "$ref": "#/$defs/sourceType" },
+        "source_name": { "type": "string" },
+        "source_url": { "type": "string" },
+        "source_date": { "type": ["string", "null"] },
+        "retrieved_at": { "type": "string", "format": "date-time" },
+        "evidence": { "type": "string" },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 100 },
+        "conflicts": { "type": "array", "items": { "$ref": "#/$defs/conflict" } },
+        "manual_review_reason": { "type": "string" }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "status": { "const": "official_confirmed" } } },
+          "then": {
+            "properties": {
+              "source_type": { "enum": ["government", "first_party"] },
+              "source_name": { "minLength": 1 },
+              "source_url": { "minLength": 1 },
+              "evidence": { "minLength": 1 }
+            }
+          }
+        },
+        {
+          "if": { "properties": { "status": { "const": "conflict" } } },
+          "then": {
+            "properties": {
+              "normalized_value": { "type": "null" },
+              "conflicts": { "minItems": 2 },
+              "manual_review_reason": { "minLength": 1 }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": { "enum": ["needs_manual_review", "unavailable"] }
+            }
+          },
+          "then": {
+            "properties": {
+              "normalized_value": { "type": "null" },
+              "manual_review_reason": { "minLength": 1 }
+            }
+          }
+        }
+      ]
+    },
+    "boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "boundary_type",
+        "road_name",
+        "planned_road_width",
+        "current_road_width",
+        "adjacent_parcel",
+        "adjacent_land_use",
+        "neighboring_building_type",
+        "neighboring_building_floors"
+      ],
+      "properties": {
+        "boundary_type": { "$ref": "#/$defs/evidenceField" },
+        "road_name": { "$ref": "#/$defs/evidenceField" },
+        "planned_road_width": { "$ref": "#/$defs/evidenceField" },
+        "current_road_width": { "$ref": "#/$defs/evidenceField" },
+        "adjacent_parcel": { "$ref": "#/$defs/evidenceField" },
+        "adjacent_land_use": { "$ref": "#/$defs/evidenceField" },
+        "neighboring_building_type": { "$ref": "#/$defs/evidenceField" },
+        "neighboring_building_floors": { "$ref": "#/$defs/evidenceField" }
+      }
+    },
+    "competitor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "project_name",
+        "developer",
+        "address",
+        "distance_from_site",
+        "selection_reason",
+        "comparison_level",
+        "sales_status",
+        "launch_date",
+        "completion_status",
+        "room_types",
+        "size_range_ping",
+        "transaction_period_start",
+        "transaction_period_end",
+        "valid_transaction_count",
+        "residential_unit_price",
+        "parking_type",
+        "parking_price",
+        "data_sources",
+        "status",
+        "missing_fields"
+      ],
+      "properties": {
+        "project_name": { "type": "string", "minLength": 1 },
+        "developer": { "type": ["string", "null"] },
+        "address": { "type": ["string", "null"] },
+        "distance_from_site": { "type": ["string", "null"] },
+        "selection_reason": { "type": "string", "minLength": 1 },
+        "comparison_level": { "enum": ["direct", "secondary", "price_reference"] },
+        "sales_status": { "type": ["string", "null"] },
+        "launch_date": { "type": ["string", "null"] },
+        "completion_status": { "type": ["string", "null"] },
+        "room_types": { "type": ["string", "null"] },
+        "size_range_ping": { "type": ["string", "null"] },
+        "transaction_period_start": { "type": ["string", "null"] },
+        "transaction_period_end": { "type": ["string", "null"] },
+        "valid_transaction_count": { "type": ["integer", "null"], "minimum": 0 },
+        "residential_unit_price": { "type": ["string", "null"] },
+        "parking_type": { "type": ["string", "null"] },
+        "parking_price": { "type": ["string", "null"] },
+        "data_sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["source_type", "source_name", "source_url"],
+            "properties": {
+              "source_type": { "$ref": "#/$defs/sourceType" },
+              "source_name": { "type": "string" },
+              "source_url": { "type": "string" }
+            }
+          }
+        },
+        "status": { "$ref": "#/$defs/status" },
+        "missing_fields": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  }
+}
