@@ -61,7 +61,7 @@ export default function ResearchReviewPage() {
         return;
       }
       await navigator.clipboard.writeText(data.handoff);
-      setHandoffMessage('正式報告交接內容已複製；只可依其中的狀態與證據撰寫。');
+      setHandoffMessage(`正式報告交接內容已複製（${data.package_id}／${data.handoff_sha256?.slice(0, 12)}…）；只可依其中的狀態與證據撰寫。`);
     } catch (error) {
       setHandoffMessage(`交接驗證失敗：${error.message || '未知錯誤'}`);
     }

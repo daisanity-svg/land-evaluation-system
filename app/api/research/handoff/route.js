@@ -1,5 +1,6 @@
 import { evaluateResearchQuality } from '../../../../lib/researchQualityGate.mjs';
 import { buildResearchReportHandoff } from '../../../../lib/researchReportHandoff.mjs';
+import { createHash } from 'node:crypto';
 
 export const runtime = 'nodejs';
 
@@ -36,6 +37,8 @@ export async function POST(request) {
   return Response.json(
     {
       accepted: true,
+      package_id: researchPackage.package_id,
+      handoff_sha256: createHash('sha256').update(handoff.text).digest('hex'),
       gate,
       blockers: [],
       handoff: handoff.text,
