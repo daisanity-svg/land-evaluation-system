@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { buildResearchReportHandoff } from '../../lib/researchReportHandoff.mjs';
 
 const SAMPLE_PLACEHOLDER = `貼上符合 hermes-research-package.schema.json 的完整 JSON 證據包`;
 
@@ -9,9 +10,11 @@ export default function ResearchReviewPage() {
   const [result, setResult] = useState(null);
   const [message, setMessage] = useState('尚未驗收。此頁不會寫入報告、資料庫或正式系統。');
   const [loading, setLoading] = useState(false);
+  const [handoffMessage, setHandoffMessage] = useState('');
 
   async function validatePackage() {
     setResult(null);
+    setHandoffMessage('');
 
     try {
       JSON.parse(payload);
@@ -43,6 +46,17 @@ export default function ResearchReviewPage() {
 
   const errors = result?.result?.errors || [];
   const blockingReasons = result?.result?.quality_gate?.blocking_reasons || [];
+  const formalEligible = result?.accepted && result?.result?.decisions?.allow_formal_report === true;
+
+  async function copyFormalHandoff() {
+    const handoff = buildResearchReportHandoff(JSON.parse(payload));
+    if (!handoff.eligible) {
+      setHandoffMessage('此研究包尚未取得正式報告資格，不能產生交接內容。');
+      return;
+    }
+    await navigator.clipboard.writeText(handoff.text);
+    setHandoffMessage('正式報告交接內容已複製；只可依其中的狀態與證據撰寫。');
+  }
 
   return (
     <main className="app-shell">
@@ -106,6 +120,13 @@ export default function ResearchReviewPage() {
               <ul>{blockingReasons.map((reason) => <li key={reason}>{reason}</li>)}</ul>
             </>}
             {errors.length === 0 && blockingReasons.length === 0 && <p>未發現阻塞事項。</p>}
+            <div className="action-card" style={{ marginTop: 20 }}>
+              <div>
+                <strong>正式報告交接</strong>
+                <p>{handoffMessage || (formalEligible ? '研究包已具正式報告資格。' : '尚未取得正式報告資格，不能交給業主版報告流程。')}</p>
+              </div>
+              <button className="btn primary" onClick={copyFormalHandoff} disabled={!formalEligible}>複製正式報告交接內容</button>
+            </div>
           </div>
         </section>
       )}
