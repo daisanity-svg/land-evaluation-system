@@ -29,6 +29,8 @@ Hermes 的 health、create、status、wait 可用，但長任務沒有穩定回�
 
 程式面的根因是研究結果只有自由文字，沒有逐欄來源、衝突、信心與人工複核狀態；Excel 端直接解析 `report_text`，自然無法區分「已證實」與「看似完整」。目前 `app/api/research/route.js` 仍是舊的自由文字研究端點，且 `sources` 固定回空陣列。正式流程也尚未接入 Hermes。
 
+補充：`POST /api/research/validate` 是隔離、唯讀的研究包驗收入口。它只執行 `researchQualityGate` 並回傳採用與阻塞結果；不呼叫 OpenAI、不寫 Supabase、不呼叫 `submitReport`，也不改變既有正式報告流程。
+
 ## 本分支新增的隔離契約
 
 - `schemas/hermes-research-package.schema.json`：定義逐欄 raw/normalized value、單位、來源、日期、證據、信心、衝突與查證狀態。
