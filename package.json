@@ -5,7 +5,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "test": "node tests/validate-system.mjs && node tests/submit-report.mjs && node tests/next15-routes.mjs && node tests/excel-export.mjs && node tests/supabase-schema.mjs && node tests/retired-diagnostics.mjs && node tests/production-monitor.mjs && node tests/research-quality-gate.mjs && node tests/research-validation-route.mjs && node tests/hermes-trace-gate.mjs && node tests/hermes-module-gate.mjs"
+    "test": "node tests/validate-system.mjs && node tests/submit-report.mjs && node tests/next15-routes.mjs && node tests/excel-export.mjs && node tests/supabase-schema.mjs && node tests/retired-diagnostics.mjs && node tests/production-monitor.mjs && node tests/research-quality-gate.mjs && node tests/research-validation-route.mjs && node tests/research-review-page.mjs && node tests/hermes-trace-gate.mjs && node tests/hermes-module-gate.mjs"
   },
   "dependencies": {
     "exceljs": "^4.4.0",
