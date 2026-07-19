@@ -3,6 +3,7 @@
 import { useState } from 'react';
 
 const SAMPLE_PLACEHOLDER = `貼上符合 hermes-research-package.schema.json 的完整 JSON 證據包`;
+const HANDOFF_SESSION_KEY = 'hiyes-approved-research-handoff-v1';
 
 export default function ResearchReviewPage() {
   const [payload, setPayload] = useState('');
@@ -10,10 +11,12 @@ export default function ResearchReviewPage() {
   const [message, setMessage] = useState('尚未驗收。此頁不會寫入報告、資料庫或正式系統。');
   const [loading, setLoading] = useState(false);
   const [handoffMessage, setHandoffMessage] = useState('');
+  const [approvedHandoff, setApprovedHandoff] = useState(null);
 
   async function validatePackage() {
     setResult(null);
     setHandoffMessage('');
+    setApprovedHandoff(null);
 
     try {
       JSON.parse(payload);
@@ -61,10 +64,22 @@ export default function ResearchReviewPage() {
         return;
       }
       await navigator.clipboard.writeText(data.handoff);
+      const handoff = {
+        packageId: data.package_id,
+        handoffSha256: data.handoff_sha256,
+        handoff: data.handoff,
+      };
+      sessionStorage.setItem(HANDOFF_SESSION_KEY, JSON.stringify(handoff));
+      setApprovedHandoff(handoff);
       setHandoffMessage(`正式報告交接內容已複製（${data.package_id}／${data.handoff_sha256?.slice(0, 12)}…）；只可依其中的狀態與證據撰寫。`);
     } catch (error) {
       setHandoffMessage(`交接驗證失敗：${error.message || '未知錯誤'}`);
     }
+  }
+
+  function openOwnerReport() {
+    if (!approvedHandoff) return;
+    window.location.assign('/');
   }
 
   return (
@@ -134,7 +149,10 @@ export default function ResearchReviewPage() {
                 <strong>正式報告交接</strong>
                 <p>{handoffMessage || (formalEligible ? '研究包已具正式報告資格。' : '尚未取得正式報告資格，不能交給業主版報告流程。')}</p>
               </div>
-              <button className="btn primary" onClick={copyFormalHandoff} disabled={!formalEligible}>複製正式報告交接內容</button>
+              <div className="toolbar">
+                <button className="btn" onClick={copyFormalHandoff} disabled={!formalEligible}>複製正式報告交接內容</button>
+                <button className="btn primary" onClick={openOwnerReport} disabled={!approvedHandoff}>帶入業主版報告</button>
+              </div>
             </div>
           </div>
         </section>
