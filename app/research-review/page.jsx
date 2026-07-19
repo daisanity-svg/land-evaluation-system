@@ -63,11 +63,17 @@ export default function ResearchReviewPage() {
         setHandoffMessage('此研究包未通過伺服器交接驗證，不能產生正式報告交接內容。');
         return;
       }
+      const researchPackage = JSON.parse(payload);
       await navigator.clipboard.writeText(data.handoff);
       const handoff = {
         packageId: data.package_id,
         handoffSha256: data.handoff_sha256,
         handoff: data.handoff,
+        case: {
+          client: researchPackage.case.client,
+          researchDate: researchPackage.case.research_date,
+          inputLandNumbers: researchPackage.case.input_land_numbers,
+        },
       };
       sessionStorage.setItem(HANDOFF_SESSION_KEY, JSON.stringify(handoff));
       setApprovedHandoff(handoff);
