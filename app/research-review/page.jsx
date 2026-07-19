@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { buildResearchReportHandoff } from '../../lib/researchReportHandoff.mjs';
 
 const SAMPLE_PLACEHOLDER = `貼上符合 hermes-research-package.schema.json 的完整 JSON 證據包`;
 
@@ -49,13 +48,23 @@ export default function ResearchReviewPage() {
   const formalEligible = result?.accepted && result?.result?.decisions?.allow_formal_report === true;
 
   async function copyFormalHandoff() {
-    const handoff = buildResearchReportHandoff(JSON.parse(payload));
-    if (!handoff.eligible) {
-      setHandoffMessage('此研究包尚未取得正式報告資格，不能產生交接內容。');
-      return;
+    setHandoffMessage('正在由伺服器重新驗證交接資格…');
+    try {
+      const response = await fetch('/api/research/handoff', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: payload,
+      });
+      const data = await response.json();
+      if (!response.ok || !data.accepted || !data.handoff) {
+        setHandoffMessage('此研究包未通過伺服器交接驗證，不能產生正式報告交接內容。');
+        return;
+      }
+      await navigator.clipboard.writeText(data.handoff);
+      setHandoffMessage('正式報告交接內容已複製；只可依其中的狀態與證據撰寫。');
+    } catch (error) {
+      setHandoffMessage(`交接驗證失敗：${error.message || '未知錯誤'}`);
     }
-    await navigator.clipboard.writeText(handoff.text);
-    setHandoffMessage('正式報告交接內容已複製；只可依其中的狀態與證據撰寫。');
   }
 
   return (
