@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0.0-phase2b-delta",
+  "case_id": "shanjie-188-189-20260718",
+  "area_evidence": {
+    "parcel_area_each": {
+      "raw_value": { "188": 602.99, "189": 1203.79 },
+      "normalized_value": { "188": 602.99, "189": 1203.79 },
+      "unit": "sqm",
+      "status": "corroborated",
+      "source_type": "government",
+      "source_name": "桃園市國土功能分區土地清冊草案－龜山區",
+      "source_url": "https://spatialplan.tycg.gov.tw/uploads/1131216專案通檢暨功能分區公展資料/土地清冊/桃園市國土功能分區土地清冊草案07-龜山區清冊.pdf",
+      "source_date": "2024-09",
+      "retrieved_at": "2026-07-18T19:35:00+08:00",
+      "evidence": "第710頁列示善捷段0188-0000面積602.99平方公尺、0189-0000面積1203.79平方公尺；資料註明採用113年9月桃園市地政局接合版地籍圖。",
+      "confidence": 95,
+      "conflicts": [],
+      "manual_review_reason": "公開展覽草案可佐證人工版面積，但仍需現行地籍謄本確認2026年未有分割、合併或更正。"
+    },
+    "parcel_area_total_sqm": {
+      "raw_value": 1806.78,
+      "normalized_value": 1806.78,
+      "unit": "sqm",
+      "status": "corroborated",
+      "source_type": "derived",
+      "source_name": "官方清冊逐筆面積加總",
+      "source_url": "https://spatialplan.tycg.gov.tw/uploads/1131216專案通檢暨功能分區公展資料/土地清冊/桃園市國土功能分區土地清冊草案07-龜山區清冊.pdf",
+      "source_date": "2024-09",
+      "retrieved_at": "2026-07-18T19:35:00+08:00",
+      "evidence": "602.99 + 1203.79 = 1806.78平方公尺，與人工交付版完全一致。",
+      "confidence": 95,
+      "conflicts": [],
+      "manual_review_reason": "仍需現行地籍謄本確認。"
+    },
+    "parcel_area_total_ping": {
+      "raw_value": 546.55,
+      "normalized_value": 546.55,
+      "unit": "ping",
+      "status": "corroborated",
+      "source_type": "derived",
+      "source_name": "1806.78平方公尺換算",
+      "source_url": "https://spatialplan.tycg.gov.tw/uploads/1131216專案通檢暨功能分區公展資料/土地清冊/桃園市國土功能分區土地清冊草案07-龜山區清冊.pdf",
+      "source_date": "2024-09",
+      "retrieved_at": "2026-07-18T19:35:00+08:00",
+      "evidence": "1806.78平方公尺換算約546.55坪，與人工交付版完全一致。",
+      "confidence": 95,
+      "conflicts": [],
+      "manual_review_reason": "上游仍以現行地籍謄本為最終依據。"
+    }
+  },
+  "hermes_module_acceptance": [
+    { "module": "legal", "run_id": "run_90266aee01ba45169db54fcccc7efde1", "fresh_session": true, "strict_json": false, "accepted": false, "reason": "輸出含Python None，並非合法JSON。" },
+    { "module": "boundary", "run_id": "run_b1959942416246caabdb114d4600f2fc", "fresh_session": true, "strict_json": true, "accepted": false, "reason": "未依逐欄證據契約輸出，來源與證據為null。" },
+    { "module": "life", "run_id": "run_7ee044733c3b471aac18c067878b236a", "fresh_session": true, "strict_json": true, "accepted": false, "reason": "以Google／OSM判讀標示official_confirmed，且沒有source_url。" },
+    { "module": "market", "run_id": "run_b08af8e7ff154f578fe897ca94c7c6df", "fresh_session": true, "strict_json": true, "accepted": false, "reason": "competitors與pricing均為null。" }
+  ],
+  "decisions": {
+    "manual_area_matches_official_draft": true,
+    "zoning_conflict_resolved": false,
+    "boundary_resolved": false,
+    "market_recalculated": false,
+    "allow_formal_report": false,
+    "allow_submit_report": false
+  },
+  "audit": {
+    "submitReport_called": false,
+    "supabase_written": false,
+    "production_modified": false,
+    "main_modified": false,
+    "sensitive_data_present": false
+  }
+}

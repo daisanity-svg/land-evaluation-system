@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0-phase2b",
+  "probe": {
+    "case_id": "fixture-phase2b-trace-01",
+    "marker": "HERMES_TRACE_FIXTURE_01",
+    "expected_artifact_filename": "hermes_trace_fixture_01.txt",
+    "requested_fresh_session": true
+  },
+  "run": {
+    "run_id": "run_fixturephase2b01",
+    "session_id": "run_fixturephase2b01",
+    "status": "completed",
+    "last_event": "run.completed",
+    "output": "{\"case_id\":\"fixture-phase2b-trace-01\",\"marker\":\"HERMES_TRACE_FIXTURE_01\",\"artifact_filename\":\"hermes_trace_fixture_01.txt\",\"artifact_sha256\":\"bc7e13e8c8c313468681e5d90ba53c5abd989d2dd5babba71302c639d91e0399\",\"submitReport_called\":false,\"supabase_written\":false,\"production_modified\":false,\"main_modified\":false}"
+  },
+  "artifacts": [
+    {
+      "run_id": "run_fixturephase2b01",
+      "filename": "hermes_trace_fixture_01.txt",
+      "sha256": "bc7e13e8c8c313468681e5d90ba53c5abd989d2dd5babba71302c639d91e0399",
+      "content_marker": "HERMES_TRACE_FIXTURE_01"
+    }
+  ],
+  "observed_at": "2026-07-18T18:30:00+08:00",
+  "audit": {
+    "submitReport_called": false,
+    "supabase_written": false,
+    "production_modified": false,
+    "main_modified": false,
+    "sensitive_data_present": false
+  }
+}

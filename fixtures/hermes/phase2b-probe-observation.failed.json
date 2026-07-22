@@ -1,0 +1,25 @@
+{
+  "schema_version": "1.0.0-phase2b",
+  "probe": {
+    "case_id": "phase2b-trace-20260718-01",
+    "marker": "HERMES_TRACE_PHASE2B_20260718_01",
+    "expected_artifact_filename": "hermes_trace_probe_20260718_01.txt",
+    "requested_fresh_session": true
+  },
+  "run": {
+    "run_id": "run_0f2cca4cd5744f07856f2270411f39b1",
+    "session_id": "run_0f2cca4cd5744f07856f2270411f39b1",
+    "status": "completed",
+    "last_event": "run.completed",
+    "output": "{\"case_id\":\"phase2b-trace-20260718-01\",\"marker\":\"HERMES_TRACE_PHASE2B_20260718_01\",\"artifact_filename\":\"hermes_trace_probe_20260718_01.txt\",\"artifact_sha256\":\"6452f84a9f1516636d683bd44f50b1c935fb9dc6f7b16883ce83e07627b70043\",\"submitReport_called\":false,\"supabase_written\":false,\"production_modified\":false,\"main_modified\":false}"
+  },
+  "artifacts": [],
+  "observed_at": "2026-07-18T18:33:55+08:00",
+  "audit": {
+    "submitReport_called": false,
+    "supabase_written": false,
+    "production_modified": false,
+    "main_modified": false,
+    "sensitive_data_present": false
+  }
+}
