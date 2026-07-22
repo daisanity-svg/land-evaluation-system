@@ -110,4 +110,24 @@ expectInvalid((candidate) => {
   candidate.fields.parcel_geometry.evidence = 'Bearer phase2a-test-token-123456789';
 }, 'credential-like material detected');
 
+expectInvalid((candidate) => {
+  delete candidate.quality_gate;
+}, 'quality_gate: is required');
+
+expectInvalid((candidate) => {
+  candidate.quality_gate = 'not-an-object';
+}, 'quality_gate: must be an object');
+
+const missingGate = clone();
+delete missingGate.quality_gate;
+const missingGateResult = evaluateResearchQuality(missingGate);
+assert.equal(missingGateResult.valid, false);
+assert.equal(missingGateResult.decisions.allow_formal_report, false);
+
+const invalidGate = clone();
+invalidGate.quality_gate = 'not-an-object';
+const invalidGateResult = evaluateResearchQuality(invalidGate);
+assert.equal(invalidGateResult.valid, false);
+assert.equal(invalidGateResult.decisions.allow_formal_report, false);
+
 console.log('Research quality gate checks passed.');

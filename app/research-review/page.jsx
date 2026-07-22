@@ -36,9 +36,15 @@ export default function ResearchReviewPage() {
       });
       const data = await response.json();
       setResult(data);
-      setMessage(data.accepted
-        ? '驗收通過：此證據包可進入人工判讀與正式報告準備。'
-        : '驗收未通過：請依阻塞事項補證據或保留待人工複核。');
+      const accepted = data.accepted;
+      const allowFormal = data.result?.decisions?.allow_formal_report === true;
+      setMessage(
+        accepted && allowFormal
+          ? '驗收通過：此證據包可進入人工判讀與正式報告準備。'
+          : accepted
+            ? '驗收通過，但尚未具備正式報告資格；可進入人工判讀，但不得直接產出正式報告。'
+            : '驗收未通過：請依阻塞事項補證據或保留待人工複核。'
+      );
     } catch (error) {
       setMessage(`驗收失敗：${error.message || '未知錯誤'}`);
     } finally {
