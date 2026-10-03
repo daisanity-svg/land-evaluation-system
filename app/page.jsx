@@ -39,7 +39,7 @@ const buildPromptWithResearch = buildPrompt;
 const buildShortPromptWithResearch = buildShortPrompt;
 buildPrompt = function(form,reportId){const handoffState=approvedResearchState(form);if(handoffState.state==='blocked')return `案件安全閘已阻擋本次操作：${handoffState.reason}\n\n不得產出正式報告、不得呼叫 submitReport、不得根據既有交接包或短提示詞推論任何土地資料。`;return buildPromptWithResearch(form,reportId)};
 buildShortPrompt = function(form,reportId){const handoffState=approvedResearchState(form);if(handoffState.state==='blocked')return `案件安全閘已阻擋本次操作：${handoffState.reason}\n不得產出正式報告、不得呼叫 submitReport。`;return buildShortPromptWithResearch(form,reportId)};
-function gptLink(shortPrompt){const encoded = encodeURIComponent(shortPrompt);return `${GPT_URL}?q=${encoded}&prompt=${encoded}`}
+function gptLink(){return GPT_URL}
 function splitKV(line){const clean=stripLabelWords(line);const idx=clean.indexOf('：');if(idx<1)return null;return [clean.slice(0,idx).trim(), clean.slice(idx+1).trim()]}
 function priorityOfKey(key){if(/建議價格|成交價格|二樓以上住宅|店面|車位|案名|結論|建議產品|土地分區|基地面積/.test(key)) return 'high'; if(/案子規劃|屋齡|成交筆數|臨路|目標客群|總價|代銷處理方式|優勢|抗性/.test(key)) return 'mid'; return 'low'}
 function Metric({label,value}){return <div className={`metric-card priority-${priorityOfKey(label)}`}><small>{label}</small><strong>{value}</strong></div>}
@@ -65,7 +65,7 @@ export default function Page(){
  useEffect(()=>{if(!waiting||hasReport)return;const timer=setInterval(()=>checkReturnedReport(true),5000);return()=>clearInterval(timer)},[waiting,hasReport,reportId]);
  useEffect(()=>{const onFocus=()=>{if(waiting&&!hasReport)checkReturnedReport(true)};window.addEventListener('focus',onFocus);return()=>window.removeEventListener('focus',onFocus)},[waiting,hasReport,reportId]);
  async function copyPrompt(){await navigator.clipboard.writeText(prompt);setCopied(true);setTimeout(()=>setCopied(false),2200)}
- async function openGpt(){if(!canOpen){alert('請先填寫配合業主與目標地號。');return}const link=gptLink(shortPrompt);setLastLink(link);try{await navigator.clipboard.writeText(prompt);setCopied(true);setTimeout(()=>setCopied(false),2200)}catch{}setWaiting(true);setSyncMessage(`已開啟新的 ChatGPT 對話並帶入案件指令；請在輸入框輸入 @海悅土地評估調研助手、點選外掛程式後送出。完整指令已同步複製，若未自動帶入請按 Command + V。`);window.open(link,'_blank')}
+ async function openGpt(){if(!canOpen){alert('請先填寫配合業主與目標地號。');return}const link=gptLink();setLastLink(link);try{await navigator.clipboard.writeText(prompt);setCopied(true);setTimeout(()=>setCopied(false),2200)}catch{}setWaiting(true);setSyncMessage(`已開啟新的 ChatGPT 對話；完整案件指令已同步複製。請先在輸入框貼上指令，再輸入 @海悅土地評估調研助手、點選外掛程式後送出。`);window.open(link,'_blank')}
  function reset(){const nextId=createReportId();setForm(emptyForm);setReportId(nextId);setWaiting(false);setSyncMessage('已建立新的空白評估。');setLastLink('');localStorage.removeItem(STORAGE_KEY)}
  function printPdf(){document.title=fileName(form);window.print()}
  async function copyReport(){if(hasReport){await navigator.clipboard.writeText(form.reportText);alert('已複製完整報告。')}}
