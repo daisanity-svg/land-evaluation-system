@@ -10,8 +10,8 @@ const submitApi = readFileSync('app/api/reports/route.js', 'utf8');
 
 const checks = [
   {
-    name: 'Prompt supports manual ordinary-ChatGPT handoff',
-    pass: page.includes('使用者會自行貼回土地評估系統') && page.includes('完整報告全文'),
+    name: 'Prompt requires summary JSON',
+    pass: page.includes('summary JSON') && page.includes('summary.location') && page.includes('summary.price'),
   },
   {
     name: 'Prompt limits report to 01-12 owner briefing',
