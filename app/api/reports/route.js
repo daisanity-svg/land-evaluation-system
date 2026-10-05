@@ -88,6 +88,13 @@ function validateTemplate(reportText) {
     fields.forEach((field) => { if (!hasTemplateField(sections[heading], field)) missing.push(`${heading}／${field}`); });
   });
   const priceSection = sections['09｜價格預判'];
+  const caseSection = sections['08｜競案分級與市場行情'];
+  const caseBlocks = caseSection.split(/^\s*競案[一二三四五六七八九十0-9]+\s*[｜|]\s*[^\n]+\s*$/m).slice(1);
+  caseBlocks.forEach((block, index) => {
+    ['建設公司', '競案等級', '案子規劃', '屋齡', '成交期間', '成交筆數', '成交價格', '車位類型', '車位價格', '資訊來源', '參考價值'].forEach(field => {
+      if (!new RegExp(`(?:^|\\n)[^\\S\\n]*${escapeRegExp(field)}[^\\S\\n]*[：:][^\\S\\n]*[^\\s\\n][^\\n]*`, 'm').test(block)) missing.push(`08｜競案${index + 1}／${field}`);
+    });
+  });
   const priceCount = (priceSection.match(/建議成交價格\s*[：:]/g) || []).length;
   if (priceCount < 3) missing.push('09｜價格預判／三項建議成交價格');
   const productSection = sections['10｜產品規劃建議'];
@@ -211,6 +218,8 @@ export async function POST(request) {
     const missing = ['report_id', 'client', 'land_number', 'research_date', 'report_text'].filter((key) => !payload[key]);
     if (missing.length) return failure('missing_required_fields', 400, id, report_id, 'Missing required fields.', `Missing: ${missing.join(', ')}`);
     if (!payload.summary) return failure('invalid_summary', 400, id, report_id, 'summary must be a JSON object.', 'The summary field is missing or invalid.');
+    const emptySummary = Object.entries(payload.summary).filter(([, entry]) => !entry).map(([key]) => key);
+    if (emptySummary.length) return failure('invalid_summary', 400, id, report_id, 'summary fields must not be empty.', `請補齊八欄摘要：${emptySummary.join('、')}`);
     const templateMissing = validateTemplate(payload.report_text);
     if (templateMissing.length) {
       return failure('template_incomplete', 422, id, report_id, 'Report template is incomplete.', `請補齊固定欄位後重新呼叫 submitReport：${templateMissing.join('、')}`);
@@ -243,7 +252,9 @@ export async function POST(request) {
     const operation = before.row ? (completeAndMatching(before.row, payload) ? 'existing_verified' : 'updated') : 'created';
     return json({
       success: true, ok: true, saved: true, verified: true, operation,
-      report_id, request_id: id, message: '報告已成功儲存並完成驗證。',
+      source_verification_complete: false,
+      verification_scope: 'stored_payload_consistency',
+      report_id, request_id: id, message: '報告已儲存，回傳內容與資料庫一致；此核對不代表來源已核實。',
     }, operation === 'created' ? 201 : 200);
   } catch (error) {
     return failure('server_error', 500, id, report_id, 'Unexpected server error.', error?.message || 'Server error.');
