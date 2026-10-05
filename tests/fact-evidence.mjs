@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import { assessFactEvidence } from '../lib/factEvidence.mjs';
+const fact = { subject: '桃園市大溪區／測試建案', field: 'residential_price', value: 31, unit: '萬/坪', period: '2026-01-01/2026-06-30', sources: [] };
+const source = { subject: fact.subject, value: 31, unit: fact.unit, period: fact.period, url: 'https://example.com/transaction/1', publisher: '測試官方資料', origin: '測試原始資料集', primary: true, excerpt: '測試來源摘錄：住宅單價31萬/坪', retrieved_at: '2026-10-05T00:00:00Z' };
+const assess = sources => assessFactEvidence({ ...fact, sources }, new Date('2026-10-05T04:00:00Z'));
+assert.equal(assess([source]).status, 'evidence_record_complete');
+assert.equal(assess([]).status, 'blocked');
+assert.equal(assess([{ ...source, subject: '另一個案' }]).status, 'blocked');
+assert.equal(assess([{ ...source, unit: '元/平方米' }]).status, 'blocked');
+assert.equal(assess([{ ...source, period: '2025' }]).status, 'blocked');
+assert.equal(assess([{ ...source, value: 32 }]).status, 'blocked');
+assert.equal(assess([{ ...source, retrieved_at: '2027-01-01' }]).status, 'blocked');
+assert.equal(assess([{ ...source, primary: false }, { ...source, primary: false, url: 'https://another.example.com/repost' }]).status, 'blocked', 'reposts of one original dataset are not independent');
+assert.equal(assess([{ ...source, primary: false }, { ...source, primary: false, origin: '另一獨立資料集' }]).status, 'evidence_record_complete');
+assert.equal(assess([source]).requires_source_review, true, 'metadata alone must not be called verified');
+console.log('Fact evidence identity, units, periods, conflicts and provenance checks passed.');
