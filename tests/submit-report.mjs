@@ -6,9 +6,96 @@ import { GET as getOpenApi } from '../app/api/openapi/route.js';
 process.env.SUPABASE_URL = 'https://test.supabase.co';
 process.env.SUPABASE_SERVICE_ROLE_KEY = 'super-secret-test-key';
 
+const completeReportText = `01｜案件摘要
+配合業主：和峻建設
+調研日期：2026-07-14
+目標地號：善捷段188、189地號
+基地位置：桃園市龜山區
+土地使用分區：住宅區
+基地面積：100坪
+建蔽率：60%
+容積率：200%
+臨路條件：臨主要道路
+初步市場定位：自住市場
+建議價格：30萬／坪
+建議產品：兩房、三房
+初步結論：可評估
+本案快速結論：可行
+
+02｜基地基本條件
+地號｜面積㎡｜面積坪｜備註
+善捷段188地號｜100｜30｜待複核
+
+03｜法規與量體初判
+土地使用分區：住宅區
+建蔽率：60%
+容積率：200%
+
+04｜臨路條件與基地四向現況
+臨路條件：臨主要道路
+東向｜待複核
+南向｜待複核
+西向｜待複核
+北向｜待複核
+
+05｜生活圈與市場定位
+交通通勤：待複核
+生活機能：待複核
+區域條件：待複核
+市場定位：自住市場
+
+06｜學區與里別
+里別：待複核
+基礎教育學區：待複核
+中等教育學區：待複核
+備註：待複核
+
+07｜目標客群判斷
+客群｜購屋動機｜在意條件｜對應產品｜主要抗性
+首購族｜自住｜總價｜兩房｜待複核
+
+08｜競案分級與市場行情
+市場行情總結：待複核
+
+09｜價格預判
+二樓以上住宅：
+建議成交價格：30萬／坪
+店面：
+建議成交價格：40萬／坪
+坡道平面車位：
+建議成交價格：150萬／位
+
+10｜產品規劃建議
+兩房產品：
+建議坪數：24坪
+對應客群：首購族
+總價控制：待複核
+規劃理由：待複核
+三房產品：
+建議坪數：30坪
+對應客群：換屋族
+總價控制：待複核
+規劃理由：待複核
+不建議產品：待複核
+
+11｜銷售優勢與抗性
+銷售優勢：
+1. 區位條件
+銷售抗性：
+1. 待複核
+
+12｜結論
+接案價值：可評估
+市場定位：自住市場
+建議產品：兩房、三房
+建議價格：30萬／坪
+主要抗性：待複核
+下一步建議：待複核
+最終結論：可行`;
+
 const base = {
   report_id: 'report-1', client: '和峻建設', land_number: '善捷段188、189地號', research_date: '2026-07-14',
-  report_text: '01｜案件摘要\n完整報告', summary: { location: '桃園市龜山區', conclusion: '可評估' },
+  report_text: completeReportText, summary: { location: '桃園市龜山區', conclusion: '可評估' },
 };
 const row = (payload = base) => ({ ...payload, summary: { conclusion: '可評估', product: '', price: '', road: '', area: '', zoning: '', land_number: '', location: '桃園市龜山區' }, created_at: '2026-01-01', updated_at: '2026-01-02' });
 const response = (body, status = 200) => new Response(body === null ? '' : JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
@@ -33,7 +120,7 @@ assert.equal(data.operation, 'created'); assert.equal(data.verified, true);
 data = await run('same report resubmitted', async (_url, init = {}) => init.method === 'POST' ? response(null, 200) : response([row()]));
 assert.equal(data.operation, 'existing_verified');
 
-const changed = { ...base, report_text: 'updated report' };
+const changed = { ...base, report_text: completeReportText.replace('最終結論：可行', '最終結論：更新後可行') };
 let reads = 0;
 data = await run('existing report updated', async (_url, init = {}) => {
   if (init.method === 'POST') return response(null, 200);
@@ -43,6 +130,9 @@ assert.equal(data.operation, 'updated');
 
 data = await run('missing report text', async () => { throw new Error('must not fetch'); }, { ...base, report_text: '' }, 400);
 assert.equal(data.status, 'missing_required_fields');
+
+data = await run('incomplete template is rejected before storage', async () => { throw new Error('must not fetch'); }, { ...base, report_text: '01｜案件摘要\n配合業主：和峻建設' }, 422);
+assert.equal(data.status, 'template_incomplete');
 
 data = await run('write failed', async (_url, init = {}) => init.method === 'POST' ? response({ message: 'write failed' }, 500) : response([]), base, 502);
 assert.equal(data.saved, false);
