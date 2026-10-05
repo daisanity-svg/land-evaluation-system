@@ -7,7 +7,7 @@ const functions = ['copyPrompt', 'openGpt', 'checkReturnedReport'].map(name => p
 function context({ popup = true, clipboard = true, blocked = false } = {}) {
   const events = [];
   const ctx = vm.createContext({
-    events, canOpen: true, form: { reportText: '' }, reportId: 'case-1', prompt: 'full', shortPrompt: 'short',
+    events, AbortSignal, buildPrompt: () => 'full', canOpen: true, form: { reportText: '' }, reportId: 'case-1', prompt: 'full', shortPrompt: 'short',
     LAND_PLUGIN_NAME: 'assistant', LAND_MCP_APP_NAME: 'mcp',
     approvedResearchState: () => ({ state: blocked ? 'blocked' : 'none', reason: 'case mismatch' }),
     queryInFlight: { current: false }, activeReportId: { current: 'case-1' },
@@ -52,7 +52,7 @@ for(const value of ['測試業主','測試段1地號','2026-10-05','test-report'
 const short=promptCtx.buildShortPrompt(form,'test-report');
 assert.equal(short,full);
 assert.match(short,/不需另選助手或自訂 GPT/);
-assert.match(page,/gptLink\(prompt\)/);
+assert.match(page,/gptLink\(completePrompt\)/);
 assert.doesNotMatch(page,/gptLink\(shortPrompt\)/);
 console.log('Merged MCP prompt, knowledge guard, case identity and success contract passed.');
 

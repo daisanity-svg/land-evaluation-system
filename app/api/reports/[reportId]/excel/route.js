@@ -1,6 +1,14 @@
+import { resolveLandParcels } from '../../../../../lib/landParcel.js';
 import { buildLandEvaluationExcelBuffer } from '../../../../../lib/landEvaluationExcel.js';
 
 export const runtime = 'nodejs';
+export const maxDuration = 60;
+async function withParcelMap(report) {
+  let parcelLookup=null;
+  try { parcelLookup=await resolveLandParcels(report.land_number); } catch {}
+  return buildLandEvaluationExcelBuffer(report,{parcelLookup});
+}
+
 
 const RAW_SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -67,7 +75,7 @@ export async function GET(_request, { params }) {
       return Response.json({ error: 'Report has no report_text.' }, { status: 422 });
     }
 
-    const buffer = await buildLandEvaluationExcelBuffer(report);
+    const buffer = await withParcelMap(report);
     const filename = safeFileName(`${report.client || '土地評估'}-${report.land_number || reportId}-土地評估簡表-${report.research_date || ''}.xlsx`);
     return excelResponse(buffer, filename || `${reportId}.xlsx`);
   } catch (error) {
@@ -93,7 +101,7 @@ export async function POST(request, { params }) {
       return Response.json({ error: 'report_text is required for direct Excel export.' }, { status: 400 });
     }
 
-    const buffer = await buildLandEvaluationExcelBuffer(report);
+    const buffer = await withParcelMap(report);
     const filename = safeFileName(`${report.client || '土地評估'}-${report.land_number || reportId || '手動貼上'}-土地評估簡表-${report.research_date || ''}.xlsx`);
     return excelResponse(buffer, filename || `${reportId || 'manual'}.xlsx`);
   } catch (error) {

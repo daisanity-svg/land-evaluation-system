@@ -155,3 +155,9 @@ const detailed=await load({report_text:reportText.replace('案子規劃：偉築
 assert.match(detailed.getCell('I19').value,/近半年有效成交筆數：30筆/);
 assert.match(detailed.getCell('I19').value,/銷售率：待複核/);
 console.log('Reference layout, missing-price preservation and explicit source checks passed.');
+
+const linkedBuffer=await buildLandEvaluationExcelBuffer({report_text:reportText},{parcelLookup:{official_map_url:'https://maps.nlsc.gov.tw/goland/F/195201110000/EMAP_B/DMAPS'}});
+const linkedWorkbook=new ExcelJS.Workbook();await linkedWorkbook.xlsx.load(linkedBuffer);
+assert.equal(linkedWorkbook.worksheets[0].getCell('A34').value.hyperlink,'https://maps.nlsc.gov.tw/goland/F/195201110000/EMAP_B/DMAPS');
+assert.match(linkedWorkbook.worksheets[0].getCell('A34').value.text,/尚未核實/);
+assert.equal(linkedWorkbook.worksheets[0].getImages().length,0,'no historical or fabricated map image');
