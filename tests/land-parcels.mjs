@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {resolveLandParcels} from '../lib/landParcel.js';
+const xml={ListCounty:'<countyItem><countyname>新北市</countyname><countycode>F</countycode></countyItem>', 'ListTown/F':'<townItem><townname>鶯歌區</townname><towncode>F16</towncode></townItem>', 'ListLandSection/F/F16':'<sectItem><sectstr>鳳鳴段</sectstr><sectcode>1952</sectcode></sectItem><sectItem><sectstr>鶯歌段牛灶坑小段</sectstr><sectcode>0096</sectcode></sectItem>'};
+const fetcher=async url=>new Response(xml[url.replace('https://api.nlsc.gov.tw/other/','')]||'',{status:200});
+const one=await resolveLandParcels('新北市鶯歌區鳳鳴段１１１地號',fetcher);
+assert.equal(one.parcels[0].parcel_code,'195201110000');
+assert.equal(one.official_map_url,'https://maps.nlsc.gov.tw/goland/F/195201110000/EMAP_B/DMAPS');
+assert.equal(one.geometry_verified,false);assert.equal(one.parcel_existence_verified,false);
+const multiple=await resolveLandParcels('新北市 鶯歌區 鳳鳴段111、112-1；鶯歌段牛灶坑小段99地號',fetcher);
+assert.deepEqual(multiple.parcels.map(p=>p.parcel_code),['195201110000','195201120001','009600990000']);
+for(const input of ['鳳鳴段111','新北市鳳鳴段111','新北市鶯歌區鶯歌段111','新北市鶯歌區鳳鳴段99999','新北市鶯歌區鳳鳴段111、111','新北市鶯歌區鳳鳴段111至113','新北市鶯歌區鳳鳴段0','新北市鶯歌區鳳鳴段111未知地段112'])await assert.rejects(()=>resolveLandParcels(input,fetcher));
+await assert.rejects(()=>resolveLandParcels('新北市鶯歌區鳳鳴段111',async()=>{throw Error('timeout');}),e=>e.code==='official_service_unavailable');
+console.log('Parcel identity, child numbers, multiple sections and fail-closed checks passed.');
