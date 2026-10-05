@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import { RESEARCH_WORKFLOW } from '../lib/researchWorkflow.mjs';
 const root = 'plugins/gpt-c654e4b1b7bd2dea116bb34f4c3580ae';
 const manifest = JSON.parse(fs.readFileSync(`${root}/plugin.json`));
 const compatibility = JSON.parse(fs.readFileSync(`${root}/.codex-plugin/plugin.json`));
@@ -17,14 +18,17 @@ for (const field of ['建設公司','競案等級','案子規劃','屋齡','成�
 const page = fs.readFileSync('app/page.jsx', 'utf8');
 const lines = page.split('\n');
 const code = lines.filter(l => /^const (LAND_PLUGIN_NAME|LAND_MCP_APP_NAME|SECTIONS|today) =/.test(l)).join('\n') + '\n' + lines.find(l => l.startsWith('function buildPrompt(form,')) + '\n' + lines.find(l => l.startsWith('function buildShortPrompt(form,'));
-const ctx = vm.createContext({ Intl, Date });
+const ctx = vm.createContext({ Intl, Date, RESEARCH_WORKFLOW });
 vm.runInContext(code, ctx);
 const form = { client:'測試業主',landNumber:'測試段1地號',researchDate:'2026-10-05' };
 const prompt = ctx.buildPrompt(form,'test-id');
 const short = ctx.buildShortPrompt(form,'test-id');
-assert.ok(prompt.includes(manifest.extensions['com.openai'].interface.displayName));
+assert.match(prompt, /本次只需選取「海悅土地評估 MCP」/);
+assert.match(prompt, /getResearchInstructions/);
+assert.ok(prompt.includes(RESEARCH_WORKFLOW));
+assert.match(prompt, /不代表來源真實性已核實/);
 assert.match(prompt, /先確認實際有 submitReport/);
-assert.match(short, /不能選自訂 GPT|不要選自訂 GPT/);
+assert.match(short, /不需另選助手或自訂 GPT/);
 assert.doesNotMatch(prompt, /必須同時使用/);
 assert.match(short, /收到完整指令前不得開始調研/);
 assert.match(page, /plugin_4361afa1dd688191ad76ec70484ab8e6/);
