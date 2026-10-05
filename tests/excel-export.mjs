@@ -87,4 +87,47 @@ const threeCaseSheet = await load({ research_date: '2026-05-29', report_text: th
 assert.equal(threeCaseSheet.getCell('C21').value, '閱讀台灣');
 assert.equal(threeCaseSheet.getCell('C22').value, null, 'three valid competitors must not be padded to four');
 
+// The MCP workflow may return the same facts in a narrative, rather than the old
+// fixed-field template. Those facts must still populate the existing workbook.
+const narrativeReport = `01｜案件摘要
+配合業主：弘峻建設
+調研日期：2026-10-04
+目標地號：桃園市大溪區田心子段下田心子小段 1994-0000、1994-0001
+基地位置：桃園市大溪區田心子段
+土地使用分區：住宅區
+基地面積：約1,240坪
+
+03｜法規條件
+本案初判建蔽率60%、容積率200%。
+
+04｜基地四向與道路
+南側臨東和路，作為主要出入動線；其餘三側為既有住宅與農地。
+
+05｜生活圈與公共設施
+本案屬大溪市區成熟生活圈，周邊有市場、學校與公園，採買及日常生活便利。
+
+08｜競案分級與市場行情
+競案一｜宜誠天匯
+案子規劃：宜誠建設，預售案，規劃2～3房、25～38坪
+屋齡／進度：2026年完工
+近一年成交：共38筆
+成交價格：住宅約31～35萬／坪；坡道平面車位約160萬元
+市場行情：大溪市區新案成交主流約31～35萬／坪。
+
+10｜產品建議
+2房：25～28坪，鎖定首購與在地就業客。
+3房：35～38坪，鎖定換屋家庭。
+`;
+const narrativeSheet = await load({ research_date: '2026-10-04', report_text: narrativeReport });
+assert.equal(narrativeSheet.getCell('B5').value, '60%');
+assert.equal(narrativeSheet.getCell('F5').value, '200%');
+assert.match(narrativeSheet.getCell('C11').value, /南側臨東和路/);
+assert.match(narrativeSheet.getCell('B13').value, /東和路/);
+assert.match(narrativeSheet.getCell('B14').value, /成熟生活圈/);
+assert.match(narrativeSheet.getCell('B15').value, /市場/);
+assert.match(narrativeSheet.getCell('B16').value, /31～35/);
+assert.match(narrativeSheet.getCell('B17').value, /2房/);
+assert.equal(narrativeSheet.getCell('D19').value, '2026年完工');
+assert.equal(narrativeSheet.getCell('J19').value, '近一年成交38筆');
+
 console.log('Excel export mapping tests passed.');
