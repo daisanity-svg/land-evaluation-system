@@ -15,7 +15,7 @@ const checks = [
   },
   {
     name: 'Prompt limits report to 01-12 owner briefing',
-    pass: page.includes('01｜案件摘要') && page.includes('12｜結論') && page.includes('不要輸出風險分級'),
+    pass: page.includes('01｜案件摘要') && page.includes('12｜結論') && /不要輸出[「"]?風險分級/.test(page),
   },
   {
     name: 'Report ID is hidden from visible input UI',
@@ -88,7 +88,7 @@ const checks = [
     pass: globalCss.includes('.hero-panel')
       && globalCss.includes('.input-panel')
       && globalCss.includes('.paste-area')
-      && globalCss.includes('display:none!important'),
+      && /display\s*:\s*none\s*!important/.test(globalCss),
   },
   {
     name: 'Reading hierarchy CSS exists in owner stylesheet',

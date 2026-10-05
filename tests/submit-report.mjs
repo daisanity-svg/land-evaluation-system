@@ -95,9 +95,9 @@ const completeReportText = `01｜案件摘要
 
 const base = {
   report_id: 'report-1', client: '和峻建設', land_number: '善捷段188、189地號', research_date: '2026-07-14',
-  report_text: completeReportText, summary: { location: '桃園市龜山區', conclusion: '可評估' },
+  report_text: completeReportText, summary: { location: '桃園市龜山區', land_number: '善捷段188、189地號', zoning: '住宅區', area: '100坪', road: '臨主要道路', price: '30萬／坪', product: '兩房、三房', conclusion: '可評估' },
 };
-const row = (payload = base) => ({ ...payload, summary: { conclusion: '可評估', product: '', price: '', road: '', area: '', zoning: '', land_number: '', location: '桃園市龜山區' }, created_at: '2026-01-01', updated_at: '2026-01-02' });
+const row = (payload = base) => ({ ...payload, created_at: '2026-01-01', updated_at: '2026-01-02' });
 const response = (body, status = 200) => new Response(body === null ? '' : JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const request = (payload) => new Request('https://local/api/reports', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
 
@@ -117,7 +117,9 @@ let data = await run('new report', async (_url, init = {}) => {
 }, base, 201);
 assert.equal(data.operation, 'created'); assert.equal(data.verified, true);
 
-data = await run('same report resubmitted', async (_url, init = {}) => init.method === 'POST' ? response(null, 200) : response([row()]));
+calls = 0;
+data = await run('same report resubmitted', async (_url, init = {}) => { calls++; assert.notEqual(init.method, 'POST'); return response([row()]); });
+assert.equal(calls, 1);
 assert.equal(data.operation, 'existing_verified');
 
 const changed = { ...base, report_text: completeReportText.replace('最終結論：可行', '最終結論：更新後可行') };
@@ -185,4 +187,22 @@ assert.ok(spec.paths['/api/reports'].post.responses['500']);
 assert.ok(spec.paths['/api/reports'].post.responses['502']);
 assert.ok(spec.paths['/api/reports/{reportId}/status']);
 
+for (const [name, change, status] of [
+  ['empty summary', { summary: { ...base.summary, price: '' } }, 'invalid_summary'],
+  ['wrong case', { client: '其他業主' }, 'case_mismatch'],
+  ['wrong summary parcel', { summary: { ...base.summary, land_number: '他段1地號' } }, 'case_mismatch'],
+  ['blank required value', { report_text: completeReportText.replace('容積率：200%', '容積率：') }, 'template_incomplete'],
+  ['duplicate heading', { report_text: completeReportText + '\n12｜結論\n最終結論：可行' }, 'template_incomplete'],
+]) {
+  const result = await run(name, async () => { throw Error('must not access database'); }, { ...base, ...change }, 422);
+  assert.equal(result.status, status);
+}
+const card = name => `競案一｜${name}\n建設公司：測試建商\n競案等級：直接競案\n案子規劃：測試規劃\n屋齡：新屋\n成交期間：2026-01至2026-06\n成交筆數：3\n成交價格：測試數值\n車位類型：坡道平面\n車位價格：待複核\n資訊來源：https://example.org/records\n`;
+for (const [name, cards] of [
+  ['duplicate competitors', card('測試建案') + card('測試建案')],
+  ['missing competitor field', card('測試建案').replace('建設公司：測試建商', '建設公司：')],
+]) {
+  const result = await run(name, async () => { throw Error('must not access database'); }, { ...base, report_text: completeReportText.replace('市場行情總結：待複核', cards + '市場行情總結：待複核') }, 422);
+  assert.equal(result.status, 'template_incomplete');
+}
 console.log('All submitReport verification tests passed.');

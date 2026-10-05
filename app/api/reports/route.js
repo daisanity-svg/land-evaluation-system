@@ -82,10 +82,31 @@ function hasTemplateField(section, field) {
 function validateTemplate(reportText) {
   const sections = splitReportSections(reportText);
   const missing = [];
+  const headings = Array.from(String(reportText || '').matchAll(/^\s*(\d{2})\s*[｜|]\s*([^\n]+?)\s*$/gm)).map(m => `${m[1]}｜${m[2].trim()}`);
+  if (JSON.stringify(headings) !== JSON.stringify(REQUIRED_SECTIONS)) missing.push('章節必須完整、依序且不得重複');
+  if (/```|^\s*#{1,6}\s/m.test(reportText)) missing.push('報告必須是純文字，不可有程式碼區塊或 Markdown 標題');
   REQUIRED_SECTIONS.forEach((heading) => { if (!sections[heading]) missing.push(heading); });
   if (missing.length) return missing;
   Object.entries(REQUIRED_TEMPLATE_FIELDS).forEach(([heading, fields]) => {
     fields.forEach((field) => { if (!hasTemplateField(sections[heading], field)) missing.push(`${heading}／${field}`); });
+  });
+  for (const heading of ['01｜案件摘要', '03｜法規與量體初判', '05｜生活圈與市場定位', '06｜學區與里別', '12｜結論']) {
+    for (const field of REQUIRED_TEMPLATE_FIELDS[heading]) {
+      const match = sections[heading].match(new RegExp(`(?:^|\\n)\\s*${escapeRegExp(field)}\\s*[：:]([^\\n]*)`));
+      if (match && !match[1].trim()) missing.push(`${heading}／${field}不可空白`);
+    }
+  }
+  const competitors = Array.from(sections['08｜競案分級與市場行情'].matchAll(/^\s*競案[一二三四五六七八九十0-9]+\s*[｜|]\s*([^\n]+)\s*$/gm));
+  const names = new Set();
+  competitors.forEach((match, index) => {
+    const name = match[1].normalize('NFKC').replace(/\s/g, '');
+    if (names.has(name)) missing.push(`08／重複競案：${name}`);
+    names.add(name);
+    const body = sections['08｜競案分級與市場行情'].slice(match.index + match[0].length, competitors[index + 1]?.index ?? undefined).split(/市場行情總結\s*[：:]/)[0];
+    for (const field of ['建設公司', '競案等級', '案子規劃', '屋齡', '成交期間', '成交筆數', '成交價格', '車位類型', '車位價格', '資訊來源']) {
+      const value = body.match(new RegExp(`(?:^|\\n)\\s*${escapeRegExp(field)}\\s*[：:]([^\\n]*)`));
+      if (!value || !value[1].trim()) missing.push(`08／${name}／${field}不可缺漏或空白`);
+    }
   });
   const priceSection = sections['09｜價格預判'];
   const priceCount = (priceSection.match(/建議成交價格\s*[：:]/g) || []).length;
@@ -211,10 +232,19 @@ export async function POST(request) {
     const missing = ['report_id', 'client', 'land_number', 'research_date', 'report_text'].filter((key) => !payload[key]);
     if (missing.length) return failure('missing_required_fields', 400, id, report_id, 'Missing required fields.', `Missing: ${missing.join(', ')}`);
     if (!payload.summary) return failure('invalid_summary', 400, id, report_id, 'summary must be a JSON object.', 'The summary field is missing or invalid.');
+    const emptySummary = Object.keys(payload.summary).filter(key => !payload.summary[key]);
+    if (emptySummary.length) return failure('invalid_summary', 422, id, report_id, '摘要欄位不可空白。', emptySummary.join('、'));
     const templateMissing = validateTemplate(payload.report_text);
     if (templateMissing.length) {
       return failure('template_incomplete', 422, id, report_id, 'Report template is incomplete.', `請補齊固定欄位後重新呼叫 submitReport：${templateMissing.join('、')}`);
     }
+    const identityText = text => String(text || '').normalize('NFKC').replace(/\s/g, '');
+    const section01 = splitReportSections(payload.report_text)['01｜案件摘要'];
+    for (const [label, key] of [['配合業主', 'client'], ['調研日期', 'research_date'], ['目標地號', 'land_number']]) {
+      const reported = section01.match(new RegExp(`(?:^|\\n)\\s*${label}\\s*[：:]([^\\n]*)`))?.[1];
+      if (identityText(reported) !== identityText(payload[key])) return failure('case_mismatch', 422, id, report_id, '報告案件資料與送件主鍵不一致。', label);
+    }
+    if (identityText(payload.summary.land_number) !== identityText(payload.land_number)) return failure('case_mismatch', 422, id, report_id, '摘要地號與送件地號不一致。', 'summary.land_number');
 
     const { baseUrl, key } = config();
     if (!baseUrl || !key) return failure('missing_config', 500, id, report_id, 'Supabase environment variables are not configured.', 'SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.');
@@ -223,6 +253,10 @@ export async function POST(request) {
     if (!before.response.ok) {
       const upstream = [401, 403].includes(before.response.status) ? before.response.status : 502;
       return failure('supabase_read_failed', upstream, id, report_id, 'Failed to inspect existing report.', before.data);
+    }
+
+    if (completeAndMatching(before.row, payload)) {
+      return json({ success: true, ok: true, saved: true, verified: true, operation: 'existing_verified', report_id, request_id: id, message: '相同報告已存在且完成驗證，未重複寫入。' }, 200);
     }
 
     const write = await upsertWithRetry(payload);
