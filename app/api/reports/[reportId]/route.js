@@ -1,3 +1,4 @@
+import { assessReportQuality } from '../../../../lib/reportQuality.mjs';
 export const runtime = 'nodejs';
 
 const RAW_SUPABASE_URL = process.env.SUPABASE_URL;
@@ -49,7 +50,7 @@ export async function GET(_request, { params }) {
       return Response.json({ error: 'Report not found.' }, { status: 404 });
     }
 
-    return Response.json({ report: data[0] });
+    return Response.json({ report: data[0], report_quality: assessReportQuality(data[0]) });
   } catch (error) {
     return Response.json({ error: error.message || 'Server error.' }, { status: 500 });
   }

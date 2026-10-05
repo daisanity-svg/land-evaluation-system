@@ -1,3 +1,4 @@
+import { assessReportQuality } from '../../../lib/reportQuality.mjs';
 export const runtime = 'nodejs';
 
 const JSON_HEADERS = {
@@ -225,6 +226,9 @@ export async function POST(request) {
       return failure('template_incomplete', 422, id, report_id, 'Report template is incomplete.', `請補齊固定欄位後重新呼叫 submitReport：${templateMissing.join('、')}`);
     }
 
+    const reportQuality = assessReportQuality(payload);
+    if(reportQuality.conflicts.length) return failure('report_inconsistent',422,id,report_id,'Report values conflict.',reportQuality.conflicts.join('；'));
+
     const { baseUrl, key } = config();
     if (!baseUrl || !key) return failure('missing_config', 500, id, report_id, 'Supabase environment variables are not configured.', 'SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required.');
 
@@ -253,6 +257,7 @@ export async function POST(request) {
     return json({
       success: true, ok: true, saved: true, verified: true, operation,
       source_verification_complete: false,
+      report_quality: reportQuality,
       verification_scope: 'stored_payload_consistency',
       report_id, request_id: id, message: '報告已儲存，回傳內容與資料庫一致；此核對不代表來源已核實。',
     }, operation === 'created' ? 201 : 200);
