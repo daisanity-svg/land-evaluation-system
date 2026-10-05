@@ -10,6 +10,7 @@ function competitor(index, name, builder, parking, count, age = '預售，2025�
 成交期間：近一年
 成交筆數：${count}筆
 成交價格：住宅約60萬／坪；坡道平面車位約${parking}萬元
+資訊來源：實價登錄
 參考價值：有效比較案例。`;
 }
 
@@ -139,3 +140,18 @@ assert.match(fixedTemplateSheet.getCell('B17').value, /建議坪數：24～26坪
 assert.match(fixedTemplateSheet.getCell('B17').value, /建議坪數：30～34坪/);
 
 console.log('Excel export mapping tests passed.');
+
+const unknownPriceReport=reportText.replace('建議成交價格：58萬／坪','建議成交價格：待複核；2026年資料不足3筆').replace('建議成交價格：68萬／坪','建議成交價格：待複核').replace('建議成交價格：210萬／位','建議成交價格：不適用');
+const unknownSheet=await load({report_text:unknownPriceReport});
+assert.equal(unknownSheet.getCell('D23').value,'待複核');
+assert.equal(unknownSheet.getCell('H23').value,'待複核');
+assert.equal(unknownSheet.getCell('H24').value,'不適用');
+assert.equal(unknownSheet.pageSetup.orientation,'portrait');
+assert.equal(unknownSheet.getColumn(1).width,14.3984375);
+assert.ok(unknownSheet.model.merges.includes('A34:J46'));
+const noSource=await load({report_text:reportText.replaceAll('資訊來源：實價登錄\n','')});
+assert.equal(noSource.getCell('I19').value,'待複核','numbers must never imply a verified original source');
+const detailed=await load({report_text:reportText.replace('案子規劃：偉築建設','房型：2-3房\n坪數：29-42坪\n全案有效成交筆數：167筆\n近半年有效成交筆數：30筆（2026年4月至9月）\n銷售率：待複核；可售戶數未確認\n月均成交量：5筆\n案子規劃：偉築建設')});
+assert.match(detailed.getCell('I19').value,/近半年有效成交筆數：30筆/);
+assert.match(detailed.getCell('I19').value,/銷售率：待複核/);
+console.log('Reference layout, missing-price preservation and explicit source checks passed.');

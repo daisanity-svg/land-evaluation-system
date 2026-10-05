@@ -95,9 +95,9 @@ const completeReportText = `01｜案件摘要
 
 const base = {
   report_id: 'report-1', client: '和峻建設', land_number: '善捷段188、189地號', research_date: '2026-07-14',
-  report_text: completeReportText, summary: { location: '桃園市龜山區', conclusion: '可評估' },
+  report_text: completeReportText, summary: { location: '桃園市龜山區', land_number: '善捷段188、189地號', zoning: '住宅區', area: '100坪', road: '臨主要道路', price: '30萬／坪', product: '兩房、三房', conclusion: '可評估' },
 };
-const row = (payload = base) => ({ ...payload, summary: { conclusion: '可評估', product: '', price: '', road: '', area: '', zoning: '', land_number: '', location: '桃園市龜山區' }, created_at: '2026-01-01', updated_at: '2026-01-02' });
+const row = (payload = base) => ({ ...payload, summary: { ...payload.summary }, created_at: '2026-01-01', updated_at: '2026-01-02' });
 const response = (body, status = 200) => new Response(body === null ? '' : JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
 const request = (payload) => new Request('https://local/api/reports', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) });
 
@@ -133,6 +133,11 @@ assert.equal(data.status, 'missing_required_fields');
 
 data = await run('incomplete template is rejected before storage', async () => { throw new Error('must not fetch'); }, { ...base, report_text: '01｜案件摘要\n配合業主：和峻建設' }, 422);
 assert.equal(data.status, 'template_incomplete');
+data = await run('case fields cannot be omitted', async () => { throw new Error('must not fetch'); }, { ...base, report_text: completeReportText.replace('市場行情總結：待複核', '競案一｜測試案\n成交價格：待複核\n市場行情總結：待複核') }, 422);
+assert.equal(data.status, 'template_incomplete');
+assert.match(data.detail, /建設公司/);
+data = await run('empty summary cannot be saved', async () => { throw new Error('must not fetch'); }, { ...base, summary: { ...base.summary, price: '' } }, 400);
+assert.equal(data.status, 'invalid_summary');
 
 data = await run('write failed', async (_url, init = {}) => init.method === 'POST' ? response({ message: 'write failed' }, 500) : response([]), base, 502);
 assert.equal(data.saved, false);
