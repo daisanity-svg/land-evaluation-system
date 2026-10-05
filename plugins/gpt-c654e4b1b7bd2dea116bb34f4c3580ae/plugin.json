@@ -1,0 +1,26 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "gpt-c654e4b1b7bd2dea116bb34f4c3580ae",
+  "version": "0.20.6",
+  "description": "外掛版土地評估調研流程，包含核實規則、固定報告格式及海悅土地評估 MCP 回傳 App。",
+  "author": {
+    "name": "丸獸品牌整合行銷有限公司"
+  },
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "capabilities": [
+          "Interactive"
+        ],
+        "category": "Education & Research",
+        "defaultPrompt": [],
+        "developerName": "丸獸品牌整合行銷有限公司",
+        "displayName": "海悅土地評估調研助手｜外掛版",
+        "longDescription": "取代舊自訂 GPT 的土地評估調研外掛。依案件與原始來源完成核實、01～12 章報告及八欄摘要；綁定現有海悅土地評估 MCP App，工具可用且儲存驗證成功後才回覆已送件。",
+        "shortDescription": "土地調研外掛版，含 MCP 回傳"
+      },
+      "apps": "./.app.json"
+    }
+  }
+}
+
