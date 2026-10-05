@@ -72,7 +72,7 @@ expectInvalid((candidate) => {
 
 for (const count of [3, 4, 5]) {
   const candidate = clone();
-  while (candidate.competitors.length < count) candidate.competitors.push(structuredClone(candidate.competitors[0]));
+  while (candidate.competitors.length < count) candidate.competitors.push({ ...structuredClone(candidate.competitors[0]), project_name: `測試獨立競案${candidate.competitors.length}` });
   candidate.competitors = candidate.competitors.slice(0, count);
   assert.equal(evaluateResearchQuality(candidate).valid, true, `${count} competitors should pass`);
 }
@@ -89,6 +89,17 @@ declaredMissing.competitors[0].developer = null;
 declaredMissing.competitors[0].parking_price = null;
 declaredMissing.competitors[0].missing_fields.push('developer', 'parking_price');
 assert.equal(evaluateResearchQuality(declaredMissing).valid, true, 'declared missing competitor data should pass');
+
+expectInvalid((candidate) => {
+  candidate.competitors[1].project_name = candidate.competitors[0].project_name;
+}, 'duplicate project');
+
+const invalidPermission = clone();
+invalidPermission.quality_gate.allow_formal_report = true;
+const blockedPermissions = evaluateResearchQuality(invalidPermission);
+assert.equal(blockedPermissions.valid, false);
+assert.equal(blockedPermissions.decisions.allow_formal_report, false);
+assert.equal(blockedPermissions.decisions.allow_definite_price, false);
 
 expectInvalid((candidate) => {
   candidate.competitors[0].developer = null;
