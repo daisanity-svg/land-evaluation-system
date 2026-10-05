@@ -23,7 +23,7 @@ function rpcError(id, code, message) {
 
 const submitTool = {
   name: 'submitReport',
-  description: '儲存土地評估正式業主版報告，並驗證已成功寫入系統。僅在 report_text 已從 01｜案件摘要 至 12｜結論完整完成後呼叫一次。',
+  description: '儲存土地評估正式業主版報告，並驗證已成功寫入系統。僅在 report_text 已從 01｜案件摘要 至 12｜結論完整完成後呼叫一次。套版欄位為強制驗收：每一章的固定欄名均不可省略；無法確認的內容請填「待複核」。若回傳 template_incomplete，必須依缺漏清單補齊後重新呼叫本工具，成功前不得宣稱已送回系統。',
   inputSchema: {
     type: 'object',
     additionalProperties: false,
