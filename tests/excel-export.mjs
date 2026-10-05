@@ -130,4 +130,12 @@ assert.match(narrativeSheet.getCell('B17').value, /2房/);
 assert.equal(narrativeSheet.getCell('D19').value, '2026年完工');
 assert.equal(narrativeSheet.getCell('J19').value, '近一年成交38筆');
 
+const fixedTemplateReport = narrativeReport.replace(
+  `10｜產品建議\n2房：25～28坪，鎖定首購與在地就業客。\n3房：35～38坪，鎖定換屋家庭。`,
+  `10｜產品規劃建議\n兩房產品：\n建議坪數：24～26坪\n對應客群：首購與小家庭\n總價控制：總價可負擔\n規劃理由：提高市場接受度\n\n三房產品：\n建議坪數：30～34坪\n對應客群：在地換屋家庭\n總價控制：避免總價過高\n規劃理由：承接家庭換屋需求\n\n不建議產品：四房大坪數產品。`,
+);
+const fixedTemplateSheet = await load({ research_date: '2026-10-04', report_text: fixedTemplateReport });
+assert.match(fixedTemplateSheet.getCell('B17').value, /建議坪數：24～26坪/);
+assert.match(fixedTemplateSheet.getCell('B17').value, /建議坪數：30～34坪/);
+
 console.log('Excel export mapping tests passed.');
