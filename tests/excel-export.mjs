@@ -162,3 +162,12 @@ const linkedWorkbook=new ExcelJS.Workbook();await linkedWorkbook.xlsx.load(linke
 assert.equal(linkedWorkbook.worksheets[0].getCell('A34').value,null);
 assert.equal(linkedWorkbook.worksheets[0].getImages().length,0);
 assert.equal(linkedWorkbook.worksheets[0].pageSetup.printArea,'A1:J46');
+
+const periodReport=reportText.replace('成交價格：住宅約60萬／坪；坡道平面車位約210萬元','成交價格：均價60萬／坪').replace('資訊來源：實價登錄','車位價格：均價210萬／位\n來源網址：https://market.591.com.tw/example\n統計備註：2026年4月至10月（截至10月6日），住宅成交12筆，均價60萬／坪；坡道平面車位12位，均價210萬元／位。\n資訊來源：591實價登錄');
+const periodSheet=await load({report_text:periodReport});
+assert.match(periodSheet.getCell('J19').value,/2026年4月至10月/);
+assert.match(periodSheet.getCell('J19').value,/住宅成交12筆，均價60/);
+assert.match(String(periodSheet.getCell('I19').note),/https:\/\/market.591.com.tw/);
+assert.equal(periodSheet.getCell('G19').value,'60萬/坪');
+assert.equal(periodSheet.getCell('A34').value,null);
+console.log('Explicit period statistics and traceable source notes passed.');
