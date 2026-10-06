@@ -28,7 +28,7 @@ Excel 簡表不得要求調研助手額外產出 excel_payload。資料來源固
 系統內建模板以 Base64 文字保存於：
 
 ```text
-templates/land-evaluation-template.xlsx.base64
+lib/landEvaluationExcelTemplate.js
 ```
 
 實作 Excel 匯出時，需將 Base64 decode 成 Buffer 後交給 Excel 套件讀取。不得從零建立空白活頁簿，避免欄寬、列高、合併儲存格與版型跑掉。
@@ -178,7 +178,7 @@ GET /api/reports/[reportId]/excel
 1. 用 reportId 到 Supabase `reports` 表查詢該案件。
 2. 讀取 `report_text`。
 3. 解析 report_text。
-4. 讀取並 decode `templates/land-evaluation-template.xlsx.base64`。
+4. 讀取並 decode `lib/landEvaluationExcelTemplate.js`。
 5. 使用 Excel 套件打開模板。
 6. 填入指定儲存格。
 7. 回傳 xlsx 檔案。
@@ -213,3 +213,7 @@ window.location.href = `/api/reports/${encodeURIComponent(reportId)}/excel`;
 5. 綜合評估優勢／劣勢有正確帶入。
 6. 個案參考房型與坪數格式精簡。
 7. 區域圖預留區保持空白。
+
+## 固定版面回歸檢查
+
+每次匯出與內建模板逐格比對 A1:J46 的列高、欄寬、合併區域、字型、框線、底色與對齊；A4 直式、縮放及頁邊距保持模板設定。禁止依內容長度自動加高列高。顯示文字經精簡時，完整原文另保留於該格批註。區域圖 A34:J46 無真實圖則留白。

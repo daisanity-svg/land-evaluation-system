@@ -171,3 +171,24 @@ assert.match(String(periodSheet.getCell('I19').note),/https:\/\/market.591.com.t
 assert.equal(periodSheet.getCell('G19').value,'60萬/坪');
 assert.equal(periodSheet.getCell('A34').value,null);
 console.log('Explicit period statistics and traceable source notes passed.');
+
+// The user's fixed brief must never change its dimensions for longer reports.
+const {LAND_EVALUATION_EXCEL_TEMPLATE_BASE64}=await import('../lib/landEvaluationExcelTemplate.js');
+const templateBook=new ExcelJS.Workbook();await templateBook.xlsx.load(Buffer.from(LAND_EVALUATION_EXCEL_TEMPLATE_BASE64,'base64'));
+const template=templateBook.worksheets[0];
+for (const exported of [sheet,narrativeSheet,fixedTemplateSheet,periodSheet,unknownSheet]) {
+ assert.deepEqual(exported.model.merges.sort(),template.model.merges.sort(),'merged regions must match the fixed template');
+ for(let col=1;col<=12;col++)assert.equal(exported.getColumn(col).width,template.getColumn(col).width,`column ${col} must stay fixed`);
+ for(let row=1;row<=46;row++) {
+  assert.equal(exported.getRow(row).height,template.getRow(row).height,`row ${row} must stay fixed`);
+  for(let col=1;col<=10;col++) {
+   const actual=exported.getCell(row,col),original=template.getCell(row,col);
+   for(const key of ['font','border','fill','alignment'])assert.deepEqual(actual[key],original[key],`cell ${actual.address} ${key} must stay fixed`);
+  }
+ }
+ for(const key of ['orientation','paperSize','scale','fitToWidth','fitToHeight'])assert.equal(exported.pageSetup[key],template.pageSetup[key],`print ${key} must stay fixed`);
+ assert.deepEqual(exported.pageMargins,template.pageMargins);
+ assert.equal(exported.pageSetup.printArea,'A1:J46');
+ assert.equal(exported.getCell('A34').value,null);
+}
+console.log('All fixed row heights, column widths, merges, cell styles, A4 scale and margins match the template.');
