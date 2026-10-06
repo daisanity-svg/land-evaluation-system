@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';
+import {calculateTransactions,auditResearchEvidence,CORE_FIELDS} from '../lib/researchEvidence.mjs';
+const scope={project_id:'test',market_type:'presale',use:'住宅',date_from:'2025-04-01',date_to:'2025-09-30',total_count:3,population_complete:true};
+const row={project_id:'test',market_type:'presale',use:'住宅',status:'valid',special:false,floor:3,date:'2025-05-10',url:'https://lvr.land.moi.gov.tw/record',parking_spaces:1,parking_type:'坡道平面',parking_area_m2:10/.3025};
+const rows=[{...row,id:'a',total_price_wan:1800,building_area_m2:45/.3025,parking_price_wan:200},{...row,id:'b',total_price_wan:2000,building_area_m2:50/.3025,parking_price_wan:250},{...row,id:'c',total_price_wan:1850,building_area_m2:45/.3025,parking_price_wan:250}];
+const result=calculateTransactions(rows,scope);
+assert.equal(result.valid_count,3);assert.equal(result.average_unit_price,45.0595);assert.equal(result.median_unit_price,45.7143);assert.equal(result.parking['坡道平面'].average_price_wan,233.3333);assert.equal(result.calculation_complete,true);
+for(const mutation of [{use:'店面'},{market_type:'resale'},{date:'2024-06-01'},{status:'cancelled'},{status:'corrected'},{status:'unknown'},{special:true},{floor:1},{parking_price_wan:null},{parking_area_m2:null},{total_price_wan:'1800'},{date:'2025-02-30'},{project_id:'other'}]){const bad=calculateTransactions([{...rows[0],...mutation}],{...scope,total_count:1});assert.equal(bad.valid_count,0,JSON.stringify(mutation));}
+assert.equal(calculateTransactions([rows[0],rows[0]],{...scope,total_count:2}).valid_count,1);
+assert.equal(calculateTransactions(rows,{...scope,total_count:100}).calculation_complete,false);
+assert.ok(calculateTransactions([{...rows[0],unit_price_wan_ping:99}],{...scope,total_count:1}).errors.length);
+const sources=[{url:'https://land.tycg.gov.tw/proof',title:'政府原始文件',kind:'official',value:'測試值',accessed_at:'2026-10-06'},{url:'attachment://case/evidence.pdf',title:'本案正式附件',kind:'document',value:'測試值',accessed_at:'2026-10-06'}];
+const evidence={version:1,land_number:'測試段1地號',research_date:'2026-10-06',claims:CORE_FIELDS.map(field=>({field,value:field==='residential_price'?'45.06萬/坪':'測試值',reviewed_by:'primary_agent',reviewed_at:'2026-10-06',sources:sources.map(s=>({...s,value:field==='residential_price'?'45.06萬/坪':'測試值'}))})),transactions:rows,market_scope:scope};
+assert.equal(auditResearchEvidence(evidence).review_record_complete,true);
+const one=structuredClone(evidence);one.claims[0].sources=[sources[0]];one.claims[0].status='已核實';assert.ok(auditResearchEvidence(one).errors.length);assert.equal(auditResearchEvidence(one).claims[0].status,'單一來源');
+const mirror=structuredClone(evidence);mirror.claims[0].sources=sources.map((s,i)=>({...s,url:i?'https://leju.com.tw/record':'https://lvr.land.moi.gov.tw/record',dataset:'transactions'}));assert.equal(auditResearchEvidence(mirror).claims[0].status,'單一來源');
+const conflict=structuredClone(evidence);conflict.claims[0].sources[1].value='其他值';assert.equal(auditResearchEvidence(conflict).claims[0].status,'衝突');
+assert.ok(auditResearchEvidence(evidence,{land_number:'另一地號'}).errors.length);
+assert.ok(auditResearchEvidence(evidence,{report_text:'不包含任何核實值'}).errors.length);
+assert.equal(auditResearchEvidence(evidence).source_verification_complete,false);
+console.log('Evidence provenance, same-source mirrors, case binding, residential filters, parking arithmetic, invalid dates, population coverage and price mismatches passed.');

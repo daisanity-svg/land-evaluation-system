@@ -6,7 +6,7 @@ const page = readFileSync('app/page.jsx', 'utf8');
 const functions = ['copyPrompt', 'openGpt', 'checkReturnedReport'].map(name => page.split('\n').find(line => line.trim().startsWith(`async function ${name}(`))).join('\n');
 function context({ popup = true, clipboard = true, blocked = false } = {}) {
   const events = [];
-  const ctx = vm.createContext({
+  const ctx = vm.createContext({busy:"",setBusy:()=>{},
     events, AbortSignal, buildPrompt: () => 'full', canOpen: true, form: { reportText: '' }, reportId: 'case-1', prompt: 'full', shortPrompt: 'short',
     LAND_PLUGIN_NAME: 'assistant', LAND_MCP_APP_NAME: 'mcp',
     approvedResearchState: () => ({ state: blocked ? 'blocked' : 'none', reason: 'case mismatch' }),
@@ -38,12 +38,12 @@ console.log('Popup timing, clipboard fallback and case guard passed.');
 const workflow = (await import('../lib/researchWorkflow.mjs')).RESEARCH_WORKFLOW;
 const lines=page.split('\n');
 const promptCode=lines.filter(l=>/^const (LAND_MCP_APP_NAME|SECTIONS|today) =/.test(l)).join('\n')+'\n'+lines.find(l=>l.startsWith('function buildPrompt(form,'))+'\n'+lines.find(l=>l.startsWith('function buildShortPrompt(form,'));
-const promptCtx=vm.createContext({Intl,Date,RESEARCH_WORKFLOW:workflow});
+const promptCtx=vm.createContext({busy:"",setBusy:()=>{},Intl,Date,RESEARCH_WORKFLOW:workflow});
 vm.runInContext(promptCode,promptCtx);
 const form={client:'測試業主',landNumber:'測試段1地號',researchDate:'2026-10-05'};
 const full=promptCtx.buildPrompt(form,'test-report');
 assert.match(full,/knowledge_included=true/);
-assert.match(full,/version 1\.4\.0/);
+assert.match(full,/version 1\.5\.0/);
 assert.match(full,/工具缺失或讀取失敗即停止/);
 assert.match(full,/success、saved、verified 均為 true/);
 assert.match(full,/總送件次數不得超過三次/);

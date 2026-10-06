@@ -13,5 +13,5 @@ export default function ParcelLocation({landNumber,onResolved}) {
     return()=>{clearTimeout(timer);controller.abort();};
   },[landNumber]);
   if(!landNumber.trim())return null;
-  return <div className="sync-box no-print" aria-live="polite"><strong>基地地號定位</strong><p>{message}</p>{result&&<><p>{result.parcels.map(p=>`${p.section}${p.land_number}地號（${p.parcel_code}）`).join('、')}</p><a className="fallback-link" href={result.official_map_url} target="_blank" rel="noreferrer">開啟官方地籍圖</a>{'　'}<a className="fallback-link" href={result.official_imagery_url} target="_blank" rel="noreferrer">開啟官方航照圖</a></>}</div>;
+  return <details className="utility-details no-print"><summary>地號核對與官方圖資</summary><div aria-live="polite"><p>{message}</p>{result&&<><p>{result.parcels.map(p=>`${p.section}${p.land_number}地號（${p.parcel_code}）`).join('、')}</p><a className="fallback-link" href={result.official_map_url} target="_blank" rel="noreferrer">開啟官方地籍圖</a>{'　'}<a className="fallback-link" href={result.official_imagery_url} target="_blank" rel="noreferrer">開啟官方航照圖</a></>}</div></details>;
 }

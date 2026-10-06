@@ -48,7 +48,7 @@ export async function GET() {
                         product: { type: 'string' }, conclusion: { type: 'string' },
                       },
                     },
-                    report_text: { type: 'string' },
+                    report_text: { type: 'string' }, research_evidence: {type:'object',description:'內部核實紀錄，與業主正文分開保存'},
                   },
                 },
               },
