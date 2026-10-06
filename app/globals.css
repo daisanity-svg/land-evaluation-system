@@ -57,3 +57,5 @@ button,input,textarea,select{font:inherit}.app-shell{min-height:100vh;padding:28
 @media print{.streamlined-app .hero-panel,.report-controls,.report-empty{display:none!important}.streamlined-app .workflow-grid{display:block}}
 
 .adjustment-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:14px}.utility-details .field{margin:12px 0}@media(max-width:680px){.adjustment-grid{grid-template-columns:1fr}}
+
+.market-summary-card{grid-column:1/-1}
