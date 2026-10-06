@@ -35,3 +35,27 @@ assert.equal(assessReportQuality({...report,report_text:report.report_text.repla
 console.log('Report completeness, inconsistent values and source verification distinction passed.');
 
 assert.ok(!assessReportQuality({...report,report_text:report.report_text.replace('甲路20公尺','計畫道路20公尺，尚未開闢')}).missing_core_fields.includes('臨路條件'));
+
+
+const incomplete=assessReportQuality(report);
+assert.ok(incomplete.missing_core_fields.includes('銷售優勢須有三項具體依據'));
+assert.ok(incomplete.missing_core_fields.includes('個案成交均價與筆數'));
+assert.ok(incomplete.missing_core_fields.includes('區域銷況須引用個案參考'));
+const content=report.report_text.replace('06｜學區與里別',`05｜生活圈與公共設施
+交通動線：甲路銜接乙站，提供聯外與軌道通勤。
+生活機能：丙市場與丁商圈提供日常採買。
+公共建設：戊活動中心營運，己公園開放，庚運動中心提供運動設施。
+06｜學區與里別`).replace('競案一｜甲案','競案一｜甲案\n成交筆數：3筆\n成交價格：住宅均價56萬／坪').replace('市場行情總結：55～58萬／坪','市場行情總結：甲案三筆成交均價56萬／坪').replace('12｜結論',`11｜銷售優勢與抗性
+銷售優勢：
+一、甲路串聯乙站通勤。
+二、丙市場提供採買。
+三、己公園提供休閒。
+銷售抗性：
+一、周邊同型競案供給增加。
+二、區域尖峰道路交通量較大。
+三、換屋總價門檻高於中古產品。
+12｜結論`);
+const completeContent=assessReportQuality({...report,report_text:content});
+for(const field of ['銷售優勢須有三項具體依據','銷售抗性須有三項具體依據','個案成交均價與筆數','區域銷況須引用個案參考'])assert.ok(!completeContent.missing_core_fields.includes(field),field);
+assert.ok(assessReportQuality({...report,report_text:content.replace('己公園提供休閒。','尚無已確認明顯項目。')}).missing_core_fields.includes('銷售優勢須有三項具體依據'));
+console.log('Competitor-based sales narrative, real transaction fields and three substantive SWOT points required for completeness.');

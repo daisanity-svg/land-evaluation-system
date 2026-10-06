@@ -43,7 +43,7 @@ vm.runInContext(promptCode,promptCtx);
 const form={client:'測試業主',landNumber:'測試段1地號',researchDate:'2026-10-05'};
 const full=promptCtx.buildPrompt(form,'test-report');
 assert.match(full,/knowledge_included=true/);
-assert.match(full,/version 1\.5\.0/);
+assert.match(full,/version 1\.6\.0/);
 assert.match(full,/工具缺失或讀取失敗即停止/);
 assert.match(full,/success、saved、verified 均為 true/);
 assert.match(full,/總送件次數不得超過三次/);
@@ -60,3 +60,4 @@ const link=new URL('https://chatgpt.com/?prompt='+encodeURIComponent(full));
 assert.equal(link.searchParams.get('prompt'),full);
 assert.ok(link.href.length<12000,'standard case launch link stays compact');
 console.log('Full prompt URL roundtrip: '+link.href.length+' characters.');
+

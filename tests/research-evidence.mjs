@@ -21,3 +21,20 @@ assert.equal(auditResearchEvidence(evidence).source_verification_complete,false)
 console.log('Evidence provenance, same-source mirrors, case binding, residential filters, parking arithmetic, invalid dates, population coverage and price mismatches passed.');
 
 const planned=structuredClone(evidence);const road=planned.claims.find(c=>c.field==='road');road.value='計畫道路20公尺，尚未開闢';road.sources.forEach(s=>s.value=road.value);assert.equal(auditResearchEvidence(planned).claims.find(c=>c.field==='road').status,'已核實');
+
+
+const monthly=rows.map((r,i)=>({...r,id:'month'+i,date:'2025-05',date_precision:'month'}));
+const monthResult=calculateTransactions(monthly,scope);
+assert.equal(monthResult.valid_count,3);
+assert.equal(monthResult.average_unit_price,result.average_unit_price);
+assert.equal(monthResult.accepted[0].date,'2025-05');
+assert.equal(calculateTransactions(monthly,{...scope,date_from:'2025-05-15'}).valid_count,0);
+assert.equal(calculateTransactions(monthly,{...scope,date_to:'2025-05-15'}).valid_count,0);
+assert.equal(calculateTransactions([{...monthly[0],date:'2025-13'}],scope).valid_count,0);
+const small=calculateTransactions([rows[0]],{...scope,total_count:1});
+assert.ok(small.average_unit_price>0);assert.equal(small.calculation_complete,false);
+assert.match(small.warnings.join(),/可列實際統計值/);
+const mirror591=structuredClone(evidence);
+mirror591.claims[0].sources=sources.map((s,i)=>({...s,url:i?'https://market.591.com.tw/record':'https://www.leju.com.tw/record',dataset:'transactions'}));
+assert.equal(auditResearchEvidence(mirror591).claims[0].status,'單一來源');
+console.log('Month precision, partial-month boundaries, small sample statistics and 591/Leju shared upstream passed.');
