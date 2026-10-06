@@ -192,3 +192,24 @@ for (const exported of [sheet,narrativeSheet,fixedTemplateSheet,periodSheet,unkn
  assert.equal(exported.getCell('A34').value,null);
 }
 console.log('All fixed row heights, column widths, merges, cell styles, A4 scale and margins match the template.');
+
+
+const detailedText=reportText.replace('08｜競案分級與市場行情',`05｜生活圈與公共設施
+交通動線：甲站提供軌道通勤。乙路銜接主要幹道。
+尖峰時段需留意丙路車流。
+生活機能：丁市場提供日常採買。戊商圈有餐飲及金融服務。
+公共建設：己公園已開放。庚活動中心規劃中。
+辛運動中心提供運動設施。
+
+08｜競案分級與市場行情`);
+const detailedEnvironment=await load({report_text:detailedText});
+assert.match(detailedEnvironment.getCell('B13').value,/乙路/);
+assert.match(detailedEnvironment.getCell('B13').value,/丙路/);
+assert.doesNotMatch(detailedEnvironment.getCell('B13').value,/丁市場/);
+assert.match(detailedEnvironment.getCell('B14').value,/戊商圈/);
+assert.doesNotMatch(detailedEnvironment.getCell('B14').value,/己公園/);
+assert.match(detailedEnvironment.getCell('B15').value,/庚活動中心規劃中/);
+assert.match(detailedEnvironment.getCell('B15').value,/辛運動中心/);
+assert.ok(detailedEnvironment.getCell('B28').value);
+assert.ok(detailedEnvironment.getCell('B32').value);
+console.log('Multi-sentence environment paragraphs preserved without mixing fields or changing the fixed template.');
