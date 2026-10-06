@@ -14,11 +14,8 @@ export default function RootLayout({ children }) {
     <html lang="zh-Hant">
       <body>
         {children}
-        <script src="/hiyes-price-adjust.js" defer></script>
-        <script src="/hiyes-site-adjust.js" defer></script>
+        <script src="/report-print.js" defer></script>
         <script src="/pdf-render-cleanup.js" defer></script>
-        <script src="/report-paste-normalize.js" defer></script>
-        <script src="/excel-download.js" defer></script>
         <script src="/title-cleanup.js" defer></script>
       </body>
     </html>

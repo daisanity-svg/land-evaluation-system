@@ -26,7 +26,8 @@ const report={report_text:`01｜案件摘要
 建議成交價格：待複核
 12｜結論
 建議價格：55～58萬／坪`};
-assert.equal(assessReportQuality(report).status,'ready_for_review');
+assert.equal(assessReportQuality(report).status,'preliminary');
+assert.ok(assessReportQuality(report).missing_core_fields.includes('核實紀錄與成交驗算'));
 assert.equal(assessReportQuality(report).source_verification_complete,false);
 assert.equal(assessReportQuality({...report,report_text:report.report_text.replace('建蔽率：60%','建蔽率：50%')}).status,'conflict');
 assert.equal(assessReportQuality({...report,report_text:report.report_text.replace('建議成交價格：55～58','建議成交價格：45')}).status,'conflict');

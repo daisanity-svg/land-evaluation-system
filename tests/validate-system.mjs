@@ -5,7 +5,8 @@ const ownerCss = readFileSync('app/owner-briefing-final.css', 'utf8');
 const globalCss = readFileSync('app/globals.css', 'utf8');
 const layout = readFileSync('app/layout.jsx', 'utf8');
 const pasteNormalizer = readFileSync('public/report-paste-normalize.js', 'utf8');
-const priceAdjust = readFileSync('public/hiyes-price-adjust.js', 'utf8');
+const priceAdjust = readFileSync('lib/reportAdjustments.mjs', 'utf8');
+const adjustmentUi = readFileSync('app/components/ReportAdjustments.jsx','utf8');
 const submitApi = readFileSync('app/api/reports/route.js', 'utf8');
 
 const checks = [
@@ -27,10 +28,10 @@ const checks = [
   },
   {
     name: 'Manual paste fallback normalizes Action JSON',
-    pass: layout.includes('/report-paste-normalize.js')
-      && pasteNormalizer.includes('JSON.parse')
-      && pasteNormalizer.includes('report_text')
-      && pasteNormalizer.includes('reportText')
+    pass: page.includes('function parseReturnedPayload')
+      && page.includes('JSON.parse')
+      && page.includes('body.report_text')
+      && page.includes('body.reportText')
       && page.includes('localStorage'),
   },
   {
@@ -62,15 +63,15 @@ const checks = [
     pass: page.includes("sectionId==='09'")
       && page.includes('二樓以上住宅')
       && page.includes('坡道平面')
-      && priceAdjust.includes("['二樓以上住宅','二樓以上住宅','residential']")
-      && priceAdjust.includes("['坡道平面車位','坡道平面車位','parking']"),
+      && priceAdjust.includes("['residential','二樓以上住宅','萬／坪']")
+      && priceAdjust.includes("['parking','坡道平面車位','萬／位']"),
   },
   {
     name: 'Product contract remains limited to two-room and three-room plans',
     pass: page.includes('產品只寫兩房、三房')
-      && priceAdjust.includes('data-product-field="twoRoomMin"')
-      && priceAdjust.includes('data-product-field="threeRoomMin"')
-      && layout.includes('/hiyes-price-adjust.js'),
+      && adjustmentUi.includes("field('twoRoomMin'")
+      && adjustmentUi.includes("field('threeRoomMin'")
+      && page.includes('<ReportAdjustments'),
   },
   {
     name: 'SWOT renderer prevents chapter 11 from disappearing',

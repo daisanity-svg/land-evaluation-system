@@ -10,4 +10,5 @@ const multiple=await resolveLandParcels('新北市 鶯歌區 鳳鳴段111、112-
 assert.deepEqual(multiple.parcels.map(p=>p.parcel_code),['195201110000','195201120001','009600990000']);
 for(const input of ['鳳鳴段111','新北市鳳鳴段111','新北市鶯歌區鶯歌段111','新北市鶯歌區鳳鳴段99999','新北市鶯歌區鳳鳴段111、111','新北市鶯歌區鳳鳴段111至113','新北市鶯歌區鳳鳴段0','新北市鶯歌區鳳鳴段111未知地段112'])await assert.rejects(()=>resolveLandParcels(input,fetcher));
 await assert.rejects(()=>resolveLandParcels('新北市鶯歌區鳳鳴段111',async()=>{throw Error('timeout');}),e=>e.code==='official_service_unavailable');
+assert.deepEqual((await resolveLandParcels('新北市鶯歌區鳳鳴段111.112地號',fetcher)).parcels.map(p=>p.land_number),['111','112']);
 console.log('Parcel identity, child numbers, multiple sections and fail-closed checks passed.');
