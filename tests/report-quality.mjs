@@ -33,3 +33,5 @@ assert.equal(assessReportQuality({...report,report_text:report.report_text.repla
 assert.equal(assessReportQuality({...report,report_text:report.report_text.replace('建議成交價格：55～58','建議成交價格：45')}).status,'conflict');
 assert.equal(assessReportQuality({...report,report_text:report.report_text.replace('甲國小','待複核')}).status,'preliminary');
 console.log('Report completeness, inconsistent values and source verification distinction passed.');
+
+assert.ok(!assessReportQuality({...report,report_text:report.report_text.replace('甲路20公尺','計畫道路20公尺，尚未開闢')}).missing_core_fields.includes('臨路條件'));

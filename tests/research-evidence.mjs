@@ -19,3 +19,5 @@ assert.ok(auditResearchEvidence(evidence,{land_number:'另一地號'}).errors.le
 assert.ok(auditResearchEvidence(evidence,{report_text:'不包含任何核實值'}).errors.length);
 assert.equal(auditResearchEvidence(evidence).source_verification_complete,false);
 console.log('Evidence provenance, same-source mirrors, case binding, residential filters, parking arithmetic, invalid dates, population coverage and price mismatches passed.');
+
+const planned=structuredClone(evidence);const road=planned.claims.find(c=>c.field==='road');road.value='計畫道路20公尺，尚未開闢';road.sources.forEach(s=>s.value=road.value);assert.equal(auditResearchEvidence(planned).claims.find(c=>c.field==='road').status,'已核實');
