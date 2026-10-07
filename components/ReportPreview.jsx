@@ -19,7 +19,7 @@ const buildReportText = (report) => {
     .map((item, index) => `${index + 1}. ${clean(item.name)}\n類型：${clean(item.type)}\n區位／距離：${clean(item.area)}\n產品規劃：${clean(item.planning)}\n成交／價格資訊：${clean(item.price)}\n參考價值：${clean(item.reference)}\n銷售狀態／資料限制：${clean(item.status)}`)
     .join('\n\n');
 
-  return `海悅廣告　土地評估分析表
+  return `丸獸品牌整合行銷　土地評估分析表
 
 配合業主：
 ${clean(report.basic_info.client)}
@@ -129,10 +129,10 @@ export default function ReportPreview({ report }) {
       <article className="report-paper">
         <div className="report-brand-row">
           <div className="report-brand-lockup">
-            <div className="report-brand-mark">H</div>
+            <div className="report-brand-mark">丸</div>
             <div>
-              <div className="report-brand-title">HIYES</div>
-              <div className="report-brand-subtitle">海悅廣告｜土地評估工作台</div>
+              <div className="report-brand-title">丸獸品牌整合行銷</div>
+              <div className="report-brand-subtitle">丸獸品牌整合行銷｜土地評估工作台</div>
             </div>
           </div>
           <div className="report-brand-side">
@@ -141,7 +141,7 @@ export default function ReportPreview({ report }) {
           </div>
         </div>
         <pre className="text-report">{reportText}</pre>
-        <div className="report-credit">海悅機構｜海宇國際 戴異軒 製</div>
+        <div className="report-credit">丸獸品牌整合行銷 戴異軒 製</div>
       </article>
     </section>
   );

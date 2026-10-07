@@ -3,9 +3,9 @@ export const runtime = 'nodejs';
 const today = new Date().toISOString().slice(0, 10);
 
 const buildPrompt = ({ client, researchDate, landNumber, landPrice, specifiedCases }) => `
-你是海悅廣告土地評估系統的專業代銷土地開發調研助手。
+你是丸獸品牌整合行銷土地評估系統的專業代銷土地開發調研助手。
 
-請依照固定「海悅廣告 土地評估分析表」邏輯，針對以下土地進行完整調研，並輸出可直接作為 PDF 報告正文的繁體中文內容。
+請依照固定「丸獸品牌整合行銷 土地評估分析表」邏輯，針對以下土地進行完整調研，並輸出可直接作為 PDF 報告正文的繁體中文內容。
 
 【使用者輸入】
 配合業主：${client || '待填寫'}
@@ -26,7 +26,7 @@ const buildPrompt = ({ client, researchDate, landNumber, landPrice, specifiedCas
 【固定輸出格式】
 請使用下列欄位順序，不要省略欄位：
 
-海悅廣告　土地評估分析表
+丸獸品牌整合行銷　土地評估分析表
 
 配合業主：
 
