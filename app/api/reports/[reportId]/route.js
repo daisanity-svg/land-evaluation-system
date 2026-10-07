@@ -50,7 +50,7 @@ export async function GET(_request, { params }) {
       return Response.json({ error: 'Report not found.' }, { status: 404 });
     }
 
-    return Response.json({ report: data[0], report_quality: assessReportQuality(data[0]) });
+    return Response.json({ report: data[0], report_quality: assessReportQuality(data[0],{sourceChecks:data[0].summary?._source_checks||[]}) });
   } catch (error) {
     return Response.json({ error: error.message || 'Server error.' }, { status: 500 });
   }
