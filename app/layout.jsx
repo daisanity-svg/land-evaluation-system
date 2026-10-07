@@ -3,6 +3,7 @@ import './print-fix.css';
 import './owner-briefing-final.css';
 import './hiyes-cis-price-adjust.css';
 import './pdf-render-final.css';
+import './company-brand.css';
 
 export const metadata = {
   title: '丸獸品牌整合行銷｜土地評估系統',
@@ -21,3 +22,4 @@ export default function RootLayout({ children }) {
     </html>
   );
 }
+
