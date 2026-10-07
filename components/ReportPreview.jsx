@@ -129,10 +129,10 @@ export default function ReportPreview({ report }) {
       <article className="report-paper">
         <div className="report-brand-row">
           <div className="report-brand-lockup">
-            <div className="report-brand-mark">丸</div>
+            <div className="report-brand-mark company-logo-card"><img src="/company-logo.jpg" alt="丸獸品牌 Logo" className="company-logo" /></div>
             <div>
               <div className="report-brand-title">丸獸品牌整合行銷</div>
-              <div className="report-brand-subtitle">丸獸品牌整合行銷｜土地評估工作台</div>
+              <div className="report-brand-subtitle">土地評估系統</div>
             </div>
           </div>
           <div className="report-brand-side">

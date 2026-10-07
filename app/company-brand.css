@@ -1,0 +1,6 @@
+.company-logo-card{flex:0 0 auto;overflow:hidden;background:#fff!important;border-radius:12px!important;box-shadow:inset 0 0 0 1px rgba(15,106,150,.12)!important}
+.brand-mark.company-logo-card{width:72px;height:64px;padding:4px}
+.company-logo{display:block;width:100%;height:100%;object-fit:contain}
+.report-brand-mark.company-logo-card{width:56px!important;height:48px!important;padding:3px}
+@media(max-width:680px){.hero-topbar{flex-wrap:wrap;gap:12px}.brand-mark.company-logo-card{width:60px;height:54px}}
+@media print{#hiyes-print-report-clone .report-brand-mark.company-logo-card{width:56px!important;height:48px!important;background:#fff!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}}
