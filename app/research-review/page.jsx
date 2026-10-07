@@ -99,9 +99,9 @@ export default function ResearchReviewPage() {
       <section className="hero-panel">
         <div className="hero-topbar">
           <div className="brand-lockup">
-            <div className="brand-mark">H</div>
+            <div className="brand-mark">丸</div>
             <div className="brand-copy">
-              <div className="brand-copy-top">HIYES</div>
+              <div className="brand-copy-top">丸獸品牌整合行銷</div>
               <div className="brand-copy-bottom">土地評估系統｜內部調研驗收台</div>
             </div>
           </div>

@@ -40,8 +40,8 @@
   }
 
   function getPrintTitle() {
-    const title = clean(document.title || '海悅廣告｜土地評估系統');
-    if (!title || title === 'land-evaluation-system') return '海悅廣告｜土地評估系統';
+    const title = clean(document.title || '丸獸品牌整合行銷｜土地評估系統');
+    if (!title || title === 'land-evaluation-system') return '丸獸品牌整合行銷｜土地評估系統';
     return title.replace(/\s*-\s*Google Chrome$/i, '').slice(0, 80);
   }
 
@@ -68,7 +68,7 @@
     footer.className = 'hiyes-native-safe-print-footer';
     footer.innerHTML = `
       <span class="hiyes-print-footer-left">https://land-evaluation-system.vercel.app</span>
-      <span class="hiyes-print-footer-center">海悅廣告｜土地評估系統</span>
+      <span class="hiyes-print-footer-center">丸獸品牌整合行銷｜土地評估系統</span>
       <span class="hiyes-print-footer-right hiyes-print-page-number"></span>
     `;
 
