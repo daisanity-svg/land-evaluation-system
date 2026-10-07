@@ -4,3 +4,7 @@
 .report-brand-mark.company-logo-card{width:56px!important;height:48px!important;padding:3px}
 @media(max-width:680px){.hero-topbar{flex-wrap:wrap;gap:12px}.brand-mark.company-logo-card{width:60px;height:54px}}
 @media print{#hiyes-print-report-clone .report-brand-mark.company-logo-card{width:56px!important;height:48px!important;background:#fff!important;print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+
+.report-case-header{padding:24px 28px 0}.report-case-header .section-heading h2{white-space:normal;overflow-wrap:anywhere}.report-case-header .section-heading{margin-bottom:0}
+@media(max-width:680px){.report-case-header{padding:20px 16px 0}}
+@media print{.report-case-header{break-inside:avoid;break-after:avoid}}
