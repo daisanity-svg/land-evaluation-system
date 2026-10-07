@@ -1,6 +1,8 @@
 import { validateTemplate } from '../../../lib/reportTemplate.mjs';
 import { assessReportQuality } from '../../../lib/reportQuality.mjs';
+import { verifySourcePages } from '../../../lib/sourceVerifier.mjs';
 export const runtime = 'nodejs';
+export const maxDuration=60;
 
 const JSON_HEADERS = {
   'Cache-Control': 'no-store',
@@ -175,7 +177,9 @@ export async function POST(request) {
     const headline = payload.report_text.split(/^\s*02[｜|]/m)[0];
     const readIdentity = key => headline.match(new RegExp(`(?:^|\\n)[ \\t]*${key}[ \\t]*[：:]([^\\n]*)`))?.[1]?.trim()||'';
     if(identity(payload.summary.land_number)!==identity(payload.land_number)||identity(readIdentity('目標地號'))!==identity(payload.land_number)||identity(readIdentity('配合業主'))!==identity(payload.client)||readIdentity('調研日期')!==payload.research_date) return failure('case_mismatch',422,id,report_id,'Report case identity does not match.','正文、摘要與案件的業主、地號及日期必須一致。');
-    const reportQuality = assessReportQuality(payload);
+    const sourceChecks=await verifySourcePages(payload.summary._research_evidence);
+    if(payload.summary._research_evidence)payload.summary._source_checks=sourceChecks;
+    const reportQuality = assessReportQuality(payload,{sourceChecks});
     if(reportQuality.conflicts.length) return failure('report_inconsistent',422,id,report_id,'Report values conflict.',reportQuality.conflicts.join('；'));
 
     const { baseUrl, key } = config();
@@ -216,3 +220,4 @@ export async function POST(request) {
 }
 
 export const _test = { normalizeSummary, completeAndMatching, safeDetail, validateTemplate };
+

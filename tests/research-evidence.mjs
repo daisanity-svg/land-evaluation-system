@@ -11,8 +11,8 @@ assert.equal(calculateTransactions(rows,{...scope,total_count:100}).calculation_
 assert.ok(calculateTransactions([{...rows[0],unit_price_wan_ping:99}],{...scope,total_count:1}).errors.length);
 const sources=[{url:'https://land.tycg.gov.tw/proof',title:'政府原始文件',kind:'official',value:'測試值',accessed_at:'2026-10-06'},{url:'attachment://case/evidence.pdf',title:'本案正式附件',kind:'document',value:'測試值',accessed_at:'2026-10-06'}];
 const evidence={version:1,land_number:'測試段1地號',research_date:'2026-10-06',claims:CORE_FIELDS.map(field=>({field,value:field==='residential_price'?'45.06萬/坪':'測試值',reviewed_by:'primary_agent',reviewed_at:'2026-10-06',sources:sources.map(s=>({...s,value:field==='residential_price'?'45.06萬/坪':'測試值'}))})),transactions:rows,market_scope:scope};
-assert.equal(auditResearchEvidence(evidence).review_record_complete,true);
-const one=structuredClone(evidence);one.claims[0].sources=[sources[0]];one.claims[0].status='已核實';assert.ok(auditResearchEvidence(one).errors.length);assert.equal(auditResearchEvidence(one).claims[0].status,'單一來源');
+assert.equal(auditResearchEvidence(evidence).review_record_complete,false);
+const one=structuredClone(evidence);one.claims[0].sources=[sources[0]];one.claims[0].status='已核實';assert.equal(auditResearchEvidence(one).source_verification_complete,false);assert.equal(auditResearchEvidence(one).claims[0].status,'單一來源');
 const mirror=structuredClone(evidence);mirror.claims[0].sources=sources.map((s,i)=>({...s,url:i?'https://leju.com.tw/record':'https://lvr.land.moi.gov.tw/record',dataset:'transactions'}));assert.equal(auditResearchEvidence(mirror).claims[0].status,'單一來源');
 const conflict=structuredClone(evidence);conflict.claims[0].sources[1].value='其他值';assert.equal(auditResearchEvidence(conflict).claims[0].status,'衝突');
 assert.ok(auditResearchEvidence(evidence,{land_number:'另一地號'}).errors.length);
@@ -20,7 +20,7 @@ assert.ok(auditResearchEvidence(evidence,{report_text:'不包含任何核實值'
 assert.equal(auditResearchEvidence(evidence).source_verification_complete,false);
 console.log('Evidence provenance, same-source mirrors, case binding, residential filters, parking arithmetic, invalid dates, population coverage and price mismatches passed.');
 
-const planned=structuredClone(evidence);const road=planned.claims.find(c=>c.field==='road');road.value='計畫道路20公尺，尚未開闢';road.sources.forEach(s=>s.value=road.value);assert.equal(auditResearchEvidence(planned).claims.find(c=>c.field==='road').status,'已核實');
+const planned=structuredClone(evidence);const road=planned.claims.find(c=>c.field==='road');road.value='計畫道路20公尺，尚未開闢';road.sources.forEach(s=>s.value=road.value);assert.equal(auditResearchEvidence(planned).claims.find(c=>c.field==='road').status,'單一來源');
 
 
 const monthly=rows.map((r,i)=>({...r,id:'month'+i,date:'2025-05',date_precision:'month'}));
