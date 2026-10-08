@@ -2,6 +2,26 @@ import assert from 'node:assert/strict';
 import ExcelJS from 'exceljs';
 import { buildLandEvaluationExcelBuffer } from '../lib/landEvaluationExcel.js';
 
+// Reproduce the cross-case contamination found in the live Taichung browser test.
+const separatedCases = new ExcelJS.Workbook();
+await separatedCases.xlsx.load(await buildLandEvaluationExcelBuffer({report_text: `08｜競案分級與市場行情
+競案一｜遠雄綠美
+案子規劃：兩房22至26坪、三房30至35坪；155戶住家、13戶店面。
+競案二｜華固頂滙
+案子規劃：兩房33坪、三房44／51／53坪；總戶數260戶。
+市場行情總結：遠雄綠美兩房22至26坪、華固頂滙兩房33坪。
+競案三｜未知規劃
+案子規劃：尚未取得。
+市場行情總結：鄰案兩房22至26坪。
+09｜價格預判
+住宅：待複核`}));
+const isolatedSheet = separatedCases.worksheets[0];
+assert.equal(isolatedSheet.getCell('E19').value, '2-3房');
+assert.equal(isolatedSheet.getCell('F19').value, '22-35坪');
+assert.equal(isolatedSheet.getCell('E20').value, '2-3房');
+assert.equal(isolatedSheet.getCell('F20').value, '33-53坪');
+assert.equal(isolatedSheet.getCell('F21').value, '待複核');
+
 function competitor(index, name, builder, parking, count, age = '預售，2025年11月開案') {
   return `競案${index}｜${name}
 競案等級：直接競案
