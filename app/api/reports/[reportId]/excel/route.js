@@ -1,3 +1,4 @@
+import {guardReport,guardUser,accessError,AccessError} from '../../../../../lib/accessControl.mjs';
 import { buildLandEvaluationExcelBuffer } from '../../../../../lib/landEvaluationExcel.js';
 
 export const runtime = 'nodejs';
@@ -44,12 +45,14 @@ async function fetchReport(reportId) {
 
 export async function GET(_request, { params }) {
   try {
+    await guardReport(_request,String((await params)?.reportId||''));
     if (!RAW_SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       return Response.json({ error: 'Supabase environment variables are not configured.' }, { status: 500 });
     }
 
     const routeParams = await params;
     const reportId = String(routeParams?.reportId || '').trim();
+
     if (!reportId) {
       return Response.json({ error: 'reportId is required.' }, { status: 400 });
     }
@@ -71,12 +74,14 @@ export async function GET(_request, { params }) {
     const filename = safeFileName(`${report.client || '土地評估'}-${report.land_number || reportId}-土地評估簡表-${report.research_date || ''}.xlsx`);
     return excelResponse(buffer, filename || `${reportId}.xlsx`);
   } catch (error) {
+    if(error instanceof AccessError)return accessError(error);
     return Response.json({ error: error.message || 'Excel export failed.' }, { status: 500 });
   }
 }
 
 export async function POST(request, { params }) {
   try {
+    await guardUser(request,true);
     const body = await request.json().catch(() => ({}));
     const routeParams = await params;
     const reportId = String(routeParams?.reportId || body.report_id || body.reportId || '').trim();
@@ -97,6 +102,7 @@ export async function POST(request, { params }) {
     const filename = safeFileName(`${report.client || '土地評估'}-${report.land_number || reportId || '手動貼上'}-土地評估簡表-${report.research_date || ''}.xlsx`);
     return excelResponse(buffer, filename || `${reportId || 'manual'}.xlsx`);
   } catch (error) {
+    if(error instanceof AccessError)return accessError(error);
     return Response.json({ error: error.message || 'Excel export failed.' }, { status: 500 });
   }
 }

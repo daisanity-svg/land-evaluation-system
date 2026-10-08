@@ -1,4 +1,6 @@
 import './globals.css';
+import AccessGate from './components/AccessGate.jsx';
+import AccountBar from './components/AccountBar.jsx';
 import './print-fix.css';
 import './owner-briefing-final.css';
 import './hiyes-cis-price-adjust.css';
@@ -14,7 +16,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="zh-Hant">
       <body>
-        {children}
+        <AccountBar />
+        <AccessGate>{children}</AccessGate>
         <script src="/report-print.js" defer></script>
         <script src="/pdf-render-cleanup.js" defer></script>
         <script src="/title-cleanup.js" defer></script>

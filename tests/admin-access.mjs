@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import {getMember,memberCanAccess,authorizeSubmission,hashToken,AccessError} from '../lib/accessControl.mjs';
+import {GET as adminGET,POST as adminPOST} from '../app/api/admin/[resource]/route.js';
+import {GET as reportGET} from '../app/api/reports/[reportId]/route.js';
+import {GET as statusGET} from '../app/api/reports/[reportId]/status/route.js';
+import {GET as excelGET,POST as excelPOST} from '../app/api/reports/[reportId]/excel/route.js';
+process.env.LAND_ACCESS_CONTROL='enabled';process.env.SUPABASE_URL='https://example.supabase.co';process.env.SUPABASE_SERVICE_ROLE_KEY='server-secret';
+const req=(headers={})=>new Request('https://land.example/api/test',{headers});
+let calls=[];globalThis.fetch=async(url,options)=>{calls.push(String(url));throw Error('unexpected network');};
+for(const handler of [reportGET,statusGET,excelGET]){const r=await handler(req(),{params:Promise.resolve({reportId:'case-a'})});assert.equal(r.status,401);}
+assert.equal((await excelPOST(req(),{params:Promise.resolve({reportId:'case-a'})})).status,401);
+assert.equal((await adminGET(req(),{params:Promise.resolve({resource:'users'})})).status,401);assert.equal(calls.length,0);
+assert.equal((await adminPOST(req({origin:'https://attacker.example'}),{params:Promise.resolve({resource:'users'})})).status,403);
+const id='11111111-1111-4111-8111-111111111111';const other='22222222-2222-4222-8222-222222222222';
+let member={email:'owner@example.com',user_id:id,role:'member',status:'active'};let grant=[];let handoff=[];let confirmed=true;
+globalThis.fetch=async(url)=>{const u=String(url);if(u.includes('/auth/v1/user'))return Response.json({id,email:member.email,email_confirmed_at:confirmed?'2026-10-08':null,user_metadata:{role:'admin'}});if(u.includes('land_members'))return Response.json([member]);if(u.includes('land_case_shares'))return Response.json(grant);if(u.includes('land_handoffs'))return Response.json(handoff);if(u.includes('land_cases'))return Response.json([{report_id:'case-a',owner_id:other,client:'業主',land_number:'地號',research_date:'2026-10-08'}]);throw Error('unexpected fetch');};
+const logged=req({cookie:'land_access=verified',origin:'https://land.example'});
+assert.equal((await getMember(logged)).role,'member','user metadata must never grant administrator');
+assert.equal((await adminGET(logged,{params:Promise.resolve({resource:'users'})})).status,403);
+assert.equal((await reportGET(logged,{params:Promise.resolve({reportId:'case-a'})})).status,403);
+grant=[{permission:'view'}];assert.equal(await memberCanAccess(member,{report_id:'case-a',owner_id:other}),true);assert.equal(await memberCanAccess(member,{report_id:'case-a',owner_id:other},true),false);
+member={...member,status:'disabled'};await assert.rejects(()=>getMember(logged),e=>e instanceof AccessError&&e.status===403);member={...member,status:'active'};confirmed=false;await assert.rejects(()=>getMember(logged),e=>e.status===401);confirmed=true;
+const payload={report_id:'case-a',client:'業主',land_number:'地號',research_date:'2026-10-08'};await assert.rejects(()=>authorizeSubmission(req(),payload,null),e=>e.status===401);
+const token='a'.repeat(43);handoff=[{token_hash:hashToken(token),issued_by:id,expires_at:'2000-01-01'}];await assert.rejects(()=>authorizeSubmission(req(),payload,token),e=>e.status===401);
+handoff=[{token_hash:hashToken(token),issued_by:id,expires_at:'2099-01-01',used_at:'2026-10-08'}];await assert.rejects(()=>authorizeSubmission(req(),payload,token),e=>e.status===401);
+await assert.rejects(()=>authorizeSubmission(req(),{...payload,client:'別人'},token),e=>e.status===409);
+console.log('Admin access tests passed: anonymous denial, CSRF, verified email, disabled member, metadata escalation, cross-case access, view-only shares, invalid/expired/reused/bound token.');

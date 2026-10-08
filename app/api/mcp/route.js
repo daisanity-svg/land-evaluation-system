@@ -34,6 +34,7 @@ const submitTool = {
     additionalProperties: false,
     required: ['report_id', 'client', 'land_number', 'research_date', 'summary', 'report_text'],
     properties: {
+      return_token: {type:'string',description:'網站產生的本案一次性回傳憑證；若指令提供，必須原樣帶入，不放入報告或摘要。'},
       report_id: { type: 'string' },
       client: { type: 'string' },
       land_number: { type: 'string' },

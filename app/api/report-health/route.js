@@ -1,3 +1,4 @@
+import {accessControlEnabled,requireAdmin,accessError} from '../../../lib/accessControl.mjs';
 export const runtime = 'nodejs';
 
 const RAW_SUPABASE_URL = process.env.SUPABASE_URL;
@@ -68,7 +69,8 @@ async function checkSupabase() {
   }
 }
 
-export async function GET() {
+export async function GET(request) {
+  if(accessControlEnabled()){try{await requireAdmin(request)}catch(e){return accessError(e)}}
   const supabase = await checkSupabase();
   return json({
     ok: true,
