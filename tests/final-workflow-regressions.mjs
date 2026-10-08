@@ -34,7 +34,7 @@ const point='甲道路交通便利，有助吸引通勤客群並支持兩房住�
 const strengths=[1,2,3].map(i=>({text:point+i,claim_fields:['same'+i]}));
 content=auditContent({'11':'銷售優勢：\n'+strengths.map((s,i)=>(i+1)+'、'+s.text).join('\n'),'08':''},{content_evidence:{strengths}},strengths.map((s,i)=>({field:'same'+(i+1),value:'甲道路',status:'已核實'})));
 assert.ok(content.missing.includes('銷售優勢三項須各有不同事實與證據'));
-const caseText='競案一｜甲案\n成交期間：2026-04-01至2026-09-30\n成交筆數：3筆\n成交價格：50萬元／坪\n車位類型：坡道平面\n車位價格：200萬元\n競案二｜乙案\n成交期間：2026-04-01至2026-09-30\n成交筆數：3筆\n成交價格：50萬元／坪\n車位類型：坡道平面\n車位價格：200萬元';
+const caseText='競案一｜甲案\n建設公司：甲建設\n案子規劃：2至3房、25至37坪\n屋齡：預售\n成交期間：2026-04-01至2026-09-30\n成交筆數：3筆\n成交價格：50萬元／坪\n車位類型：坡道平面\n車位價格：200萬元\n競案二｜乙案\n建設公司：乙建設\n案子規劃：2至3房、27至40坪\n屋齡：預售\n成交期間：2026-04-01至2026-09-30\n成交筆數：3筆\n成交價格：50萬元／坪\n車位類型：坡道平面\n車位價格：200萬元';
 const group=name=>({case_name:name,market_scope:{project_id:name,market_type:'presale',use:'住宅',date_from:'2026-04-01',date_to:'2026-09-30',population_complete:true,total_count:3},transactions:[1,2,3].map(id=>({id:name+id,project_id:name,market_type:'presale',use:'住宅',date:'2026-05-02',status:'valid',special:false,floor:3,total_price_wan:1700,building_area_m2:40/.3025,parking_area_m2:10/.3025,parking_price_wan:200,parking_spaces:1,parking_type:'坡道平面',url:'https://lvr.land.moi.gov.tw/a'}))});
 const caseClaims=['甲案','乙案'].map(name=>({field:'case_price:'+name,status:'已核實'}));
 content=auditContent({'08':caseText},{comparables:[group('甲案')]},caseClaims);assert.ok(content.missing.includes('乙案逐案成交明細與統計區間'));
@@ -49,3 +49,6 @@ const result=ctx.getSummary(manual,{landNumber:'測試段1地號'});
 assert.equal(result.price,'50萬元／坪');assert.equal(result.product,'兩房25坪、三房35坪。');assert.equal(result.conclusion,'依基地條件採兩房及三房住宅產品。');
 assert.ok(!result.price.includes('01｜'));
 console.log('Five workflow regressions passed: actual source reads, independent origins, evidenced prose/SWOT, every comparable, multiline fields and scoped manual summaries. No database writes.');
+
+const incompleteCase=caseText.replace('案子規劃：2至3房、25至37坪','案子規劃：待複核');
+assert.ok(auditContent({'08':incompleteCase},{comparables:[group('甲案'),group('乙案')]},caseClaims).missing.includes('甲案：房型與規劃坪數尚未補齊'));
