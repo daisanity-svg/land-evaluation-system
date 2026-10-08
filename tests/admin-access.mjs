@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {getMember,memberCanAccess,authorizeSubmission,hashToken,AccessError} from '../lib/accessControl.mjs';
+import {getMember,memberCanAccess,authorizeSubmission,hashToken,AccessError,verificationInput} from '../lib/accessControl.mjs';
 import {GET as adminGET,POST as adminPOST} from '../app/api/admin/[resource]/route.js';
 import {GET as reportGET} from '../app/api/reports/[reportId]/route.js';
 import {GET as statusGET} from '../app/api/reports/[reportId]/status/route.js';
@@ -25,3 +25,8 @@ const token='a'.repeat(43);handoff=[{token_hash:hashToken(token),issued_by:id,ex
 handoff=[{token_hash:hashToken(token),issued_by:id,expires_at:'2099-01-01',used_at:'2026-10-08'}];await assert.rejects(()=>authorizeSubmission(req(),payload,token),e=>e.status===401);
 await assert.rejects(()=>authorizeSubmission(req(),{...payload,client:'別人'},token),e=>e.status===409);
 console.log('Admin access tests passed: anonymous denial, CSRF, verified email, disabled member, metadata escalation, cross-case access, view-only shares, invalid/expired/reused/bound token.');
+
+assert.deepEqual(verificationInput('123456','owner@example.com'),{email:'owner@example.com',token:'123456',type:'email'});
+const link='https://example.supabase.co/auth/v1/verify?token='+ 'b'.repeat(64)+'&type=signup&redirect_to=http://localhost:3000';assert.equal(verificationInput(link,'owner@example.com').token_hash,'b'.repeat(64));
+assert.throws(()=>verificationInput(link.replace('example.supabase.co','attacker.example'),'owner@example.com'));assert.throws(()=>verificationInput(link.replace('type=signup','type=recovery'),'owner@example.com'));
+console.log('Verification code and same-project signup/magiclink handling passed; unrelated URLs and recovery links rejected.');
