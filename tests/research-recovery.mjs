@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import {verifySourcePages,safeSourceUrl,sourceKey} from '../lib/sourceVerifier.mjs';
+import {auditResearchEvidence} from '../lib/researchEvidence.mjs';
+import {buildRecoveryPlan} from '../lib/researchRecovery.mjs';
+import {OWNER_RESEARCH_POLICY} from '../lib/ownerResearchPolicy.mjs';
+const date='2026-10-08';
+const school={field:'junior_school',value:'義學國中',reviewed_by:'primary_agent',reviewed_at:date,sources:[{url:'https://school.ntpc.edu.tw/rule',title:'學区公告',kind:'official',value:'義學國中',accessed_at:date,subject:'貴和里',raw_value:'貴和里33至38鄰為義學國中與丹鳳國中部自由學區'}]};
+const fixture={version:1,land_number:'新北市泰山區新貴段308地號',research_date:date,claims:[school]};
+const fetcher=async()=>new Response(school.sources[0].raw_value,{headers:{'content-type':'text/html'}});
+const reads=await verifySourcePages(fixture,{fetcher});assert.equal(reads[0].verified,true);assert.equal(auditResearchEvidence(fixture,{}, {sourceChecks:reads}).claims[0].status,'單一來源');
+assert.equal(safeSourceUrl('https://school.ntpc.edu.tw.evil.test'),null);
+const area={field:'area',value:'894坪',sources:[{url:'https://a.gov.tw/parcel',subject:'新貴段308地號',raw_value:'新貴段308地號登記面積2955.37平方公尺',calculation:{type:'m2_to_ping',input_m2:2955.37,precision:0}}]};
+const areaFetcher=async()=>new Response(area.sources[0].raw_value,{headers:{'content-type':'text/plain'}});
+assert.equal((await verifySourcePages({claims:[area]},{fetcher:areaFetcher}))[0].verified,true);
+const wrong=structuredClone(area);wrong.value='900坪';assert.equal((await verifySourcePages({claims:[wrong]},{fetcher:areaFetcher}))[0].verified,false);
+const forged=structuredClone(area);forged.sources[0].calculation.input_m2=308;forged.value='93坪';assert.equal((await verifySourcePages({claims:[forged]},{fetcher:areaFetcher}))[0].verified,false,'parcel number cannot be used as square metres');
+assert.notEqual(sourceKey('area','894坪',area.sources[0]),sourceKey('area','894坪',{...area.sources[0],calculation:{...area.sources[0].calculation,input_m2:3000}}));
+const jsonClaim={field:'test',value:'A<B',sources:[{url:'https://a.gov.tw/data',subject:'example',raw_value:'{"subject":"example","value":"A<B","note":"original"}'}]};
+assert.equal((await verifySourcePages({claims:[jsonClaim]},{fetcher:async()=>new Response(jsonClaim.sources[0].raw_value,{headers:{'content-type':'application/json'}})}))[0].verified,true);
+const plan=buildRecoveryPlan(['area','junior_school']);assert.equal(plan.items.length,2);assert.ok(plan.items[0].routes[1].includes('先檢查'));assert.ok(OWNER_RESEARCH_POLICY.startsWith('【全臺通用'));assert.ok(OWNER_RESEARCH_POLICY.includes('非都市土地'));assert.ok(OWNER_RESEARCH_POLICY.includes('沒有面積就改查'));
+console.log('Universal recovery, official school sources, honest single-source status, original JSON and server-checked area conversion passed. All area figures in this test are synthetic fixtures, not verified parcel facts.');
+
+let redirects=0;const redirectReads=await verifySourcePages(fixture,{fetcher:async()=>++redirects===1?new Response(null,{status:302,headers:{location:'/rule-normalized'}}):fetcher()});assert.equal(redirectReads[0].verified,true);assert.equal(redirects,2);
