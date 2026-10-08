@@ -59,3 +59,14 @@ const completeContent=assessReportQuality({...report,report_text:content});
 for(const field of ['銷售優勢須有三項具體依據','銷售抗性須有三項具體依據','個案成交均價與筆數','區域銷況須引用個案參考'])assert.ok(!completeContent.missing_core_fields.includes(field),field);
 assert.ok(assessReportQuality({...report,report_text:content.replace('己公園提供休閒。','尚無已確認明顯項目。')}).missing_core_fields.includes('銷售優勢須有三項具體依據'));
 console.log('Competitor-based sales narrative, real transaction fields and three substantive SWOT points required for completeness.');
+
+// Real historical regressions: inherited base size/frontages in SWOT.
+const fourParcels=report.report_text.replace('100坪','2395坪')+'\n11｜銷售優勢與抗性\n銷售優勢：\n一、擁有約1,810坪的土地面積，適合整體規劃。';
+assert.ok(assessReportQuality({report_text:fourParcels}).conflicts.includes('基地面積在基本資料與綜合評估不一致'));
+const twoFronts=report.report_text.replace('100坪','776坪').replace('甲路20公尺','雙面臨路，甲路及乙路')+'\n11｜銷售優勢與抗性\n銷售優勢：\n一、千坪方正基地，三面臨路利於規劃。';
+const historical=assessReportQuality({report_text:twoFronts});
+assert.ok(historical.conflicts.includes('臨路面數在基地條件與綜合評估不一致'));
+assert.ok(historical.conflicts.includes('基地不足千坪，綜合評估卻描述為千坪基地'));
+const rounded=report.report_text.replace('100坪','2394.93坪')+'\n11｜銷售優勢與抗性\n銷售優勢：\n一、約2395坪基地，有整體規劃空間。\n二、比較案住宅24坪，總價競爭須留意。';
+assert.ok(!assessReportQuality({report_text:rounded}).conflicts.some(x=>x.includes('基地面積')));
+console.log('Historical appraisal base-area and frontage consistency regressions passed.');
