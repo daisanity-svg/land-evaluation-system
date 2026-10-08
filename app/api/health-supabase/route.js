@@ -1,3 +1,4 @@
+import {accessControlEnabled,requireAdmin,accessError} from '../../../lib/accessControl.mjs';
 export const runtime = 'nodejs';
 
 const RAW_SUPABASE_URL = process.env.SUPABASE_URL;
@@ -41,7 +42,8 @@ function safeError(error) {
   };
 }
 
-export async function GET() {
+export async function GET(request) {
+  if(accessControlEnabled()){try{await requireAdmin(request)}catch(e){return accessError(e)}}
   const startedAt = Date.now();
   const result = {
     ok: true,

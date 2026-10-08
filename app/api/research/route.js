@@ -1,3 +1,4 @@
+import {guardUser,AccessError,accessError} from '../../../lib/accessControl.mjs';
 export const runtime = 'nodejs';
 
 const today = new Date().toISOString().slice(0, 10);
@@ -93,6 +94,7 @@ const buildPrompt = ({ client, researchDate, landNumber, landPrice, specifiedCas
 `;
 
 export async function POST(request) {
+  try{await guardUser(request,true)}catch(e){return accessError(e)}
   try {
     const body = await request.json();
     const { client, landNumber } = body;

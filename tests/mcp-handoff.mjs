@@ -7,7 +7,7 @@ const functions = ['copyPrompt', 'openGpt', 'checkReturnedReport'].map(name => p
 function context({ popup = true, clipboard = true, blocked = false } = {}) {
   const events = [];
   const ctx = vm.createContext({busy:"",setBusy:()=>{},
-    events, AbortSignal, buildPrompt: () => 'full', canOpen: true, form: { reportText: '' }, reportId: 'case-1', prompt: 'full', shortPrompt: 'short',
+    events, AbortSignal, authorizeCase:async input=>input, buildPrompt: () => 'full', canOpen: true, form: { reportText: '' }, reportId: 'case-1', prompt: 'full', shortPrompt: 'short',
     LAND_PLUGIN_NAME: 'assistant', LAND_MCP_APP_NAME: 'mcp',
     approvedResearchState: () => ({ state: blocked ? 'blocked' : 'none', reason: 'case mismatch' }),
     queryInFlight: { current: false }, activeReportId: { current: 'case-1' },

@@ -1,0 +1,6 @@
+'use client';
+import {useState} from 'react';
+import '../management.css';
+export default function Login(){const [email,setEmail]=useState(''),[code,setCode]=useState(''),[sent,setSent]=useState(false),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);
+async function submit(e){e.preventDefault();setBusy(true);try{const r=await fetch('/api/auth/'+(sent?'verify':'request'),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,code})});const d=await r.json();if(!r.ok)throw Error(d.error||'登入失敗');if(sent){location.href=d.role==='admin'?'/admin':'/';return;}setSent(true);setMessage(d.message);}catch(e){setMessage(e.message);}finally{setBusy(false);}}
+return <main className="management login-card"><a href="/">丸獸品牌整合行銷 · 土地評估系統</a><h1>帳號登入</h1><p>僅限管理員核准的信箱。收到驗證碼後才可登入。</p><form onSubmit={submit}><label>Email<input type="email" required autoComplete="email" value={email} disabled={sent} onChange={e=>setEmail(e.target.value)}/></label>{sent&&<label>信件驗證碼<input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6,8}" value={code} onChange={e=>setCode(e.target.value)}/></label>}<button disabled={busy}>{busy?'處理中…':sent?'驗證並登入':'寄送驗證碼'}</button>{sent&&<button type="button" className="secondary" onClick={()=>{setSent(false);setCode('');}}>重新輸入信箱</button>}</form><p role="status">{message}</p></main>;}

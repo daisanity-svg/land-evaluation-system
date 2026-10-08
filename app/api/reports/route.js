@@ -1,3 +1,4 @@
+import {authorizeSubmission,controlledSave,AccessError,accessError} from '../../../lib/accessControl.mjs';
 import { validateTemplate } from '../../../lib/reportTemplate.mjs';
 import { assessReportQuality } from '../../../lib/reportQuality.mjs';
 import { verifySourcePages } from '../../../lib/sourceVerifier.mjs';
@@ -177,6 +178,7 @@ export async function POST(request) {
     const headline = payload.report_text.split(/^\s*02[｜|]/m)[0];
     const readIdentity = key => headline.match(new RegExp(`(?:^|\\n)[ \\t]*${key}[ \\t]*[：:]([^\\n]*)`))?.[1]?.trim()||'';
     if(identity(payload.summary.land_number)!==identity(payload.land_number)||identity(readIdentity('目標地號'))!==identity(payload.land_number)||identity(readIdentity('配合業主'))!==identity(payload.client)||readIdentity('調研日期')!==payload.research_date) return failure('case_mismatch',422,id,report_id,'Report case identity does not match.','正文、摘要與案件的業主、地號及日期必須一致。');
+    const authorization=await authorizeSubmission(request,payload,body.return_token);
     const sourceChecks=await verifySourcePages(payload.summary._research_evidence);
     if(payload.summary._research_evidence)payload.summary._source_checks=sourceChecks;
     const reportQuality = assessReportQuality(payload,{sourceChecks});
@@ -191,7 +193,7 @@ export async function POST(request) {
       return failure('supabase_read_failed', upstream, id, report_id, 'Failed to inspect existing report.', before.data);
     }
 
-    const write = await upsertWithRetry(payload);
+    const write = authorization ? (await controlledSave(payload,authorization,reportQuality),{response:{ok:true}}) : await upsertWithRetry(payload);
     if (!write?.response?.ok) {
       const upstream = [401, 403].includes(write?.response?.status) ? write.response.status : 502;
       return failure('supabase_save_failed', upstream, id, report_id, 'Failed to save report.', write?.data);
@@ -215,6 +217,7 @@ export async function POST(request) {
       report_id, request_id: id, message: '報告已儲存，回傳內容與資料庫一致；此核對不代表來源已核實。',
     }, operation === 'created' ? 201 : 200);
   } catch (error) {
+    if(error instanceof AccessError)return accessError(error);
     return failure('server_error', 500, id, report_id, 'Unexpected server error.', error?.message || 'Server error.');
   }
 }

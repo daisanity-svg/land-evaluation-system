@@ -1,0 +1,4 @@
+'use client';
+import {useEffect,useState} from 'react';
+import '../management.css';
+export default function Cases(){const [cases,setCases]=useState([]),[message,setMessage]=useState('正在載入案件…'),[search,setSearch]=useState('');useEffect(()=>{fetch('/api/cases',{cache:'no-store'}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error);setCases(d.cases);setMessage(d.cases.length?'':'尚無案件。');}).catch(e=>setMessage(e.message));},[]);return <main className="management"><a href="/">← 土地評估系統</a><h1>我的案件</h1><p>只列出你的案件及分享給你的案件。</p><input placeholder="搜尋業主或地號" aria-label="搜尋案件" value={search} onChange={e=>setSearch(e.target.value)}/><p role="status">{message}</p>{cases.filter(c=>(c.client+c.land_number).includes(search)).map(c=><div className="card" key={c.report_id}><h2>{c.client}</h2><p>{c.land_number}</p><p>{c.research_date}</p><a href={'/?case='+encodeURIComponent(c.report_id)}>開啟案件</a></div>)}</main>;}

@@ -1,3 +1,4 @@
+import {guardReport,guardUser,accessError,AccessError} from '../../../../../lib/accessControl.mjs';
 export const runtime = 'nodejs';
 
 function config() {
@@ -16,6 +17,7 @@ export async function GET(_request, { params }) {
   if (!baseUrl || !key) return Response.json({ exists: false, report_id: reportId, error: 'Supabase is not configured.' }, { status: 500 });
 
   try {
+    await guardReport(_request,reportId);
     const response = await fetch(`${baseUrl}/rest/v1/reports?report_id=eq.${encodeURIComponent(reportId)}&select=*&limit=1`, {
       headers: { apikey: key, Authorization: `Bearer ${key}` }, cache: 'no-store',
     });
@@ -35,7 +37,8 @@ export async function GET(_request, { params }) {
       created_at: row.created_at || null,
       updated_at: row.updated_at || null,
     }, { headers: { 'Cache-Control': 'no-store' } });
-  } catch {
+  } catch (error) {
+    if(error instanceof AccessError)return accessError(error);
     return Response.json({ exists: false, report_id: reportId, error: 'Report query failed.' }, { status: 500 });
   }
 }

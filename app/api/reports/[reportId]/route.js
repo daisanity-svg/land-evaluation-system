@@ -1,3 +1,4 @@
+import {guardReport,guardUser,accessError,AccessError} from '../../../../lib/accessControl.mjs';
 import { assessReportQuality } from '../../../../lib/reportQuality.mjs';
 export const runtime = 'nodejs';
 
@@ -14,6 +15,7 @@ function getSupabaseRestUrl() {
 
 export async function GET(_request, { params }) {
   try {
+    await guardReport(_request,String((await params)?.reportId||''));
     if (!RAW_SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
       return Response.json(
         { error: 'Supabase environment variables are not configured.' },
@@ -23,6 +25,7 @@ export async function GET(_request, { params }) {
 
     const routeParams = await params;
     const reportId = String(routeParams?.reportId || '').trim();
+
     if (!reportId) {
       return Response.json({ error: 'reportId is required.' }, { status: 400 });
     }
@@ -52,6 +55,7 @@ export async function GET(_request, { params }) {
 
     return Response.json({ report: data[0], report_quality: assessReportQuality(data[0],{sourceChecks:data[0].summary?._source_checks||[]}) });
   } catch (error) {
+    if(error instanceof AccessError)return accessError(error);
     return Response.json({ error: error.message || 'Server error.' }, { status: 500 });
   }
 }
