@@ -48,6 +48,18 @@ const manual='01｜案件摘要\n基地位置：測試位置\n09｜價格\n建�
 const result=ctx.getSummary(manual,{landNumber:'測試段1地號'});
 assert.equal(result.price,'50萬元／坪');assert.equal(result.product,'兩房25坪、三房35坪。');assert.equal(result.conclusion,'依基地條件採兩房及三房住宅產品。');
 assert.ok(!result.price.includes('01｜'));
+// Exporting an unchanged saved report must retain its original summary/evidence
+// and must not rewrite the editor state or silently change the quality badge.
+vm.runInContext(page.split('\n').filter(l=>l.startsWith('function parseReturnedPayload(')||l.startsWith(' function prepareExport(')).join('\n'),ctx);
+ctx.today='2026-10-08';ctx.reportId='test-export';
+ctx.form={client:'測試',researchDate:'2026-10-08',landNumber:'測試段1地號',reportText:manual,summary:{location:'原始位置',land_number:'測試段1地號',zoning:'單一來源待複核',area:'歷史10.41㎡；現行待核',road:'待複核',price:'待複核',product:'兩房三房',conclusion:'草稿',_research_evidence:{version:1,claims:[]},_source_checks:[{status:'單一來源'}]}};
+ctx.validateTemplate=()=>[];
+ctx.assessReportQuality=payload=>{assert.equal(payload.summary,ctx.form.summary);assert.equal(payload.research_evidence,ctx.form.summary._research_evidence);return {conflicts:[]}};
+ctx.setForm=()=>{throw Error('Export must not mutate report state')};
+ctx.setSyncMessage=()=>{};
+const before=JSON.stringify(ctx.form),exported=ctx.prepareExport();
+assert.equal(JSON.stringify(ctx.form),before);assert.equal(exported.summary.area,'歷史10.41㎡；現行待核');
+assert.equal(ctx.parseReturnedPayload('01｜案件摘要\n基地位置：修改後位置',{...ctx.form,summary:null},'test-export').summary.location,'修改後位置');
 console.log('Five workflow regressions passed: actual source reads, independent origins, evidenced prose/SWOT, every comparable, multiline fields and scoped manual summaries. No database writes.');
 
 const incompleteCase=caseText.replace('案子規劃：2至3房、25至37坪','案子規劃：待複核');
