@@ -29,5 +29,6 @@ assert.ok(auditDeclaredFacts({...base,'01':base['01']+'\n里別：樂善里','06
 assert.ok(auditDeclaredFacts({...base,'01':base['01']+'\n基礎教育學區：甲國小','06':'基礎教育學區：乙國小'}).some(x=>x.includes('學區')));
 assert.deepEqual(auditDeclaredFacts({...base,'06':'基礎教育學區：待確認'}),[]);
 assert.ok(auditDeclaredFacts({...base,'12':'北向｜臨善捷二路約25米'}).some(x=>x.includes('北向')));
+assert.deepEqual(auditDeclaredFacts({...base,'12':'北向｜臨樂善二路，銜接華亞二路'}),[]);
 assert.deepEqual(auditDeclaredFacts({...base,'05':'交通通勤：可銜接華亞二路及文化一路。'}),[]);
 console.log('Cross-chapter recommendation, declared base facts and scoped road comparisons passed; competitor, asking-price, scenario and pending values are excluded.');
