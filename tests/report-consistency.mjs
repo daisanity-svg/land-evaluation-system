@@ -22,6 +22,12 @@ for(const prose of [
 assert.deepEqual(auditRecommendedPrice({...base,'01':'建議價格：56萬／坪','09':'二樓以上住宅：\n建議成交價格：56萬／坪'}),[]);
 assert.equal(auditRecommendedPrice({...base,'08':'市場行情總結：本案住宅預判５５－５８萬元／坪。'}).length,1);
 assert.equal(auditRecommendedPrice({...base,'08':'市場行情總結：比較案成交60萬／坪。','12':'本案住宅建議售價55～58萬／坪。'}).length,1);
+for(const suffix of ['，店面另議。','，車位建議200萬元／位。','，車位價格待確認。']) {
+  assert.equal(auditRecommendedPrice({...base,'08':'市場行情總結：本案住宅建議55～58萬／坪'+suffix}).length,1);
+}
+for(const prose of ['本案店面建議55～58萬／坪，住宅另議。','本案住宅參考比較案，該案建議55～58萬／坪。']) {
+  assert.deepEqual(auditRecommendedPrice({...base,'08':'市場行情總結：'+prose}),[]);
+}
 
 assert.ok(auditDeclaredFacts({...base,'02':'基地面積：1810坪'}).some(x=>x.includes('基地面積')));
 assert.deepEqual(auditDeclaredFacts({...base,'02':'基地面積：1,806.78㎡'}),[]);
@@ -31,4 +37,8 @@ assert.deepEqual(auditDeclaredFacts({...base,'06':'基礎教育學區：待確�
 assert.ok(auditDeclaredFacts({...base,'12':'北向｜臨善捷二路約25米'}).some(x=>x.includes('北向')));
 assert.deepEqual(auditDeclaredFacts({...base,'12':'北向｜臨樂善二路，銜接華亞二路'}),[]);
 assert.deepEqual(auditDeclaredFacts({...base,'05':'交通通勤：可銜接華亞二路及文化一路。'}),[]);
+const zoning={...base,'03':'土地使用分區：第五種住宅區（建蔽率60%、容積率300%）\n建蔽率：60%\n容積率：300%'};
+assert.deepEqual(auditDeclaredFacts(zoning,{zoning:'第五種住宅區'}),[]);
+assert.ok(auditDeclaredFacts({...zoning,'01':base['01']+'\n建蔽率：50%'}).some(v=>v.includes('建蔽率')));
+assert.ok(auditDeclaredFacts({...zoning,'03':'土地使用分區：第五種住宅區（供合宜住宅使用）'}).some(v=>v.includes('土地使用分區')));
 console.log('Cross-chapter recommendation, declared base facts and scoped road comparisons passed; competitor, asking-price, scenario and pending values are excluded.');

@@ -31,3 +31,14 @@ Outstanding factual acceptance requires parcel-specific zoning, neighborhood
 school assignment, exact road conditions, release-aware full transaction checks
 and substantive environmental evidence. A passing test suite does not certify
 those research facts or the currently deployed production version.
+
+October 21 review adds mixed residential/shop/parking narrative regressions:
+later clauses no longer suppress a conflicting residential recommendation.
+Rate-only zoning annotations normalize to the same zoning name, while conflicting
+coverage/FAR numbers and material zoning restrictions remain conflicts.
+
+The read-only health response now exposes a validated Vercel Git commit SHA.
+If deployment metadata is absent or invalid it returns null, without changing
+service availability or contacting external services. This allows a production
+response to be compared with the merged commit instead of inferring its version
+from an unrelated successful deployment check.
