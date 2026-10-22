@@ -38,3 +38,14 @@ const mirror591=structuredClone(evidence);
 mirror591.claims[0].sources=sources.map((s,i)=>({...s,url:i?'https://market.591.com.tw/record':'https://www.leju.com.tw/record',dataset:'transactions'}));
 assert.equal(auditResearchEvidence(mirror591).claims[0].status,'單一來源');
 console.log('Month precision, partial-month boundaries, small sample statistics and 591/Leju shared upstream passed.');
+// An estimate need not equal achieved mean; adjustments must be tied to source-checked facts.
+const estimated=structuredClone(evidence);estimated.claims=estimated.claims.filter(c=>c.field!=='residential_price');
+estimated.pricing_assessment={version:1,type:'estimated',residential:{value:44.06,base_value:45.0595,unit:'萬/坪',adjustments:[{amount:-.9995,reason:'合成測試：基地道路車流條件可能增加臨路住宅的安靜需求。',claim_fields:['road']}]}};
+const {sourceKey}=await import('../lib/sourceVerifier.mjs');
+const checks=estimated.claims.flatMap(c=>c.sources.map(s=>({key:sourceKey(c.field,c.value,s),verified:true})));
+const estimatedAudit=auditResearchEvidence(estimated,{report_text:'09｜價格預判\n建議成交價格：44.06萬／坪（本案初估）'},{sourceChecks:checks});
+assert.equal(estimatedAudit.pricing_assessment.complete,true);
+assert.ok(!estimatedAudit.missing_fields.includes('residential_price'));
+assert.ok(!estimatedAudit.errors.some(e=>e.includes('主要可比組重算均價不一致')));
+const unsupported=auditResearchEvidence(estimated,{report_text:'09｜價格預判\n建議成交價格：44.06萬／坪（本案初估）'});
+assert.equal(unsupported.pricing_assessment.complete,false);
