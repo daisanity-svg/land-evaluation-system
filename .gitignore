@@ -14,3 +14,7 @@ yarn-error.log*
 .DS_Store
 .vercel
 .env*
+
+assets/NotoSansCJKtc-Regular.otf
+
+assets/NotoSansTC.ttf
