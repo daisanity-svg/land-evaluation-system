@@ -17,7 +17,7 @@ const forged=structuredClone(area);forged.sources[0].calculation.input_m2=308;fo
 assert.notEqual(sourceKey('area','894坪',area.sources[0]),sourceKey('area','894坪',{...area.sources[0],calculation:{...area.sources[0].calculation,input_m2:3000}}));
 const jsonClaim={field:'test',value:'A<B',sources:[{url:'https://a.gov.tw/data',subject:'example',raw_value:'{"subject":"example","value":"A<B","note":"original"}'}]};
 assert.equal((await verifySourcePages({claims:[jsonClaim]},{fetcher:async()=>new Response(jsonClaim.sources[0].raw_value,{headers:{'content-type':'application/json'}})}))[0].verified,true);
-const plan=buildRecoveryPlan(['area','junior_school']);assert.equal(plan.items.length,2);assert.ok(plan.items[0].routes[1].includes('先檢查'));assert.ok(OWNER_RESEARCH_POLICY.startsWith('【生活圈完整盤點與通用調研流程'));assert.ok(OWNER_RESEARCH_POLICY.includes('非都市土地'));assert.ok(OWNER_RESEARCH_POLICY.includes('沒有面積就改查'));
+const plan=buildRecoveryPlan(['area','junior_school']);assert.equal(plan.items.length,2);assert.ok(plan.items[0].routes[1].includes('先檢查'));assert.ok(OWNER_RESEARCH_POLICY.startsWith('【區域市況、自然語言優劣勢與開發決策'));assert.ok(OWNER_RESEARCH_POLICY.includes('非都市土地'));assert.ok(OWNER_RESEARCH_POLICY.includes('沒有面積就改查'));
 console.log('Universal recovery, official school sources, honest single-source status, original JSON and server-checked area conversion passed. All area figures in this test are synthetic fixtures, not verified parcel facts.');
 
 let redirects=0;const redirectReads=await verifySourcePages(fixture,{fetcher:async()=>++redirects===1?new Response(null,{status:302,headers:{location:'/rule-normalized'}}):fetcher()});assert.equal(redirectReads[0].verified,true);assert.equal(redirects,2);

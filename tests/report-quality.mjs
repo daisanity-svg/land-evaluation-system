@@ -38,7 +38,7 @@ assert.ok(!assessReportQuality({...report,report_text:report.report_text.replace
 
 
 const incomplete=assessReportQuality(report);
-assert.ok(incomplete.missing_core_fields.includes('銷售優勢須有三項具體依據'));
+assert.ok(incomplete.missing_core_fields.includes('銷售優勢須有至少一項不重複的具體依據'));
 assert.ok(incomplete.missing_core_fields.includes('個案成交均價與筆數'));
 assert.ok(incomplete.missing_core_fields.includes('區域銷況須引用個案參考'));
 const content=report.report_text.replace('06｜學區與里別',`05｜生活圈與公共設施
@@ -56,8 +56,8 @@ const content=report.report_text.replace('06｜學區與里別',`05｜生活圈�
 三、換屋總價門檻高於中古產品。
 12｜結論`);
 const completeContent=assessReportQuality({...report,report_text:content});
-for(const field of ['銷售優勢須有三項具體依據','銷售抗性須有三項具體依據','個案成交均價與筆數','區域銷況須引用個案參考'])assert.ok(!completeContent.missing_core_fields.includes(field),field);
-assert.ok(assessReportQuality({...report,report_text:content.replace('己公園提供休閒。','尚無已確認明顯項目。')}).missing_core_fields.includes('銷售優勢須有三項具體依據'));
+for(const field of ['銷售優勢須有至少一項不重複的具體依據','銷售抗性須有至少一項不重複的具體依據','個案成交均價與筆數','區域銷況須引用個案參考'])assert.ok(!completeContent.missing_core_fields.includes(field),field);
+assert.ok(assessReportQuality({...report,report_text:content.replace('己公園提供休閒。','尚無已確認明顯項目。')}).missing_core_fields.includes('銷售優勢各項須與正文逐點對應，並有不同事實與證據'));
 console.log('Competitor-based sales narrative, real transaction fields and three substantive SWOT points required for completeness.');
 
 // Real historical regressions: inherited base size/frontages in SWOT.

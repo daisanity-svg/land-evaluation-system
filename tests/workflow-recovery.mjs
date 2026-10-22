@@ -46,6 +46,6 @@ const fixture=(await readFile(new URL('./submit-report.mjs',import.meta.url),'ut
 await assert.rejects(buildLandEvaluationPdfBuffer({report_text:fixture.replace('建蔽率：60%','建蔽率：50%')}),/內容衝突/);
 const bytes=await buildLandEvaluationPdfBuffer({report_text:fixture+'\n'+('合成測試長段落，驗證繁體中文自動換行與分頁。'.repeat(300)),client:'合成測試'});
 assert.equal(bytes.subarray(0,5).toString(),'%PDF-');assert.ok((await PDFDocument.load(bytes)).getPageCount()>1);
-assert.ok(OWNER_RESEARCH_POLICY.startsWith('【生活圈完整盤點與通用調研流程｜1.14.1'));
+assert.ok(OWNER_RESEARCH_POLICY.startsWith('【區域市況、自然語言優劣勢與開發決策｜1.15.0'));
 for(const rule of ['嫌惡設施','棟距採光','有效住宅樣本少於3筆','不使用Hermes或付費API'])assert.ok(OWNER_RESEARCH_POLICY.includes(rule));
 console.log('Recovery checks passed: real case-card boundaries, compound rooms, explicit sample periods, storage outage, PDF rejection and Chinese multipage export.');
