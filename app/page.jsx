@@ -98,7 +98,7 @@ export default function Page(){
      <label className="field"><span>目標地號</span><textarea rows={3} value={form.landNumber} onChange={e=>setField('landNumber',e.target.value)} placeholder="例如：桃園市中壢區中運段162、163地號"/></label>
      <ParcelLocation landNumber={form.landNumber} onResolved={lookup=>setForm(old=>old.landNumber.trim()===lookup.input?{...old,parcelLookup:lookup}:old)}/>
      <button className="btn primary start-research" onClick={openGpt} disabled={!canOpen||!!busy}>開始網頁版自動調研</button>
-     <p className="muted launch-help">開啟 ChatGPT 後，選取「{LAND_MCP_APP_NAME}」並送出。完成後回到本頁查看。</p>
+     <a href={hasReport?`/research-workbench?case=${encodeURIComponent(reportId)}`:"/research-workbench"}>調研工作台與檢查點</a><p className="muted launch-help">開啟 ChatGPT 後，選取「{LAND_MCP_APP_NAME}」並送出。完成後回到本頁查看。</p>
      <div className="sync-box" role="status" aria-live="polite"><strong>回傳狀態</strong><p>{syncMessage}</p>{lastLink&&<a className="fallback-link" href={lastLink} target="_blank" rel="noreferrer">重新開啟本案 ChatGPT 對話</a>}<button className="btn" onClick={()=>checkReturnedReport(false)} disabled={!!busy}>檢查 / 載入回傳</button></div>
      <details className="utility-details"><summary>備援提示詞</summary><p className="muted">新對話未帶入指令時，複製下方內容貼上。</p><button className="btn" onClick={copyPrompt}>{copied?'提示詞已複製':'複製完整提示詞'}</button><label className="field"><span>完整送件指令</span><textarea rows={8} readOnly value={prompt}/></label></details>
     </div>
