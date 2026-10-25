@@ -1,0 +1,9 @@
+'use client';
+import {useState} from 'react';
+import {recordParcelObservation} from '../../lib/parcelObservation.mjs';
+export default function ParcelObservation({payload,onRecorded}) {
+ const [values,setValues]=useState({date:new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Taipei'}).format(new Date()),url:'https://maps.nlsc.gov.tw/T09/mobilemap.action'}),[file,setFile]=useState(null),[message,setMessage]=useState('');
+ const field=(key,label,type='text')=><label className="field"><span>{label}</span><input type={type} value={values[key]||''} onChange={e=>setValues(v=>({...v,[key]:e.target.value}))}/></label>;
+ async function save(){try{if(!file)throw Error('請先選取官方截圖或文件原檔。');if(file.size>15*1024*1024)throw Error('原檔請小於15MB。');const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());const sha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');const next=recordParcelObservation(payload,{...values,land_number:values.land_number||'',filename:file.name,sha256});onRecorded(next);setMessage('查閱值、原文與附件雜湊已記錄；待原件覆核，未自動確認分區、學區或完成調研。原檔請自行保留並隨調研附上。');}catch(e){setMessage(e.message);}}
+ return <details className="utility-details"><summary>補入官方截圖／文件查閱紀錄</summary><p>僅填原件可讀欄位；不會自動辨識圖片、不上傳原檔，也不把人工輸入當作已核實資料。</p>{field('land_number','附件完整地號')}{field('url','官方來源網址')}{field('date','實際查閱日期','date')}<label className="field"><span>官方截圖或文件原檔</span><input type="file" accept="image/*,application/pdf" onChange={e=>setFile(e.target.files?.[0]||null)}/></label><label className="field"><span>原文摘錄（含地段地號及填入的資料）</span><textarea rows={5} value={values.excerpt||''} onChange={e=>setValues(v=>({...v,excerpt:e.target.value}))}/></label>{field('area','原件面積（平方公尺）','number')}{field('village','原件里別')}{field('longitude','原件WGS84經度','number')}{field('latitude','原件WGS84緯度','number')}<button className="btn" onClick={save}>記錄並保存本案查閱資料</button><p role="status">{message}</p></details>;
+}
