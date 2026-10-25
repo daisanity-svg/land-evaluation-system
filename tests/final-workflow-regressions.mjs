@@ -1,3 +1,4 @@
+import {canonicalSummary,reportForOutput} from '../lib/reportData.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -41,7 +42,7 @@ content=auditContent({'08':caseText},{comparables:[group('甲案')]},caseClaims)
 content=auditContent({'08':caseText},{comparables:[group('甲案'),group('乙案')]},caseClaims);assert.equal(content.conflicts.length,0);assert.ok(!content.missing.some(x=>x.includes('甲案')||x.includes('乙案')));
 const wrong=group('乙案');wrong.transactions[0].total_price_wan=5000;
 content=auditContent({'08':caseText},{comparables:[group('甲案'),wrong]},caseClaims);assert.ok(content.conflicts.some(x=>x.includes('乙案')));
-const page=fs.readFileSync('app/page.jsx','utf8'),ctx=vm.createContext({fieldBlock});
+const page=fs.readFileSync('app/page.jsx','utf8'),ctx=vm.createContext({fieldBlock,canonicalSummary,reportForOutput});
 const names=['normalize','cleanMarkdown','stripLabelWords','isUnknown','compact','extractLine','matchText','extractSentence','firstUseful','getSummary'];
 vm.runInContext(page.split('\n').filter(l=>names.some(n=>l.startsWith('function '+n+'('))).join('\n'),ctx);
 const manual='01｜案件摘要\n基地位置：測試位置\n09｜價格\n建議成交價格：50萬元／坪\n價格說明：不應混入摘要\n10｜產品\n建議產品：\n兩房25坪、三房35坪。\n11｜綜合評估\n銷售優勢：略\n12｜結論\n結論：\n依基地條件採兩房及三房住宅產品。\n建議價格：50萬元／坪';

@@ -23,8 +23,8 @@ const checks = [
     pass: !page.includes('回傳編號 report_id') && page.includes('回傳狀態'),
   },
   {
-    name: 'Frontend prioritizes summary object before text parsing',
-    pass: page.includes('sourceSummary') && page.includes('form?.summary') && page.includes('getSummary'),
+    name: 'Frontend reads only canonical labelled summary fields',
+    pass: page.includes('canonicalSummary(text,form)') && page.includes('getSummary'),
   },
   {
     name: 'Manual paste fallback normalizes Action JSON',
