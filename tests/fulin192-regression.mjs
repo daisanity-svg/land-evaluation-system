@@ -15,7 +15,8 @@ const p=reportForOutput(fixture);assert.match(p.summary.conclusion,/尚無法判
 const cards=priceCards(p.report_text.split('09｜價格預判')[1].split('10｜產品規劃建議')[0]);assert.equal(cards.cards.length,3);assert.ok(cards.cards.every(c=>!c.lines.some(x=>x.includes('價格判斷摘要'))));assert.match(cards.summary,/住宅須由/);
 const buffer=await buildLandEvaluationExcelBuffer(fixture),book=new ExcelJS.Workbook();await book.xlsx.load(buffer);const s=book.worksheets[0];
 assert.equal(s.getCell('F4').value,'待複核');
-for(const cell of ['J19','J20']){assert.match(s.getCell(cell).value,/期間筆數待複核/);assert.doesNotMatch(s.getCell(cell).value,/591筆|23筆/);}
+for(const cell of ['J19','J20']){assert.match(s.getCell(cell).value,/筆數待複核/);assert.doesNotMatch(s.getCell(cell).value,/591筆|23筆/);}
+assert.equal(s.getCell('H19').value,'待複核');
 assert.match(s.getCell('G20').value,/25.02萬\/坪\n一年指標/);
 const full=book.getWorksheet('評估全文').getSheetValues().flat().join('\n');assert.match(full,/尚無法判斷開發可行性/);assert.match(full,/全歷史23筆/);
 const db=new Map(),storage={getItem:k=>db.get(k)||null,setItem:(k,v)=>db.set(k,v)};
