@@ -233,3 +233,14 @@ assert.match(detailedEnvironment.getCell('B15').value,/辛運動中心/);
 assert.ok(detailedEnvironment.getCell('B28').value);
 assert.ok(detailedEnvironment.getCell('B32').value);
 console.log('Multi-sentence environment paragraphs preserved without mixing fields or changing the fixed template.');
+
+const fourPointReport={land_number:'合成測試段1地號',report_text:`11｜銷售優勢與抗性\n銷售優勢：\n1. 既有採買：合成優勢完整敘述。\n銷售抗性：\n1. 交通聲音：合成第一項完整敘述。\n2. 區域競爭：合成第二項完整敘述。\n3. 等待通車：合成第三項完整敘述。\n4. 總價比較：合成第四項完整敘述不得遺漏。\n12｜結論\n最終結論：合成案件仍待核實，暫緩開發。`};
+const fourPointBook=new ExcelJS.Workbook();await fourPointBook.xlsx.load(await buildLandEvaluationExcelBuffer(fourPointReport));
+assert.match(fourPointBook.worksheets[0].getCell('A1').value,/初評草稿/);
+assert.match(fourPointBook.worksheets[0].getCell('B32').value,/4\. 總價比較/);
+const full=fourPointBook.getWorksheet('評估全文');
+const fullText=full.getColumn(1).values.join('\n');
+assert.ok(fullText.includes('4. 總價比較：合成第四項完整敘述不得遺漏。'));
+assert.ok(fullText.includes('最終結論：合成案件仍待核實，暫緩開發。'));
+assert.equal(fourPointBook.worksheets[0].getRow(32).height,template.getRow(32).height);
+console.log('Live-test regression: fourth SWOT point, complete conclusion and explicit draft status survive the fixed brief export.');
