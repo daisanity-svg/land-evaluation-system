@@ -244,3 +244,8 @@ assert.ok(fullText.includes('4. 總價比較：合成第四項完整敘述不得
 assert.ok(fullText.includes('最終結論：合成案件仍待核實，暫緩開發。'));
 assert.equal(fourPointBook.worksheets[0].getRow(32).height,template.getRow(32).height);
 console.log('Live-test regression: fourth SWOT point, complete conclusion and explicit draft status survive the fixed brief export.');
+const mixedAreaBook=new ExcelJS.Workbook();await mixedAreaBook.xlsx.load(await buildLandEvaluationExcelBuffer({report_text:`08｜競案分級與市場行情\n競案一｜合成面積測試\n案子規劃：基地約2124.15坪，規劃兩房18／25坪、三房33／35坪、四房39坪。\n車位價格：220.14萬／位（近半年73位）；近一年219.64萬／位。\n競案二｜合成未列房型坪數\n案子規劃：基地面積2124.16坪，規劃住宅大樓。`}));
+assert.equal(mixedAreaBook.worksheets[0].getCell('F19').value,'18-39坪');
+assert.equal(mixedAreaBook.worksheets[0].getCell('F20').value,'待複核');
+assert.match(mixedAreaBook.worksheets[0].getCell('H19').value,/220.14萬\/位/);
+console.log('Parcel acceptance regression: site area cannot become apartment size; parking brief keeps the adopted period mean.');
