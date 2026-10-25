@@ -1,3 +1,4 @@
+import {assessResearchProgress} from '../../../../lib/researchProgress.mjs';
 import { assessReportQuality } from '../../../../lib/reportQuality.mjs';
 import { auditResearchEvidence } from '../../../../lib/researchEvidence.mjs';
 import { verifySourcePages } from '../../../../lib/sourceVerifier.mjs';
@@ -9,6 +10,7 @@ export async function POST(request) {
   const sourceChecks=await verifySourcePages(body.research_evidence);
   const audit=auditResearchEvidence(body.research_evidence,{land_number:body.land_number,research_date:body.research_date,report_text:body.report_text},{sourceChecks});
   if(body.report_text)audit.report_quality=assessReportQuality(body,{sourceChecks});
+  audit.workflow=assessResearchProgress(body,audit);
   return Response.json({success:audit.present&&!audit.errors.length,database_written:false,...audit},{status:audit.errors.length?422:200,headers:{'Cache-Control':'no-store'}});
 }
 
