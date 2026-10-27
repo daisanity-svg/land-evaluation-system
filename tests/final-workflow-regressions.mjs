@@ -74,3 +74,7 @@ const verified=[{field:'park',value:'公園',status:'已核實'},{field:'road',v
 assert.ok(!auditContent(oneSection,oneProof,verified).missing.some(x=>x.startsWith('銷售')));
 assert.ok(auditContent(oneSection,{content_evidence:{...oneProof.content_evidence,strengths:[]}},verified).missing.some(x=>x.startsWith('銷售優勢')));
 assert.ok(auditContent(oneSection,oneProof,[]).missing.some(x=>x.startsWith('銷售優勢')));
+
+ctx.form.researchEvidence={claims:[{field:'area',value:'old evidence'}]};
+const independent=ctx.parseReturnedPayload(JSON.stringify({report_id:'independent',report_text:manual,summary:{area:'待複核'}}),ctx.form,'independent');
+assert.equal(independent.research_evidence,undefined,'independent JSON must never inherit prior draft evidence');
