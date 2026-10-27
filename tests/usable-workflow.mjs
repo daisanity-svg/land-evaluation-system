@@ -32,3 +32,5 @@ await assert.rejects(()=>checkedArtifact(new Response('x',{status:500}),'pdf'),/
 assert.ok((await checkedArtifact(new Response('%PDF-'+'.'.repeat(200)),'pdf')).size>100);
 assert.ok((await checkedArtifact(new Response('PK'+'.'.repeat(200)),'xlsx')).size>100);
 console.log('Draft adoption, exact parcel isolation, consistent blocked decisions and checked download bodies passed; manual observations stay unverified.');
+
+const legacy=JSON.parse(await readFile(new URL('./fixtures/historical-acceptance/jieshou479.json',import.meta.url),'utf8')).payload;const legacyOutput=reportForOutput(legacy).report_text;assert.doesNotMatch(legacyOutput,/可行性(?:購地|承諾)/);
