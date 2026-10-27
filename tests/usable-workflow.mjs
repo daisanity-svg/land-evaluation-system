@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import ExcelJS from 'exceljs';
+import {recordParcelObservation} from '../lib/parcelObservation.mjs';
+import {adoptParcelObservations} from '../lib/parcelObservationAdoption.mjs';
+import {reportForOutput,researchBlocked} from '../lib/reportData.mjs';
+import {assessReportQuality} from '../lib/reportQuality.mjs';
+import {buildLandEvaluationExcelBuffer} from '../lib/landEvaluationExcel.js';
+import {checkedArtifact} from '../lib/downloadArtifact.mjs';
+const fixture=JSON.parse(await readFile(new URL('./fixtures/fulin192-regression.json',import.meta.url),'utf8'));
+const observation={land_number:fixture.land_number,url:'https://maps.nlsc.gov.tw/T09/mobilemap.action',date:'2026-10-25',sha256:'a'.repeat(64),filename:'official.png',excerpt:'桃園市平鎮區福林里 平鎮所(HG1252)福林段192地號 面積2050.47平方公尺，經緯度121.218279,24.904277。',area:'2050.47',village:'福林里',longitude:'121.218279',latitude:'24.904277'};
+const recorded=recordParcelObservation(fixture,observation);
+assert.throws(()=>adoptParcelObservations(recorded),/逐項/);
+const adopted=adoptParcelObservations(recorded,true);
+assert.match(adopted.report_text,/基地面積：2050.47㎡，約620.27坪/);
+assert.match(adopted.report_text,/合計｜2050.47｜620.27/);
+assert.match(adopted.report_text,/里別：福林里/);
+assert.match(adopted.report_text,/土地使用分區：待複核/);
+assert.equal(assessReportQuality(adopted).source_verification_complete,false);
+assert.equal(adopted.research_evidence.claims[0].sources[0].observation.status,'needs_manual_review');
+const w=new ExcelJS.Workbook();await w.xlsx.load(await buildLandEvaluationExcelBuffer(adopted));
+assert.match(w.worksheets[0].getCell('F4').value,/620.27坪/);
+assert.throws(()=>adoptParcelObservations({...recorded,land_number:'另一段1地號'},true),/不同/);
+assert.throws(()=>adoptParcelObservations({...recorded,report_text:recorded.report_text.replace('基地面積：待複核','基地面積：999坪')},true),/不同值/);
+for(const label of ['基地位置','標的位置']) {
+ const text=`01｜案件摘要\n${label}：測試道路\n基地面積：100坪\n土地使用分區：待複核\n初步結論：暫緩正式投入；保留既有原因\n本案快速結論：資料未齊，建議暫緩正式投入。\n12｜結論\n最終結論：目前選擇暫緩正式開發決策。保留完整條件分析。`;
+ assert.ok(researchBlocked(text));const output=reportForOutput({report_text:text});
+ assert.doesNotMatch(output.report_text,/暫緩/);assert.match(output.report_text,/保留完整條件分析/);assert.match(output.report_text,/保留既有原因/);
+}
+await assert.rejects(()=>checkedArtifact(new Response('<html>error</html>'),'pdf'),/有效檔案/);
+await assert.rejects(()=>checkedArtifact(new Response('x',{status:500}),'pdf'),/產生失敗/);
+assert.ok((await checkedArtifact(new Response('%PDF-'+'.'.repeat(200)),'pdf')).size>100);
+assert.ok((await checkedArtifact(new Response('PK'+'.'.repeat(200)),'xlsx')).size>100);
+console.log('Draft adoption, exact parcel isolation, consistent blocked decisions and checked download bodies passed; manual observations stay unverified.');
