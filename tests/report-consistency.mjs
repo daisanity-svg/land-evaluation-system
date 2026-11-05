@@ -42,3 +42,14 @@ assert.deepEqual(auditDeclaredFacts(zoning,{zoning:'第五種住宅區'}),[]);
 assert.ok(auditDeclaredFacts({...zoning,'01':base['01']+'\n建蔽率：50%'}).some(v=>v.includes('建蔽率')));
 assert.ok(auditDeclaredFacts({...zoning,'03':'土地使用分區：第五種住宅區（供合宜住宅使用）'}).some(v=>v.includes('土地使用分區')));
 console.log('Cross-chapter recommendation, declared base facts and scoped road comparisons passed; competitor, asking-price, scenario and pending values are excluded.');
+
+// Pending legal zoning descriptions must remain drafts, not conflicting facts.
+for(const value of [
+ '圖片標示第三種住宅區，現行法定分區仍待地號套繪及分區證明確認。',
+ '示意圖標示第三種住宅區，待正式複核。',
+ '待核本地號適用現行細部計畫及管制條文。',
+]) {
+ assert.deepEqual(auditDeclaredFacts({'01':'土地使用分區：'+value,'03':'土地使用分區：待複核'},{zoning:'示意圖標第三種住宅區，現行法定分區待複核'}),[]);
+}
+assert.ok(auditDeclaredFacts({'01':'土地使用分區：第一種住宅區','03':'土地使用分區：第三種住宅區'}).length);
+assert.ok(assessReportQuality({report_text:'01｜案件摘要\n建蔽率：待核\n03｜法規與量體初判\n建蔽率：待核'}).missing_core_fields.includes('建蔽率'));
