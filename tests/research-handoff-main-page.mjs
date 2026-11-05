@@ -15,7 +15,7 @@ assert.match(page, /案件安全閘已阻擋本次操作/);
 assert.doesNotMatch(page, /fetch\('\/api\/research\/handoff'/);
 
 assert.match(page, /GPT_URL = 'https:\/\/chatgpt.com\/'/);
-assert.match(page, /開始網頁版自動調研/);
+assert.match(page, /前往 ChatGPT 開始調研/);
 assert.match(page, /async function openGpt/);
 assert.match(page, /approvedResearchState\(form\)/);
 console.log('Approved research handoff prompt bridge checks passed.');
