@@ -269,3 +269,11 @@ const overflowBook=new ExcelJS.Workbook();await overflowBook.xlsx.load(await bui
 assert.ok(overflowBook.getWorksheet('成交統計').getSheetValues().flat().includes('武泰臻愛'),'fifth comparable must survive in complete statistics');
 assert.equal(overflowBook.worksheets[0].getCell('D23').value,'58 萬/坪','overflow competitors must not overwrite fixed price cells');
 console.log('Four-side sales impacts, complete road conditions and overflow comparable statistics passed.');
+
+// Reproduced from the actual Huanhan return: public facilities followed the region field inline.
+const legacyFacilities=detailedText.replace('公共建設：己公園已開放。庚活動中心規劃中。','區域條件：街廓逐步形成。公共建設：己公園已開放。庚活動中心規劃中。');
+const legacyFacilitiesSheet=await load({report_text:legacyFacilities});
+assert.match(legacyFacilitiesSheet.getCell('B15').value,/己公園已開放/);
+assert.match(legacyFacilitiesSheet.getCell('B15').value,/辛運動中心/);
+assert.doesNotMatch(legacyFacilitiesSheet.getCell('B14').value,/己公園|街廓逐步形成/);
+console.log('Inline legacy public facilities survive export without contaminating living amenities.');
