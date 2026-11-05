@@ -249,3 +249,23 @@ assert.equal(mixedAreaBook.worksheets[0].getCell('F19').value,'18-39坪');
 assert.equal(mixedAreaBook.worksheets[0].getCell('F20').value,'待複核');
 assert.match(mixedAreaBook.worksheets[0].getCell('H19').value,/220.14萬\/位/);
 console.log('Parcel acceptance regression: site area cannot become apartment size; parking brief keeps the adopted period mean.');
+
+// Owner-visible regression: the third table column used to disappear on export.
+const directionsText=reportText.replace('臨路條件：三面臨路','臨路條件：東側甲路10米。南側乙路20米。').replace('08｜競案分級與市場行情',`04｜臨路條件與基地四向現況
+臨路條件：東側甲路10米。南側乙路20米。
+方位｜現況｜對銷售影響
+東向｜臨甲路10米｜面路低樓層需處理交通噪音。
+南向｜臨乙路20米｜門廳與車道可分側配置。
+西向｜鄰既有住宅｜低樓層須照顧採光隱私。
+北向｜鄰住宅用地｜後續開發可能改變視野。
+08｜競案分級與市場行情`);
+const directionsSheet=await load({report_text:directionsText});
+assert.match(directionsSheet.getCell('B6').value,/甲路10米。南側乙路20米/);
+assert.match(directionsSheet.getCell('C9').value,/交通噪音/);
+assert.match(directionsSheet.getCell('C10').value,/門廳與車道/);
+assert.match(directionsSheet.getCell('C11').value,/採光隱私/);
+assert.match(directionsSheet.getCell('C12').value,/改變視野/);
+const overflowBook=new ExcelJS.Workbook();await overflowBook.xlsx.load(await buildLandEvaluationExcelBuffer({report_text:reportText}));
+assert.ok(overflowBook.getWorksheet('成交統計').getSheetValues().flat().includes('武泰臻愛'),'fifth comparable must survive in complete statistics');
+assert.equal(overflowBook.worksheets[0].getCell('D23').value,'58 萬/坪','overflow competitors must not overwrite fixed price cells');
+console.log('Four-side sales impacts, complete road conditions and overflow comparable statistics passed.');
