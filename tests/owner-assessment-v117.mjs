@@ -110,6 +110,7 @@ ${resistances.map((x,i)=>i+1+'. '+x).join('\n')}
 }
 const p=fixture();
 assert.deepEqual(validateTemplate(p.report_text),[]);
+await assert.rejects(()=>buildOwnerBriefPdf({...p,report_text:'不完整'}),/欄位尚未齊全/);
 assert.deepEqual(workingConflicts(p.summary._working_fields,p.report_text),[]);
 assert.equal(workingConflicts(p.summary._working_fields,p.report_text.replace('建議成交價格：45','建議成交價格：49'))[0].working,'45萬／坪');
 const base=readWorkValues(p.report_text);
