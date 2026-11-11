@@ -18,3 +18,5 @@ yarn-error.log*
 assets/NotoSansCJKtc-Regular.otf
 
 assets/NotoSansTC.ttf
+
+supabase/.temp/

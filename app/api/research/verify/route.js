@@ -1,3 +1,4 @@
+import {reviewMarketInputs} from '../../../../lib/marketDecision.mjs';
 import {assessResearchProgress} from '../../../../lib/researchProgress.mjs';
 import { assessReportQuality } from '../../../../lib/reportQuality.mjs';
 import { auditResearchEvidence } from '../../../../lib/researchEvidence.mjs';
@@ -11,6 +12,7 @@ export async function POST(request) {
   const audit=auditResearchEvidence(body.research_evidence,{land_number:body.land_number,research_date:body.research_date,report_text:body.report_text},{sourceChecks});
   if(body.report_text)audit.report_quality=assessReportQuality(body,{sourceChecks});
   audit.workflow=assessResearchProgress(body,audit);
+  if(body.market_decision){try{audit.market_decision=reviewMarketInputs(body.market_decision,audit,body.research_date||body.research_evidence?.research_date);}catch(e){audit.errors.push(e.message);}}
   return Response.json({success:audit.present&&!audit.errors.length,database_written:false,...audit},{status:audit.errors.length?422:200,headers:{'Cache-Control':'no-store'}});
 }
 

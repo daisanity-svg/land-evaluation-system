@@ -1,4 +1,5 @@
-import {authorizeSubmission,controlledSave,AccessError,accessError} from '../../../lib/accessControl.mjs';
+import {normalizeOwnerBrief,updateWorkingFields,workingConflicts,readWorkValues,siteConflicts} from '../../../lib/ownerAssessment.mjs';
+import {authorizeSubmission,controlledSave,AccessError,accessError,rest} from '../../../lib/accessControl.mjs';
 import { validateTemplate } from '../../../lib/reportTemplate.mjs';
 import { assessReportQuality } from '../../../lib/reportQuality.mjs';
 import { verifySourcePages } from '../../../lib/sourceVerifier.mjs';
@@ -181,7 +182,7 @@ export async function POST(request) {
     const authorization=await authorizeSubmission(request,payload,body.return_token);
     const sourceChecks=await verifySourcePages(payload.summary._research_evidence);
     if(payload.summary._research_evidence)payload.summary._source_checks=sourceChecks;
-    const reportQuality = assessReportQuality(payload,{sourceChecks});
+    let reportQuality = assessReportQuality(payload,{sourceChecks});
     if(reportQuality.conflicts.length) return failure('report_inconsistent',422,id,report_id,'Report values conflict.',reportQuality.conflicts.join('；'));
 
     const { baseUrl, key } = config();
@@ -193,7 +194,32 @@ export async function POST(request) {
       return failure('supabase_read_failed', upstream, id, report_id, 'Failed to inspect existing report.', before.data);
     }
 
-    const write = authorization ? (await controlledSave(payload,authorization,reportQuality),{response:{ok:true}}) : await upsertWithRetry(payload);
+    // Working values are server-owned. A MCP payload cannot assign or unlock them.
+    const oldFields=before.row?.summary?._working_fields||{};
+    if(body.working_fields!==undefined&&(!authorization?.member||authorization.token_hash))
+      return failure('manual_confirmation_required',403,id,report_id,'人工欄位須由有權限的網站使用者確認。');
+    let working=oldFields;
+    try {
+      if(body.working_fields!==undefined)working=updateWorkingFields(oldFields,body.working_fields,{actor:authorization.member.user_id});
+      const brief=body.owner_brief??before.row?.summary?._owner_brief;
+      if(brief)payload.summary._owner_brief=normalizeOwnerBrief(brief,payload.report_text);
+    }catch(error){return failure('invalid_owner_assessment',422,id,report_id,error.message);}
+    const locked=workingConflicts(working,payload.report_text);
+    if(locked.length)return json({success:false,saved:false,verified:false,status:'working_value_conflict',error:'人工工作值與本次正文不一致，請確認差異後再儲存。',conflicts:locked,report_id},409);
+    const oldRevision=before.row?.summary?._working_revision;
+    if(Object.keys(working).length){
+      if(await rest('rpc/land_working_guard_version',{method:'POST',body:{}})!=='1')
+        return failure('working_guard_unavailable',503,id,report_id,'人工鎖定資料庫保護尚未啟用。');
+      payload.summary._working_fields=working;
+      payload.summary._working_revision=oldRevision&&sameJson(working,oldFields)?oldRevision:requestId();
+    }
+    const writePayload=oldRevision?{...payload,summary:{...payload.summary,_working_base:oldRevision}}:payload;
+    if(payload.summary._owner_brief||Object.keys(working).length){
+      const findings=siteConflicts(readWorkValues(payload.report_text));
+      if(findings.length)reportQuality={...reportQuality,status:'preliminary',label:'初評草稿',source_verification_complete:false,missing_core_fields:[...reportQuality.missing_core_fields,...findings]};
+    }
+    if(Object.values(working).some(f=>f.locked))reportQuality={...reportQuality,status:'preliminary',label:'初評草稿',source_verification_complete:false};
+    const write = authorization ? (await controlledSave(writePayload,authorization,reportQuality),{response:{ok:true}}) : await upsertWithRetry(writePayload);
     if (!write?.response?.ok) {
       const upstream = [401, 403].includes(write?.response?.status) ? write.response.status : 502;
       return failure('supabase_save_failed', upstream, id, report_id, 'Failed to save report.', write?.data);
