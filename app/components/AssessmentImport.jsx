@@ -6,6 +6,8 @@ const normalize=s=>String(s||'').normalize('NFKC').replace(/台/g,'臺').replace
 export default function AssessmentImport({landNumber,reportText,savedFields,onConfirm}){
  const [result,setResult]=useState(null),[source,setSource]=useState(''),[selected,setSelected]=useState({}),[message,setMessage]=useState(''),[busy,setBusy]=useState(false);
  const fields=readWorkValues(reportText);
+ const [values,setValues]=useState({});
+ const [reason,setReason]=useState('');
  async function read(file){
   if(!file)return;
   setBusy(true);setResult(null);setSelected({});setMessage('正在讀取附件…');
@@ -14,7 +16,7 @@ export default function AssessmentImport({landNumber,reportText,savedFields,onCo
    const r=await fetch('/api/research/import',{method:'POST',body});
    const data=await r.json();
    if(!r.ok)throw Error(data.error||'無法讀取附件');
-   setResult(data);setSource(data.source.filename+' / SHA256:'+data.source.sha256);
+   setResult(data);setValues(Object.fromEntries(data.candidates.map(c=>[c.field,c.value.replace(/（人工工作值）/g,'')])));setSource(data.source.filename+' / SHA256:'+data.source.sha256);
    setMessage(data.notice||'已擷取候選值，請核對本案正文後再鎖定。');
   }catch(error){setMessage(error.message);}finally{setBusy(false);}
  }
@@ -22,7 +24,7 @@ export default function AssessmentImport({landNumber,reportText,savedFields,onCo
  async function confirm(){
   setBusy(true);
   try{
-   await onConfirm(Object.keys(selected).filter(key=>selected[key]&&fields[key]).map(field=>({field,value:fields[field],source,locked:true})));
+   await onConfirm(Object.keys(selected).filter(key=>selected[key]).map(field=>({field,value:values[field]??fields[field].replace(/（人工工作值）/g,''),source,reason,locked:true})));
    setMessage('工作值已鎖定。人工確認不等於官方核實。');setSelected({});
   }catch(error){setMessage(error.message);}finally{setBusy(false);}
  }
@@ -32,10 +34,11 @@ export default function AssessmentImport({landNumber,reportText,savedFields,onCo
   {mismatch&&<p role="alert">附件地號「{result.landNumber}」與本案不一致，不能採用。</p>}
   {!!result?.candidates.length&&<ul>{result.candidates.map((c,i)=><li key={i}>{names[c.field]}：{c.value}（附件候選值）</li>)}</ul>}
   {result?.excerpt&&<details><summary>PDF 擷取原文</summary><pre style={{whiteSpace:'pre-wrap'}}>{result.excerpt}</pre></details>}
-  {reportText&&<><p>先在「手動貼回或修改報告」更正正文，再選取已確認的欄位。研究回傳若有差異，會拒絕覆蓋。</p>
+  {reportText&&<><p>輸入採用值後勾選確認，正文、摘要和匯出會同步更新。研究回傳若有差異，會拒絕覆蓋。</p>
    <label>人工資料來源<input value={source} onChange={e=>setSource(e.target.value)} maxLength={300}/></label>
-   <ul>{Object.entries(fields).filter(([,v])=>v&&!/待複核|待確認/.test(v)).map(([key,v])=><li key={key}><label><input type="checkbox" checked={!!selected[key]} onChange={e=>setSelected(old=>({...old,[key]:e.target.checked}))}/>{names[key]}：{v}{savedFields?.[key]?.locked?'（已鎖定）':''}</label></li>)}</ul>
-   <button type="button" className="btn" disabled={busy||mismatch||!source.trim()||!Object.values(selected).some(Boolean)} onClick={confirm}>儲存並鎖定選取欄位</button>
+   <label>採用理由<input value={reason} onChange={e=>setReason(e.target.value)} maxLength={300}/></label>
+   <ul>{Object.entries(fields).map(([key,v])=><li key={key}><label><input type="checkbox" checked={!!selected[key]} onChange={e=>setSelected(old=>({...old,[key]:e.target.checked}))}/>{names[key]}{savedFields?.[key]?.locked?'（已鎖定）':''}</label><input aria-label={names[key]+'採用值'} value={values[key]??v.replace(/（人工工作值）/g,'')} onChange={e=>setValues(old=>({...old,[key]:e.target.value}))}/></li>)}</ul>
+   <button type="button" className="btn" disabled={busy||mismatch||!source.trim()||!reason.trim()||!Object.values(selected).some(Boolean)} onClick={confirm}>儲存並鎖定選取欄位</button>
   </>}
  </details>;
 }

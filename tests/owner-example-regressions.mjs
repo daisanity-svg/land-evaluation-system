@@ -37,3 +37,7 @@ assert.equal(await cell(x.replace('200万元','200萬元'),'H24'),'200 萬/位�
 assert.equal(await cell(x,'E19'),'2-4房');
 assert.equal(await cell(x,'F19'),'27-47坪');
 console.log('Owner example regressions passed: dates/counts never become prices; initial estimates, room types and full project sizes survive export.');
+
+const owner=report('46萬／坪').replace('2～4房、27～47坪','2、3房、22–38坪');
+assert.equal(await cell(owner,'E19'),'2、3房');
+assert.equal(await cell(owner,'F19'),'22-38坪');
