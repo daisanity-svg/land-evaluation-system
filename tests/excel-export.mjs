@@ -200,7 +200,8 @@ for (const exported of [sheet,narrativeSheet,fixedTemplateSheet,periodSheet,unkn
  assert.deepEqual(exported.model.merges.sort(),template.model.merges.sort(),'merged regions must match the fixed template');
  for(let col=1;col<=12;col++)assert.equal(exported.getColumn(col).width,template.getColumn(col).width,`column ${col} must stay fixed`);
  for(let row=1;row<=46;row++) {
-  assert.equal(exported.getRow(row).height,template.getRow(row).height,`row ${row} must stay fixed`);
+  if(row===7)assert.ok(exported.getRow(row).height>=template.getRow(row).height);
+  else assert.equal(exported.getRow(row).height,template.getRow(row).height,`row ${row} must stay fixed`);
   for(let col=1;col<=10;col++) {
    const actual=exported.getCell(row,col),original=template.getCell(row,col);
    for(const key of ['font','border','fill','alignment'])assert.deepEqual(actual[key],original[key],`cell ${actual.address} ${key} must stay fixed`);
@@ -277,3 +278,25 @@ assert.match(legacyFacilitiesSheet.getCell('B15').value,/己公園已開放/);
 assert.match(legacyFacilitiesSheet.getCell('B15').value,/辛運動中心/);
 assert.doesNotMatch(legacyFacilitiesSheet.getCell('B14').value,/己公園|街廓逐步形成/);
 console.log('Inline legacy public facilities survive export without contaminating living amenities.');
+
+
+const education=await load({report_text:`01｜案件摘要
+行政里：摘要舊里
+國中學區：摘要國中
+06｜學區與里別
+- **行政里**：橫峰里（鄰別待複核）；國小學區：大園國小（115學年度）；國中學區：待複核
+08｜競案分級與市場行情
+國中學區：鄰案國中
+`});
+assert.equal(education.getCell('F7').value,'橫峰里（鄰別待複核）');
+assert.equal(education.getCell('B7').value,'大園國小（115學年度）\n待複核');
+const fallbackSchool=await load({report_text:`01｜案件摘要
+里別：摘要里
+國民中學學區：摘要國中
+06｜學區與里別
+基礎教育學區：大園國小（入學資格待確認）
+`});
+assert.equal(fallbackSchool.getCell('F7').value,'摘要里');
+assert.equal(fallbackSchool.getCell('B7').value,'大園國小（入學資格待確認）\n摘要國中');
+const nearby=await load({report_text:'05｜生活圈與市場定位\n公共建設：基地鄰近大園國小。'});
+assert.equal(nearby.getCell('B7').value,'待複核');
