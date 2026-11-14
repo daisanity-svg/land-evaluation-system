@@ -1,0 +1,66 @@
+@media screen {
+body:has(.land-workspace){--home-ink:#262c40;--home-help:#5b6472;--home-rule:#e1e4ea}
+body:has(.land-workspace) .shared-header .account-bar{max-width:1040px;width:calc(100% - 48px);height:64px;padding:0;display:flex;flex-wrap:nowrap;gap:16px;box-sizing:border-box;color:white}
+body:has(.land-workspace) .shared-brand{order:0;flex:none;gap:0}
+body:has(.land-workspace) .shared-brand img{width:40px;height:32px;border-radius:6px}
+body:has(.land-workspace) .shared-brand span{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.home-title{order:1;font-size:22px;margin:0;white-space:nowrap;color:white}
+body:has(.land-workspace) .shared-header nav{order:2;margin-left:auto;gap:16px;font-size:13px;justify-content:flex-end}
+.home-header-actions{order:3;display:flex;align-items:center;gap:16px;flex:none}
+.home-header-actions .workspace-status{margin:0;color:white;font-size:13px;padding:0}
+.home-header-actions small{max-width:104px}
+.app-shell.land-workspace{max-width:1040px;width:calc(100% - 48px);margin:24px auto;padding:0;box-sizing:border-box}
+.land-workspace .document-flow>section+section{margin-top:48px}
+.land-workspace .document-flow>section{min-width:0}
+.land-workspace .panel-header,.land-workspace .panel-body,.land-workspace .report-controls{padding:16px 0}
+.land-workspace .panel-header h2{font-size:22px;font-weight:750;margin:0}
+.land-workspace .panel-header .eyebrow{font-size:12px;margin:0 0 8px}
+.land-workspace h3,.land-workspace legend,.land-workspace summary,.land-workspace .sync-box strong{font-size:16px;font-weight:750;padding-inline:0;line-height:1.5}
+.land-workspace .muted,.land-workspace .launch-card p,.land-workspace .sync-box p,.land-workspace .utility-details p{font-size:13px;color:var(--home-help)}
+.land-workspace .case-fields,.land-workspace .document-case-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:24px}
+.land-workspace .case-fields>.field,.land-workspace .document-case-values>div,.land-workspace .intake-fields .field,.land-workspace .paste-area .field,.land-workspace .home-actions .field{display:grid;grid-template-columns:160px minmax(0,1fr);column-gap:16px;align-items:center;min-width:0;min-height:48px;margin:0;padding:3px 0 4px;border:0;border-bottom:1px solid var(--home-rule);box-sizing:border-box}
+.land-workspace .case-fields>.field:first-child,.land-workspace .case-fields>.field:last-child,.document-case-values>div:nth-child(1),.document-case-values>div:nth-child(6),.document-case-values>div:nth-child(7){grid-column:1/-1}
+.land-workspace .field>span,.land-workspace .document-case-values dt{font-size:14px;font-weight:650;color:var(--home-ink);overflow-wrap:anywhere}
+.land-workspace .field input:not([type=file]),.land-workspace .field textarea{display:block;width:100%;min-width:0;max-width:none;background:white;border:1px solid var(--home-rule);border-radius:6px;padding:8px 16px;font-size:15px;box-shadow:none;box-sizing:border-box;margin:0}
+.land-workspace .field input:not([type=file]){height:40px}
+.land-workspace input[placeholder="YYYY-MM-DD"],.land-workspace .field input:is([type=date],[type=number]),.land-workspace .intake-fields [data-width="short"] input{max-width:240px}
+.land-workspace .case-fields>.field:first-child input,.land-workspace .document-case-values>div:nth-child(6) dd,.land-workspace .document-case-values>div:nth-child(7) dd{max-width:480px}
+.land-workspace .field textarea{height:120px;min-height:120px;resize:none}
+.land-workspace .pending-data{display:inline-block;background:#fff3da;color:#784604;border-radius:6px;padding:0 8px;line-height:24px;font-size:13px}
+.land-workspace .simple-form,.land-workspace .launch-panel .panel-body{display:flex;flex-direction:column;gap:24px}
+.land-workspace .utility-details,.land-workspace .intake-fields,.land-workspace .launch-card,.land-workspace .sync-box{min-width:0;margin:0;padding:16px 0}
+.land-workspace .utility-details + .utility-details,.land-workspace .utility-details fieldset+fieldset{margin-top:24px}
+.land-workspace .launch-card p,.land-workspace .sync-box p,.land-workspace .launch-help{margin:8px 0 0}
+.land-workspace .competitor-row{align-items:center;margin:0;gap:16px}
+.land-workspace .drop-file{margin:16px 0;border-radius:6px}
+.land-workspace .home-original-check{display:block;margin:16px 0}
+.land-workspace .home-original-check input{margin-right:8px}
+.land-workspace .home-actions,.land-workspace .export-toolbar{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px 16px;width:100%;margin:16px 0 0}
+.land-workspace .home-actions>div{min-width:0}
+.land-workspace .export-toolbar .btn{flex:none}
+.land-workspace .export-toolbar p{text-align:right}
+.land-workspace .btn,.land-workspace .report-tabs button,.home-header-actions .btn{display:inline-flex;min-height:40px;align-items:center;justify-content:center;padding:0 16px;border:1px solid var(--home-ink);border-radius:6px;background:white;color:var(--home-ink);font-size:14px;line-height:1.25;font-weight:650;box-shadow:none;width:auto;margin:0;box-sizing:border-box}
+.land-workspace .btn.primary{background:var(--home-ink);color:white}
+.land-workspace .report-tabs .active{text-decoration:underline;text-underline-offset:3px}
+.land-workspace .btn:disabled,.home-header-actions .btn:disabled{background:#f1f2f6;color:var(--home-help);border-color:var(--home-rule)}
+.land-workspace a:not(.workflow-steps a){color:var(--home-ink);text-decoration:underline;text-underline-offset:3px}
+.land-workspace summary:focus:not(:focus-visible){outline:none;box-shadow:none}
+.land-workspace .home-prompt .field{display:block;margin-top:16px}
+.land-workspace .home-prompt textarea{background:#f3f4f7;font-family:ui-monospace,monospace}
+.land-workspace .report-skeleton dl{display:block;margin:16px 0}
+.land-workspace .report-skeleton dl>div{display:grid;grid-template-columns:160px minmax(0,1fr);gap:16px;align-items:center;min-height:48px;padding:0;border-bottom:1px solid var(--home-rule)}
+.land-workspace .report-skeleton dd{margin:0;display:block}
+.land-workspace .report-skeleton dd i{height:8px;width:100%;border-radius:4px}
+.land-workspace .report-skeleton dd .short{width:40%}
+@media(max-width:920px){
+ body:has(.land-workspace) .shared-header .account-bar{height:auto;min-height:64px;flex-wrap:wrap;padding:8px 0}
+ .land-workspace .case-fields,.land-workspace .document-case-values{grid-template-columns:minmax(0,1fr)}
+ .land-workspace .report-skeleton dl>div,.land-workspace .case-fields>.field,.land-workspace .document-case-values>div,.land-workspace .intake-fields .field,.land-workspace .paste-area .field,.land-workspace .home-actions .field{grid-template-columns:112px minmax(0,1fr)}
+}
+@media(max-width:480px){
+ body:has(.land-workspace) .shared-header .account-bar,.app-shell.land-workspace{width:calc(100% - 32px)}
+ .home-title{font-size:18px}
+ .home-header-actions{gap:8px;flex-wrap:wrap}
+ body:has(.land-workspace) .shared-header nav{order:4;justify-content:flex-start;width:100%;margin:0}
+}
+}
