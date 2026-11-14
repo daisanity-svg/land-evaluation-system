@@ -100,3 +100,40 @@ a{color:var(--deep);text-underline-offset:3px}
 @media(max-width:780px){.land-workspace .workflow-grid{grid-template-columns:minmax(0,1fr)}.land-workspace .launch-panel{position:static;max-height:none}.shared-header .account-bar{padding:10px 12px}.shared-header nav{gap:10px}.workflow-steps{grid-template-columns:repeat(3,minmax(108px,1fr))}.workflow-steps a{padding:8px;gap:0 5px}.workflow-steps .step-number{font-size:15px}.report-skeleton{padding:14px}}
 }
 @media print{.report-skeleton{display:none!important}}
+@media screen {
+body{background:#fff}
+.land-workspace .hero-panel{background:#262c40;border:0;border-radius:0;box-shadow:none;padding:12px 20px;margin-bottom:18px}
+.land-workspace .workspace-intro{margin-top:5px}
+.land-workspace .workspace-intro .app-title{font-size:24px;margin:0}
+.land-workspace .app-subtitle{display:none}
+.land-workspace .hero-topbar{float:right;margin-left:10px}
+.land-workspace .workspace-status{padding:2px 0;font-size:13px}
+.land-workspace .workflow-steps{gap:0;border-bottom:1px solid var(--line)}
+.land-workspace .workflow-steps a{background:none;border:0;border-radius:0;min-width:0;border-bottom:2px solid transparent}
+.land-workspace .workflow-steps a[aria-current]{border-color:var(--brand-dark)}
+.workflow-steps small:before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:#777e91;margin-right:6px}
+.workflow-steps a[data-state="2"] small:before{background:var(--brand-dark)}
+.land-workspace .workflow-steps a[data-state="2"] .step-number{color:var(--brand-dark)}
+.land-workspace .document-flow{display:block}
+.land-workspace .document-flow .panel,.land-workspace .launch-panel{position:static;max-height:none;overflow:visible;background:#fff;border:0;border-radius:0;box-shadow:none}
+.land-workspace .document-flow>section+section{margin-top:24px;border-top:1px solid var(--line)}
+.land-workspace .panel-header,.land-workspace .report-controls,.land-workspace .panel-body{padding:14px 0;background:none}
+.land-workspace .panel-header h2{font-size:21px}
+.land-workspace .case-fields{display:block}
+.land-workspace .case-fields .field,.land-workspace .intake-fields>.field,.document-case-values>div{display:grid;grid-template-columns:minmax(102px,25%) minmax(0,1fr);gap:10px;align-items:start;border-bottom:1px solid #e7e9ef;padding:8px 0}
+.document-case-values{margin:0}.document-case-values dd{margin:0;overflow-wrap:anywhere}.document-case-values dt{font-size:14px;font-weight:750}
+.pending-data{color:#89510a;font-size:13px}
+.land-workspace .field input,.land-workspace .field textarea,.inner-workspace .field textarea,.management input{background:white;border:1px solid #d7dae5;border-radius:3px;font-size:15px;box-sizing:border-box;min-width:0}
+.land-workspace .utility-details,.inner-workspace .utility-details,.land-workspace .intake-fields,.inner-workspace .intake-fields{border:0;border-top:1px solid var(--line);border-radius:0;background:#fff;padding:10px 0}
+.land-workspace .launch-card,.land-workspace .sync-box,.land-workspace .quality-note{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:10px 0}
+.land-workspace .launch-card .start-research{width:auto;padding:10px 14px}
+.land-workspace .btn:disabled{opacity:1;background:#f1f2f6;color:#535d72;border-color:#d7dae5;box-shadow:none}
+.land-workspace .report-skeleton,.land-workspace .report-paper,.land-workspace .card-report{border:0;border-radius:0;box-shadow:none;margin:0;padding-inline:0}
+.report-skeleton dl{border:0;border-radius:0}
+.report-skeleton dl>div{padding-inline:0}
+.land-workspace .muted,.land-workspace .sync-box p,.land-workspace .launch-card p{font-size:13px}
+.land-workspace,.management,.inner-workspace{font-size:15px}
+.management,.management .card,.management form,.management .notice{background:white;border:0;border-radius:0;box-shadow:none}
+.management .card,.management form,.management .notice{border-top:1px solid var(--line);padding-inline:0}
+@media(max-width:780px){.land-workspace .hero-panel{padding:10px}.land-workspace .workflow-steps{grid-template-columns:repeat(3,minmax(0,1fr))}.land-workspace .workflow-steps a{font-size:13px;padding:7px 4px}.land-workspace .preview-header{padding:14px 0}}
+}
