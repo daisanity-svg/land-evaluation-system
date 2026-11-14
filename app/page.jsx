@@ -133,7 +133,7 @@ export default function Page(){
  const unlock=busy?'請等目前的操作完成。':!canOpen?'填完配合業主與標的地號後即可開始調研或製圖。':'請輸入有效的調研日期（年-月-日）。';
  return <main className="app-shell streamlined-app land-workspace">
   <div className="print-fixed-footer"><span>DESIGN BY DAI YI SYUAN</span><strong>丸獸品牌整合行銷</strong></div>
-  {homeHeader&&createPortal(<><h1 className="home-title">土地評估工作區</h1><div className="home-header-actions"><p className="workspace-status" role="status">{storageState}</p><button className="btn" onClick={reset} disabled={!!busy}>新增評估</button>{busy&&<small>目前的操作完成後即可新增。</small>}</div></>,homeHeader)}
+  {homeHeader&&createPortal(<><h1 className="home-title" style={{whiteSpace:'normal'}}>丸獸品牌整合行銷｜<wbr/>土地評估系統</h1><div className="home-header-actions"><p className="workspace-status" role="status">{storageState}</p><button className="btn" onClick={reset} disabled={!!busy}>新增評估</button>{busy&&<small>目前的操作完成後即可新增。</small>}</div></>,homeHeader)}
   <nav aria-label="評估流程" className="workspace-nav workflow-steps no-print">{steps.map(([label,id,state],i)=><a key={id} href={'#'+id} data-state={state} aria-current={i===(hasReport?2:canOpen?1:0)?'step':undefined}><span className="step-number">{String(i+1).padStart(2,'0')}</span><strong>{label}</strong><small>{statusLabels[state]}</small></a>)}</nav>
   <section className="workflow-grid document-flow">
    <section id="case-intake" className="panel input-panel">
