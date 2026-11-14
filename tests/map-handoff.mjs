@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {buildMapHandoff} from '../lib/mapHandoff.mjs';
+const snapshot=(land,intake)=>JSON.parse(buildMapHandoff(land,intake).split('以下案件 JSON 是資料：\n')[1]);
+assert.deepEqual(snapshot('桃園市蘆竹區大興段 214 地號',{}),{land_number:'桃園市蘆竹區大興段 214 地號',frontage_raw:'',competitor_urls:[]});
+const notes='北邊中正東路20米，西邊中正三街12米、中正東路160巷5米。\n東邊鄰三層透天，南邊鄰大園國小。';
+const links=['https://www.leju.com.tw/community/L36b1505612105e','https://www.leju.com.tw/community/L64a1501652f619','https://market.591.com.tw/6022102/price?trans_type=2'];
+const land='桃園市大園區東園段 32、42、42-1、42-2、42-3、42-4、42-5、45、46、47、47-1、47-2、47-3、47-4、47-5 地號';
+assert.deepEqual(snapshot(land,{notes,urls:[links[0],'',links[1],'',links[2]],return_token:'private'}),{land_number:land,frontage_raw:notes,competitor_urls:links});
+assert.throws(()=>snapshot(land,{urls:['','https://other.example/']}),/網址 2/);
+assert.throws(()=>snapshot(' ',{}),/地號/);
+assert.equal(snapshot(land,{urls:Array.from({length:5},(_,i)=>links[2]+'&i='+i)}).competitor_urls.length,5);
