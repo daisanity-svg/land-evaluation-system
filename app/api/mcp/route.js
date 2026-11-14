@@ -1,3 +1,4 @@
+import {reviewMarketInputs} from '../../../lib/marketDecision.mjs';
 import { assessReportQuality } from '../../../lib/reportQuality.mjs';
 import { assessResearchProgress } from '../../../lib/researchProgress.mjs';
 import { resolveLandParcels } from '../../../lib/landParcel.js';
@@ -50,13 +51,14 @@ const submitTool = {
         },
       },
       report_text: { type: 'string' },
+      owner_brief: {type:'object',description:'選填獨立簡表：version=1.17.0、market、product、advantages、resistances；須與正文一致。'},
       research_evidence: { type: 'object', description: '內部核實紀錄：version=1、land_number、research_date、claims、transactions、market_scope。依getResearchInstructions完整格式填寫。' },
     },
   },
 };
 
 const parcelTool={name:'lookupLandParcels',description:'唯讀核對官方地段代碼並標準化地號；不確認宗地存在或幾何。',annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:true},inputSchema:{type:'object',required:['land_number'],additionalProperties:false,properties:{land_number:{type:'string'}}}};
-const verifyTool={name:'verifyResearch',description:'唯讀查閱允許的公開原文並核對摘錄、標的與採用值，逐案成交驗算；不寫入資料庫，不代替法定文件與專業審閱。',annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:true},inputSchema:{type:'object',required:['research_evidence'],additionalProperties:false,properties:{research_evidence:{type:'object'},report_text:{type:'string'},land_number:{type:'string'},research_date:{type:'string'}}}};
+const verifyTool={name:'verifyResearch',description:'唯讀查閱允許的公開原文並核對摘錄、標的與採用值，逐案成交驗算；不寫入資料庫，不代替法定文件與專業審閱。',annotations:{readOnlyHint:true,destructiveHint:false,idempotentHint:true,openWorldHint:true},inputSchema:{type:'object',required:['research_evidence'],additionalProperties:false,properties:{research_evidence:{type:'object'},report_text:{type:'string'},land_number:{type:'string'},research_date:{type:'string'},market_decision:{type:'object'}}}};
 
 export async function OPTIONS() {
   return new Response(null, { status: 204, headers });
@@ -80,7 +82,7 @@ export async function POST(request) {
   if (body.method === 'tools/list') return rpc(body.id, { tools: [submitTool,verifyTool,parcelTool] });
   if (body.method !== 'tools/call') return rpcError(body.id, -32601, 'Method not found.');
   if(body.params?.name===parcelTool.name){try{const payload=await resolveLandParcels(body.params.arguments?.land_number);return rpc(body.id,{content:[{type:'text',text:JSON.stringify(payload)}],structuredContent:payload,isError:false});}catch(error){const payload={success:false,error:error.code||'lookup_failed',message:error.message};return rpc(body.id,{content:[{type:'text',text:JSON.stringify(payload)}],structuredContent:payload,isError:true});}}
-  if(body.params?.name===verifyTool.name){const args=body.params.arguments||{};const sourceChecks=await verifySourcePages(args.research_evidence);const audit=auditResearchEvidence(args.research_evidence,args,{sourceChecks});if(args.report_text)audit.report_quality=assessReportQuality(args,{sourceChecks});audit.workflow=assessResearchProgress(args,audit);return rpc(body.id,{content:[{type:'text',text:JSON.stringify(audit)}],structuredContent:audit,isError:!audit.present||audit.errors.length>0});}
+  if(body.params?.name===verifyTool.name){const args=body.params.arguments||{};const sourceChecks=await verifySourcePages(args.research_evidence);const audit=auditResearchEvidence(args.research_evidence,args,{sourceChecks});if(args.report_text)audit.report_quality=assessReportQuality(args,{sourceChecks});audit.workflow=assessResearchProgress(args,audit);if(args.market_decision){try{audit.market_decision=reviewMarketInputs(args.market_decision,audit,args.research_date||args.research_evidence?.research_date);}catch(e){audit.errors.push(e.message);}}return rpc(body.id,{content:[{type:'text',text:JSON.stringify(audit)}],structuredContent:audit,isError:!audit.present||audit.errors.length>0});}
   if (body.params?.name !== submitTool.name) return rpcError(body.id, -32602, 'Unknown tool.');
 
   const requestUrl = new URL('/api/reports', request.url);

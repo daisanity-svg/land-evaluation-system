@@ -4,6 +4,7 @@ const scope={project_id:'test',market_type:'presale',use:'住宅',date_from:'202
 const row={project_id:'test',market_type:'presale',use:'住宅',status:'valid',special:false,floor:3,date:'2025-05-10',url:'https://lvr.land.moi.gov.tw/record',parking_spaces:1,parking_type:'坡道平面',parking_area_m2:10/.3025};
 const rows=[{...row,id:'a',total_price_wan:1800,building_area_m2:45/.3025,parking_price_wan:200},{...row,id:'b',total_price_wan:2000,building_area_m2:50/.3025,parking_price_wan:250},{...row,id:'c',total_price_wan:1850,building_area_m2:45/.3025,parking_price_wan:250}];
 const result=calculateTransactions(rows,scope);
+assert.equal(result.parking["坡道平面"].range_midpoint_wan,225);
 assert.equal(result.valid_count,3);assert.equal(result.average_unit_price,45.0595);assert.equal(result.median_unit_price,45.7143);assert.equal(result.parking['坡道平面'].average_price_wan,233.3333);assert.equal(result.calculation_complete,true);
 for(const mutation of [{use:'店面'},{market_type:'resale'},{date:'2024-06-01'},{status:'cancelled'},{status:'corrected'},{status:'unknown'},{special:true},{floor:1},{parking_price_wan:null},{parking_area_m2:null},{total_price_wan:'1800'},{date:'2025-02-30'},{project_id:'other'}]){const bad=calculateTransactions([{...rows[0],...mutation}],{...scope,total_count:1});assert.equal(bad.valid_count,0,JSON.stringify(mutation));}
 assert.equal(calculateTransactions([rows[0],rows[0]],{...scope,total_count:2}).valid_count,1);

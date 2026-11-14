@@ -300,3 +300,25 @@ assert.equal(fallbackSchool.getCell('F7').value,'摘要里');
 assert.equal(fallbackSchool.getCell('B7').value,'大園國小（入學資格待確認）\n摘要國中');
 const nearby=await load({report_text:'05｜生活圈與市場定位\n公共建設：基地鄰近大園國小。'});
 assert.equal(nearby.getCell('B7').value,'待複核');
+
+const periodWorkbook = new ExcelJS.Workbook();
+await periodWorkbook.xlsx.load(await buildLandEvaluationExcelBuffer({report_text:`08｜競案分級與市場行情
+競案一｜測試競案
+建設公司：測試建設
+591狀態：新成屋
+開案時間：114.4
+房型：2房、3房
+坪數：18.4～20.5坪
+採計口徑：115年
+成交期間：2026-01-01至2026-11-14
+成交筆數：35筆
+成交價格：29萬／坪
+車位價格：175萬／位
+資訊來源：591實價登錄
+累計有效首次成交戶數：55戶
+全案可售戶數：66戶
+09｜價格預判
+住宅：待複核`}));
+const annualBriefSheet=periodWorkbook.worksheets[0];
+for(const [cell,value] of Object.entries({D19:'新成屋\n114.4開案',E19:'2-3房',F19:'18-21坪',G19:'29萬/坪',H19:'175萬/位',I19:'實價登錄',J19:'115年35筆\n83%\n55│66戶'}))
+  assert.equal(annualBriefSheet.getCell(cell).text,value,cell);

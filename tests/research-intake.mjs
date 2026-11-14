@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {intakePrompt,intakeUrls} from '../lib/researchIntake.mjs';
+import {checkpointPayload,saveCheckpoint,loadCheckpoint} from '../lib/researchCheckpoint.mjs';
+const land='桃園市平鎮區測試段1地號',url='https://market.591.com.tw/6022102/price?trans_type=2';
+const intake={land,sides:{東:'○○路約8公尺',北:'鄰三層透天'},source:'國土測繪圖資服務雲',urls:url+'\n'+url};
+const prompt=intakePrompt(intake);
+for(const value of ['約8公尺','三層透天','人工量測／觀察','未確認',url,'不能自行替換'])assert.ok(prompt.includes(value));
+assert.deepEqual(intakeUrls(intake.urls),[url]);
+assert.throws(()=>intakeUrls('https://market.591.com.tw.evil.example/'));
+assert.equal(intakePrompt({}),'');
+const m=new Map(), storage={setItem:(k,v)=>m.set(k,v),getItem:k=>m.get(k)};
+saveCheckpoint(storage,checkpointPayload({landNumber:land,researchIntake:intake},'case-1'));
+assert.deepEqual(loadCheckpoint(storage,'case-1',land).payload.research_intake,intake);
+assert.equal(loadCheckpoint(storage,'case-1','其他地號'),null);
+console.log('Research intake: direction provenance, designated URLs, launch prompt and parcel-bound checkpoint passed.');
