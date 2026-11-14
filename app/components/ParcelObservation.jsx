@@ -4,10 +4,12 @@ import {recordParcelObservation} from '../../lib/parcelObservation.mjs';
 import {adoptParcelObservations} from '../../lib/parcelObservationAdoption.mjs';
 export default function ParcelObservation({payload,onRecorded}) {
  const [values,setValues]=useState({date:new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Taipei'}).format(new Date()),url:'https://maps.nlsc.gov.tw/T09/mobilemap.action'}),[file,setFile]=useState(null),[message,setMessage]=useState(''),[confirmed,setConfirmed]=useState(false);
+ const [edited,setEdited]=useState({});
  function apply(){try{onRecorded(adoptParcelObservations(payload,confirmed));setMessage('原件查閱值已套用至初評草稿；未改動分區、學區或其他章節，仍須完成正式核實。');setConfirmed(false);}catch(e){setMessage(e.message);}}
- const field=(key,label,type='text')=><label className="field"><span>{label}</span><input type={type} value={values[key]||''} onChange={e=>setValues(v=>({...v,[key]:e.target.value}))}/></label>;
+ const field=(key,label,type='text')=><label className="field"><span>{label}</span><input type={type} value={values[key]||''} onChange={e=>{setEdited(v=>({...v,[key]:true}));setValues(v=>({...v,[key]:e.target.value}));}}/></label>;
  async function save(){try{if(!file)throw Error('請先選取官方截圖或文件原檔。');if(file.size>15*1024*1024)throw Error('原檔請小於15MB。');const digest=await crypto.subtle.digest('SHA-256',await file.arrayBuffer());const sha256=Array.from(new Uint8Array(digest),b=>b.toString(16).padStart(2,'0')).join('');const next=recordParcelObservation(payload,{...values,land_number:values.land_number||'',filename:file.name,sha256});onRecorded(next);setMessage('查閱值、原文與附件雜湊已記錄；待原件覆核，未自動確認分區、學區或完成調研。原檔請自行保留並隨調研附上。');}catch(e){setMessage(e.message);}}
- const count=[values.land_number,values.url,values.date,file,values.excerpt,values.area||values.village,values.longitude&&values.latitude].filter(Boolean).length;
+ const filled=key=>Boolean(String(values[key]??'').trim());
+ const count=[filled('land_number'),edited.url&&filled('url'),edited.date&&filled('date'),file,filled('excerpt'),filled('area')||filled('village'),filled('longitude')&&filled('latitude')].filter(Boolean).length;
  function selectFile(next){if(next&&!/^(image\/|application\/pdf$)/.test(next.type)&&! /\.(pdf|png|jpe?g|webp|gif|tiff?|heic)$/i.test(next.name)){setMessage('請選擇圖片或 PDF。');return;}setFile(next||null);setMessage('');}
  return <details className="utility-details"><summary>補入官方截圖／文件查閱紀錄 <small>官方資料 {count}／7</small></summary>
  <p>只填原件可讀的內容。原檔留在本機，系統只記錄查閱資料。</p>
