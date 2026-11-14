@@ -99,31 +99,40 @@ export default function Page(){
  async function copyReport(){if(hasReport){await navigator.clipboard.writeText(form.reportText);alert('已複製完整報告。')}}
  async function downloadExcel(){if(!hasReport||busy)return;const saved=prepareExport();if(!saved)return;setBusy('excel');try{setSyncMessage('正在產生 Excel 簡表。');const response=await fetch(`/api/reports/${encodeURIComponent(saved.report_id)}/excel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(saved),signal:AbortSignal.timeout(65000)});const blob=await checkedArtifact(response,'xlsx');offerDownload(blob,'xlsx',`${fileName({...form,client:saved.client,landNumber:saved.land_number,researchDate:saved.research_date})}_土地評估簡表.xlsx`);setSyncMessage('Excel 已產生並送交瀏覽器下載；若未取得檔案，請點下方下載連結。')}catch(error){setSyncMessage('Excel輸出失敗：'+error.message)}finally{setBusy('')}}
  const quality=hasReport?assessReportQuality({report_text:form.reportText,summary:form.summary,land_number:form.landNumber,research_date:form.researchDate},{sourceChecks:form.summary?._source_checks||[]}):null;
- return <main className="app-shell streamlined-app">
+ return <main className="app-shell streamlined-app land-workspace">
   <div className="print-fixed-footer"><span>DESIGN BY DAI YI SYUAN</span><strong>丸獸品牌整合行銷</strong></div>
   <header className="hero-panel">
    <div className="hero-topbar"><div className="brand-lockup"><div className="brand-mark company-logo-card"><img src="/company-logo.jpg" alt="丸獸品牌 Logo" className="company-logo" /></div><div className="brand-copy"><div className="brand-copy-top">丸獸品牌整合行銷</div><div className="brand-copy-bottom">土地評估系統</div></div></div><button className="btn ghost" onClick={reset} disabled={!!busy}>新增評估</button></div>
-   <h1 className="app-title">土地評估</h1><p className="muted" role="status">{storageState}</p><p className="app-subtitle">填寫案件 → 前往 ChatGPT 調研 → 回傳與下載</p>
+   <div className="workspace-intro"><div><p className="workspace-kicker">LAND EVALUATION</p><h1 className="app-title">土地評估工作區</h1><p className="app-subtitle">建立案件、調研與製圖，集中在同一個工作區。</p></div><p className="workspace-status" role="status">{storageState}</p></div>
+   <svg className="parcel-motif" viewBox="0 0 420 220" aria-hidden="true"><g fill="none" stroke="currentColor"><path d="M-38 102 152-20 396 88 235 246M-10 149 175 25 429 140M47 226 249 76 309-5M130 243 415 29M86-12l279 235M-16 67l274 159"/><path d="m137 105 64-45 71 36-64 47z" fill="currentColor" fillOpacity=".17" strokeWidth="2"/></g></svg>
   </header>
+  <nav aria-label="工作區導覽" className="workspace-nav no-print"><a href="#case-intake"><span>01</span> 案件資料</a><a href="#case-actions"><span>02</span> 調研與製圖</a><a href="#case-report"><span>03</span> 評估成果</a></nav>
   <section className="workflow-grid">
-   <section className="panel input-panel">
-    <div className="panel-header compact"><p className="eyebrow small">01 / 案件資料</p><h2>建立土地評估</h2></div>
+   <section id="case-intake" className="panel input-panel">
+    <div className="panel-header compact"><p className="eyebrow small">01 / 案件資料</p><h2>建立土地評估</h2><p className="muted">先填業主、日期與地號；基地現況和競案可稍後補上。</p></div>
     <div className="panel-body simple-form">
-     <label className="field"><span>配合業主</span><input value={form.client} onChange={e=>setField('client',e.target.value)} placeholder="例如：弘峻建設"/></label>
+     <div className="case-fields"><label className="field"><span>配合業主</span><input value={form.client} onChange={e=>setField('client',e.target.value)} placeholder="例如：弘峻建設"/></label>
      <label className="field"><span>調研日期</span><input type="date" value={form.researchDate} onChange={e=>setField('researchDate',e.target.value)}/></label>
-     <label className="field"><span>目標地號</span><textarea rows={3} value={form.landNumber} onChange={e=>setField('landNumber',e.target.value)} placeholder="例如：桃園市中壢區中運段162、163地號"/></label>
+     <label className="field"><span>目標地號</span><textarea rows={3} value={form.landNumber} onChange={e=>setField('landNumber',e.target.value)} placeholder="例如：桃園市中壢區中運段162、163地號"/></label></div>
      <ParcelLocation landNumber={form.landNumber} onResolved={lookup=>setForm(old=>old.landNumber.trim()===lookup.input?{...old,parcelLookup:lookup}:old)}/>
      <ParcelObservation key={reportId} payload={checkpointPayload(form,reportId)} onRecorded={p=>setForm(old=>({...old,researchEvidence:p.research_evidence,reportText:p.report_text,summary:{...(p.summary||{}),_research_evidence:p.research_evidence}}))}/>
      <ResearchIntake value={intakeFor(form)} disabled={!!busy} onChange={value=>setField('researchIntake',{...value,land:form.landNumber.trim()})}/>
+    </div>
+   </section>
+   <section id="case-actions" className="panel launch-panel">
+    <div className="panel-header compact"><p className="eyebrow small">02 / 調研與製圖</p><h2>開始工作</h2><p className="muted">兩項工作可分開啟動，共用本案資料。</p></div>
+    <div className="panel-body simple-form">
+     <div className="launch-card"><h3>土地調研</h3><p className="muted">查核基地與競案，完成後回傳報告。</p>
      <button className="btn primary start-research" onClick={openGpt} disabled={!canOpen||!!busy}>{hasReport?'接續本案調研':'前往 ChatGPT 開始調研'}</button>
-     <MapHandoff key={reportId+form.landNumber} landNumber={form.landNumber} intake={intakeFor(form)}/>
+     </div><div className="launch-card"><h3>地圖製作</h3><p className="muted">另開 ChatGPT 對話，成果留在製圖對話。</p>
+     <MapHandoff key={reportId+form.landNumber} landNumber={form.landNumber} intake={intakeFor(form)}/></div>
      <a href={`/research-workbench?case=${encodeURIComponent(reportId)}&land=${encodeURIComponent(form.landNumber)}`}>調研工作台與檢查點</a><p className="muted launch-help">開啟 ChatGPT 後，選取「{LAND_MCP_APP_NAME}」並送出。完成後回到本頁查看。</p>
      <div className="sync-box" role="status" aria-live="polite"><strong>回傳狀態</strong><p>{syncMessage}</p>{lastLink&&<a className="fallback-link" href={lastLink} target="_blank" rel="noreferrer">重新開啟本案 ChatGPT 對話</a>}<button className="btn" onClick={()=>checkReturnedReport(false)} disabled={!!busy}>檢查 / 載入回傳</button></div>
      <details className="utility-details"><summary>備援提示詞</summary><p className="muted">新對話未帶入指令時，複製下方內容貼上。</p><button className="btn" onClick={copyPrompt}>{copied?'提示詞已複製':'複製完整提示詞'}</button><label className="field"><span>完整送件指令</span><textarea rows={8} readOnly value={prompt}/></label></details>
     </div>
    </section>
-   <section className="panel preview-panel">
-    <div className="panel-header preview-header"><div><p className="eyebrow small">02 / 評估成果</p><h2>土地評估報告</h2><p className="muted">{hasReport?'閱讀報告，或下載檔案留存。':'調研完成並回傳後，報告會出現在這裡。'}</p></div>
+   <section id="case-report" className="panel preview-panel">
+    <div className="panel-header preview-header"><div><p className="eyebrow small">03 / 評估成果</p><h2>土地評估報告</h2><p className="muted">{hasReport?'閱讀報告，或下載檔案留存。':'調研完成並回傳後，報告會出現在這裡。'}</p></div>
      <div className="toolbar export-toolbar" aria-label="報告輸出"><button className="btn primary" onClick={printPdf} disabled={!hasReport||!!busy}>輸出 PDF</button><button className="btn" onClick={downloadExcel} disabled={!hasReport||!!busy}>{busy==='excel'?'正在產生…':'下載 Excel 簡表'}</button></div>
     </div>
     <div className="report-controls no-print">
@@ -133,7 +142,7 @@ export default function Page(){
      {hasReport&&<ReportAdjustments key={reportId} text={form.reportText} onApply={text=>{setForm(old=>({...old,reportText:text,summary:null}));setSyncMessage('調整已套用；請重新核實修改項目後再正式送件。');}}/>}
      {hasReport&&<div className="report-tabs"><button className={viewMode==='card'?'active':''} onClick={()=>setViewMode('card')}>業主閱讀版</button><button className={viewMode==='raw'?'active':''} onClick={()=>setViewMode('raw')}>原文版</button><button onClick={copyReport}>複製全文</button></div>}
     </div>
-    {hasReport?(viewMode==='card'?<Report text={form.reportText} form={form}/>:<article className="report-paper raw-paper"><div className="report-brand-row"><div className="report-brand-title">丸獸品牌整合行銷｜原文版</div></div><pre className="text-report">{form.reportText}</pre></article>):<div className="report-empty"><span className="empty-symbol" aria-hidden="true">丸</span><h3>等待本案調研成果</h3><p>先填寫左側案件資料，前往 ChatGPT 調研並送回結果。<br/>已完成調研但未顯示時，請檢查回傳或手動貼回。</p><button className="btn" onClick={()=>setManualOpen(true)}>手動貼回報告</button></div>}
+    {hasReport?(viewMode==='card'?<Report text={form.reportText} form={form}/>:<article className="report-paper raw-paper"><div className="report-brand-row"><div className="report-brand-title">丸獸品牌整合行銷｜原文版</div></div><pre className="text-report">{form.reportText}</pre></article>):<div className="report-empty"><span className="empty-symbol" aria-hidden="true">丸</span><h3>等待本案調研成果</h3><p>先填寫案件資料，前往 ChatGPT 調研並送回結果。<br/>已完成調研但未顯示時，請檢查回傳或手動貼回。</p><button className="btn" onClick={()=>setManualOpen(true)}>手動貼回報告</button></div>}
    </section>
   </section>
   <footer className="designer-credit"><span>Designed by</span><strong>DAI YI SYUAN</strong></footer>
