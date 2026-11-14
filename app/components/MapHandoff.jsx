@@ -2,7 +2,7 @@
 import {useState} from 'react';
 import {buildMapHandoff,CHATGPT_HOME,MAP_APP} from '../../lib/mapHandoff.mjs';
 
-export default function MapHandoff({landNumber,intake}){
+export default function MapHandoff({landNumber,intake,disabled,disabledReason,onPrepared}){
  const [result,setResult]=useState(null);
  async function copy(text){
   try{await navigator.clipboard.writeText(text);return true;}catch{return false;}
@@ -16,11 +16,13 @@ export default function MapHandoff({landNumber,intake}){
    if(tab){tab.opener=null;tab.location.replace(CHATGPT_HOME);opened=true;}
   }catch{}
   setResult({text,opened,copied:null});
+  onPrepared?.();
   const copied=await copy(text);
   setResult(previous=>previous?.text===text?{...previous,copied}:previous);
  }
  return <div>
-  <button type="button" className="btn primary start-research" onClick={launch}>製作地圖</button>
+  <button type="button" className="btn start-research" disabled={disabled} aria-describedby={disabled?"map-unlock":undefined} onClick={launch}>製作地圖</button>
+  {disabled&&<p className="muted" id="map-unlock">{disabledReason}</p>}
   {result?.error&&<p role="alert">{result.error}</p>}
   {result?.text&&<>
    <p role="status">{result.opened?'已開啟 ChatGPT 新分頁。':'新分頁未開啟。'}{result.copied===true?'交接內容已複製。':result.copied===false?'無法自動複製，請全選下方內容。':''}請切到工作模式，用 @ 選取「{MAP_APP}」，貼上後送出。</p>
