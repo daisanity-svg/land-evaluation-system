@@ -34,6 +34,14 @@ for(const [row,name] of [[19,'日勝好日子'],[20,'臻璞'],[21,'立鴻晶硯'
 assert.equal(new Set([19,20,21].map(n=>sheet.getCell('J'+n).note.split('｜')[1])).size,3);
 for(const [cell,num] of [['D23',30],['H23',36],['H24',180]])assert.match(sheet.getCell(cell).text,new RegExp(num+'.*人工工作值'));
 assert.match(sheet.getCell('B7').text,/大園國小.*人工工作值/s);
+assert.match(sheet.getCell('B7').text,/大園國中.*人工工作值/s);
+assert.match(sheet.getCell('F7').text,/橫峰里.*人工工作值/s);
+for(const [cell,value] of [['B4','住宅區'],['B5','60%'],['F5','200%']]){
+ assert.equal(sheet.getCell(cell).text,`${value}\n（待複核）`);
+}
+assert.match(sheet.getCell('G19').text,/29\.24.*9筆樣本/s);
+assert.match(sheet.getCell('G20').text,/半年樣本 1筆.*30\.60.*一年樣本 6筆.*29\.65/s);
+assert.match(sheet.getCell('G21').text,/30\.95.*2筆樣本均價.*全期待複核/s);
 assert.equal(sheet.pageSetup.fitToPage,true);
 assert.equal(sheet.pageSetup.fitToHeight,1);
 assert.match(sheet.getCell('A34').text,/未附本案位置圖/);
