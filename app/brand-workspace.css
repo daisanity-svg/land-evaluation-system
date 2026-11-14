@@ -55,3 +55,48 @@ a{color:var(--deep);text-underline-offset:3px}
 @media(max-width:780px){.land-workspace .workflow-grid{grid-template-columns:minmax(0,1fr)}.land-workspace .hero-panel,.panel-body{padding:16px}.app-shell{padding:12px}.workspace-intro{align-items:start}.case-fields{grid-template-columns:minmax(0,1fr)}}
 }
 @media print{.launch-panel{display:none!important}}
+@media screen{
+.app-shell,.management,.shared-header .account-bar{max-width:1260px}
+.shared-header{background:#262c40;color:#fff}
+.shared-header .account-bar{margin:auto;background:transparent;color:white;align-items:center;justify-content:space-between;padding:12px 28px}
+.shared-header a,.shared-header button{color:white}
+.shared-header nav,.shared-brand{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.shared-brand{text-decoration:none;font-weight:800}
+.shared-brand img{width:54px;height:42px;object-fit:contain;background:white;border-radius:8px}
+.shared-brand small{display:block;color:#dce1ee}
+.shared-header nav span{overflow-wrap:anywhere}
+.workspace-intro{margin-top:12px}
+.workspace-status{border:0;background:none}
+.workspace-status:before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:#a8bbd6;margin-right:8px}
+.land-workspace .workflow-grid{grid-template-columns:minmax(0,1.55fr) minmax(0,1fr)}
+.land-workspace .launch-panel{position:sticky;top:16px;max-height:calc(100dvh - 32px);overflow:auto}
+.workflow-steps{display:grid;grid-template-columns:repeat(3,minmax(145px,1fr));overflow-x:auto}
+.workflow-steps a{display:grid;grid-template-columns:auto 1fr;align-items:center;gap:0 10px;padding:11px 13px}
+.workflow-steps .step-number{grid-row:span 2;font-size:19px;margin:0}
+.workflow-steps small{color:#535d72}
+.workflow-steps a[aria-current]{border-color:#596582;background:#eef0f6}
+.workflow-steps a[data-state="2"] .step-number{color:#226642}
+.field span{font-size:14px;font-weight:750}
+.muted,.utility-details p,.launch-card p,.sync-box p,.inner-workspace p,.management p{font-size:14px;color:#535d72}
+.land-workspace .panel-header h2{font-size:23px}
+.btn:disabled,.management button:disabled{opacity:.54;cursor:not-allowed}
+.competitor-row,.file-name{display:flex;align-items:end;gap:8px;margin:8px 0}
+.competitor-row label{flex:1;min-width:0}
+.file-name{flex-wrap:wrap;overflow-wrap:anywhere}
+.visually-hidden{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.drop-file{padding:14px;border:1px dashed #8c91a5;border-radius:10px}
+.drop-file label:focus-within{outline:2px solid var(--sky)}
+.utility-details fieldset+fieldset{margin:12px 0}
+.report-skeleton{padding:24px;color:var(--ink)}
+.report-skeleton h3{margin:0;font-size:22px}
+.report-skeleton dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.report-skeleton dl>div{padding:12px;border-bottom:1px solid var(--line);min-width:0}
+.report-skeleton .wide{grid-column:1/-1}
+.report-skeleton dd{margin:8px 0 0;display:flex;gap:8px}
+.report-skeleton i{display:block;height:16px;background:#e8eaf0;border-radius:4px;flex:1}
+.report-skeleton .wide:last-child i{height:48px}
+.export-toolbar .muted{flex-basis:100%;margin:0}
+.inner-workspace .brief-table td{overflow-wrap:anywhere}
+@media(max-width:780px){.land-workspace .workflow-grid{grid-template-columns:minmax(0,1fr)}.land-workspace .launch-panel{position:static;max-height:none}.shared-header .account-bar{padding:10px 12px}.shared-header nav{gap:10px}.workflow-steps{grid-template-columns:repeat(3,minmax(108px,1fr))}.workflow-steps a{padding:8px;gap:0 5px}.workflow-steps .step-number{font-size:15px}.report-skeleton{padding:14px}}
+}
+@media print{.report-skeleton{display:none!important}}
