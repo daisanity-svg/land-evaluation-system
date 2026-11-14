@@ -13,3 +13,10 @@ saveCheckpoint(storage,checkpointPayload({landNumber:land,researchIntake:intake}
 assert.deepEqual(loadCheckpoint(storage,'case-1',land).payload.research_intake,intake);
 assert.equal(loadCheckpoint(storage,'case-1','其他地號'),null);
 console.log('Research intake: direction provenance, designated URLs, launch prompt and parcel-bound checkpoint passed.');
+const spoken='我剛量東向約8公尺；北邊鄰三層透天。';
+const spokenPrompt=intakePrompt({notes:spoken,urls:['',url,'','','']});
+assert.ok(spokenPrompt.includes(spoken));
+assert.ok(spokenPrompt.includes('未提或語意不清標為未確認'));
+assert.deepEqual(intakeUrls(['',url,'','','']),[url]);
+assert.throws(()=>intakeUrls(Array.from({length:6},(_,i)=>url+'&id='+i)),/最多 5/);
+assert.throws(()=>intakeUrls([url+' '+url]));
