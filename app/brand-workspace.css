@@ -1,0 +1,57 @@
+/* Screen palette sampled from the existing Sold Out monsters logo. */
+@media screen {
+:root{--brand:#8c91a5;--brand-dark:#41485e;--brand-ink:#222738;--brand-soft:#eef0f6;--ink:var(--brand-ink);--muted:#535d72;--line:#d7dae5;--paper:#fff;--deep:var(--brand-dark);--sky:#596582;--shadow:0 8px 26px #242a4110}
+body{background:#f2f3f7;color:var(--ink)}
+a{color:var(--deep);text-underline-offset:3px}
+.app-shell{max-width:1300px;padding:28px}
+.land-workspace .hero-panel{isolation:isolate;background:#262c40;color:white;border:1px solid #363e56;border-radius:22px;padding:22px 28px;margin-bottom:14px;box-shadow:var(--shadow)}
+.land-workspace .hero-panel:after{display:none}
+.land-workspace .hero-topbar,.workspace-intro{position:relative;z-index:1}
+.land-workspace .hero-topbar{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.land-workspace .brand-copy-top{color:#e4e7f2}
+.land-workspace .brand-copy-bottom{color:#fff}
+.land-workspace .brand-mark.company-logo-card{width:68px;height:52px}
+.workspace-intro{display:flex;align-items:end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:24px}
+.workspace-kicker{font-size:11px;font-weight:800;letter-spacing:.2em;color:#bcc2d7;margin:0 0 5px}
+.land-workspace .workspace-intro .app-title{font-size:clamp(26px,4vw,38px);margin:0 0 8px;color:white}
+.land-workspace .app-subtitle{color:#dee2ee}
+.workspace-status{color:#eef0fb;border:1px solid #727b93;background:#30384e;border-radius:20px;font-size:12px;padding:7px 12px;margin:0}
+.parcel-motif{position:absolute;pointer-events:none;z-index:0;right:0;bottom:0;width:min(60%,440px);height:auto;color:#a9b0ca;opacity:.22}
+.workspace-nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 20px}
+.workspace-nav a{background:white;color:var(--deep);border:1px solid var(--line);border-radius:9px;padding:9px 12px;text-decoration:none;font-weight:750;font-size:14px}
+.workspace-nav a span{font-size:12px;color:var(--muted);margin-right:5px}
+.workspace-nav a:hover{background:var(--brand-soft)}
+.land-workspace .workflow-grid{grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px}
+.land-workspace .preview-panel{grid-column:1/-1}
+.land-workspace section[id]{scroll-margin-top:16px;min-width:0}
+.panel,.management,.land-workspace .panel-header,.utility-details,.report-controls{border-color:var(--line)}
+.panel{border-radius:16px;background:#fff;box-shadow:var(--shadow);backdrop-filter:none}
+.panel-header{background:#fafafe}
+.eyebrow.small,.field span,.utility-details summary,.empty-symbol,.report-empty h3{color:var(--deep)}
+.case-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.case-fields .field:last-child{grid-column:1/-1}
+.intake-fields{display:grid;min-width:0;margin:0;padding:15px;gap:10px;border:1px solid var(--line);border-radius:12px}
+.intake-fields legend{padding:0 5px;font-weight:750}
+.intake-fields p,.launch-card p{margin:0}
+.competitor-options label+label{margin-top:10px}
+.field input,.field textarea,.field select{background:#fafafe;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:10px 12px;max-width:100%}
+.land-workspace .field textarea{min-height:0}
+.field input:focus,.field textarea:focus{border-color:var(--deep);box-shadow:0 0 0 3px #8c91a54d}
+.btn{border-radius:10px;box-shadow:none}
+.btn.primary,.report-tabs button.active,.management button,.management .link-button{background:var(--brand-dark);color:white;border-color:var(--brand-dark)}
+.btn.ghost{color:white}
+.launch-card,.sync-box,.quality-note{padding:14px;border:1px solid var(--line);background:var(--brand-soft);border-radius:12px}
+.launch-card h3{font-size:16px;margin:0 0 5px}
+.launch-card .btn{margin-top:10px}
+.sync-box strong{color:var(--deep)}
+.sync-box .btn{margin:0;justify-self:start}
+.report-empty{padding:36px 20px;color:var(--muted)}
+.account-bar{background:#e4e7f1;color:var(--ink);flex-wrap:wrap}
+.account-bar a,.account-bar button,.management a{color:var(--deep)}
+.management{background:white;color:var(--ink);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);width:calc(100% - 28px)}
+.management form,.management .card,.management button.secondary{background:var(--brand-soft);border-color:var(--line);color:var(--ink)}
+.report-brand-row{background:var(--brand-dark)}
+:where(a,button,input,textarea,select,summary):focus-visible{outline:2px solid var(--sky);outline-offset:3px}
+@media(max-width:780px){.land-workspace .workflow-grid{grid-template-columns:minmax(0,1fr)}.land-workspace .hero-panel,.panel-body{padding:16px}.app-shell{padding:12px}.workspace-intro{align-items:start}.case-fields{grid-template-columns:minmax(0,1fr)}}
+}
+@media print{.launch-panel{display:none!important}}
