@@ -91,7 +91,7 @@ export default function ResearchReviewPage() {
 
   function openOwnerReport() {
     if (!approvedHandoff) return;
-    window.location.assign('/');
+    window.location.assign('/?handoff=approved');
   }
 
   return (
