@@ -1,4 +1,6 @@
 'use client';
+import { createPortal } from 'react-dom';
+import './home-document.css';
 import ReportSkeleton from './components/ReportSkeleton.jsx';
 import MapHandoff from './components/MapHandoff.jsx';
 import { intakePrompt, intakeUrls } from '../lib/researchIntake.mjs';
@@ -77,6 +79,8 @@ function RichText({text,sectionId}){const lines=normalize(text).split('\n').map(
 function Report({text,form}){const quality=assessReportQuality({report_text:text,summary:form.summary},{sourceChecks:form.summary?._source_checks||[]});const output=reportForOutput({report_text:text,summary:form.summary});text=output.report_text;form={...form,summary:output.summary};const parts=orderSections(parseSections(text));const s=getSummary(text,form);return <article className="card-report readable-report briefing-report"><div className="report-brand-row"><div className="report-brand-lockup"><div className="report-brand-mark company-logo-card"><img src="/company-logo.jpg" alt="丸獸品牌 Logo" className="company-logo" /></div><div><div className="report-brand-title">丸獸品牌整合行銷</div><div className="report-brand-subtitle">土地評估系統</div></div></div><div className="report-brand-side"><span>土地開發初評</span><span>OWNER REPORT</span></div></div><div className="report-case-header"><Heading index="" title={`${compact(form.client) || extractLine(text,['配合業主']) || '建設公司'}－${fullLandTitle(form.landNumber || s.land)} 土地評估`} subtitle="案件簡報"/></div><section className="report-section cover-section briefing-summary">{quality.status!=='ready_for_review'&&<p className="muted">{quality.label}。{quality.missing_core_fields.join('、')}尚待確認。</p>}<Heading index="01" title="案件摘要"/><div className="summary-grid briefing-summary-grid"><Metric label="標的位置" value={s.location}/><Metric label="標的地號" value={s.land}/><Metric label="土地分區" value={s.zone}/><Metric label="基地面積" value={s.area}/><Metric label="臨路條件" value={s.road}/><Metric label="建議價格" value={s.price}/><Metric label="建議產品" value={s.product}/><Metric label="結論" value={s.conclusion}/></div></section><section className="report-section briefing-main">{parts.map(p=><section className={`info-card accent briefing-section section-${p.id}`} key={`${p.id}-${p.title}`}><Heading index={p.id} title={p.title}/><RichText text={p.body} sectionId={p.id}/></section>)}</section></article>}
 
 export default function Page(){
+ const [homeHeader,setHomeHeader]=useState(null);
+ useEffect(()=>{setHomeHeader(document.querySelector('.shared-header .account-bar'));},[]);
  const [exportFiles,setExportFiles]=useState({});const exportUrls=useRef({});
  useEffect(()=>()=>{Object.values(exportUrls.current).forEach(URL.revokeObjectURL)},[]);
  function offerDownload(blob,kind,name){const previous=exportUrls.current[kind];if(previous)setTimeout(()=>URL.revokeObjectURL(previous),60000);const url=URL.createObjectURL(blob);exportUrls.current[kind]=url;setExportFiles(old=>({...old,[kind]:{url,name}}));const link=document.createElement('a');link.href=url;link.download=name;document.body.appendChild(link);link.click();link.remove();}
@@ -109,11 +113,7 @@ export default function Page(){
  const unlock=busy?'請等目前的操作完成。':!canOpen?'填完配合業主與標的地號後即可開始調研或製圖。':'請輸入有效的調研日期（年-月-日）。';
  return <main className="app-shell streamlined-app land-workspace">
   <div className="print-fixed-footer"><span>DESIGN BY DAI YI SYUAN</span><strong>丸獸品牌整合行銷</strong></div>
-  <header className="hero-panel">
-   <div className="hero-topbar"><button className="btn" onClick={reset} disabled={!!busy}>新增評估</button>{busy&&<small>目前的操作完成後即可新增。</small>}</div>
-   <div className="workspace-intro"><div><h1 className="app-title">土地評估工作區</h1><p className="app-subtitle">建立案件、調研與製圖，集中在同一個工作區。</p></div><p className="workspace-status" role="status">{storageState}</p></div>
-
-  </header>
+  {homeHeader&&createPortal(<><h1 className="home-title">土地評估工作區</h1><div className="home-header-actions"><p className="workspace-status" role="status">{storageState}</p><button className="btn" onClick={reset} disabled={!!busy}>新增評估</button>{busy&&<small>目前的操作完成後即可新增。</small>}</div></>,homeHeader)}
   <nav aria-label="評估流程" className="workspace-nav workflow-steps no-print">{steps.map(([label,id,state],i)=><a key={id} href={'#'+id} data-state={state} aria-current={i===(hasReport?2:canOpen?1:0)?'step':undefined}><span className="step-number">{String(i+1).padStart(2,'0')}</span><strong>{label}</strong><small>{statusLabels[state]}</small></a>)}</nav>
   <section className="workflow-grid document-flow">
    <section id="case-intake" className="panel input-panel">
@@ -131,18 +131,20 @@ export default function Page(){
     <div className="panel-header compact"><p className="eyebrow small">02 / 調研與製圖</p><h2>開始工作</h2><p className="muted">兩項工作可分開啟動，共用本案資料。</p></div>
     <div className="panel-body simple-form">
      <div className="launch-card"><h3>土地調研</h3><p className="muted">查核基地與競案，完成後回傳報告。</p>
-     <button className="btn primary start-research" onClick={openGpt} aria-describedby={locked?"launch-unlock":undefined} disabled={locked}>{hasReport?'接續本案調研':'前往 ChatGPT 開始調研'}</button>
+
      </div><div className="launch-card"><h3>地圖製作</h3><p className="muted">另開 ChatGPT 對話，成果留在製圖對話。</p>
-     <MapHandoff onPrepared={()=>setMapStartedFor(reportId+form.landNumber)} disabled={locked} key={reportId+form.landNumber} landNumber={form.landNumber} intake={intakeFor(form)}/></div>
-     {locked&&<p className="muted" id="launch-unlock">{unlock}</p>}
+</div>
      <a href={`/research-workbench?case=${encodeURIComponent(reportId)}&land=${encodeURIComponent(form.landNumber)}`}>調研工作台與檢查點</a><p className="muted launch-help">開啟 ChatGPT 後，選取「{LAND_MCP_APP_NAME}」並送出。完成後回到本頁查看。</p>
-     <div className="sync-box" role="status" aria-live="polite"><strong>回傳狀態</strong><p>{syncMessage}</p>{lastLink&&<a className="fallback-link" href={lastLink} target="_blank" rel="noreferrer">重新開啟本案 ChatGPT 對話</a>}<button className="btn" onClick={()=>checkReturnedReport(false)} disabled={!!busy}>檢查 / 載入回傳</button></div>
-     <details className="utility-details"><summary>備援提示詞</summary><p className="muted">新對話未帶入指令時，複製下方內容貼上。</p><button className="btn" onClick={copyPrompt}>{copied?'提示詞已複製':'複製完整提示詞'}</button><label className="field"><span>完整送件指令</span><textarea rows={8} readOnly value={prompt}/></label></details>
+     <div className="sync-box" role="status" aria-live="polite"><strong>回傳狀態</strong><p>{syncMessage}</p>{lastLink&&<a className="fallback-link" href={lastLink} target="_blank" rel="noreferrer">重新開啟本案 ChatGPT 對話</a>}</div>
+     <details className="utility-details home-prompt"><summary>完整送件指令</summary><label className="field"><span className="visually-hidden">完整送件指令</span><textarea rows={8} readOnly value={prompt}/></label></details>
+     {locked&&<p className="muted" id="launch-unlock">{unlock}</p>}
+     <div className="home-actions">
+<button className="btn" onClick={()=>checkReturnedReport(false)} disabled={!!busy}>檢查／載入回傳</button><button className="btn" onClick={copyPrompt}>{copied?'提示詞已複製':'複製完整提示詞'}</button>     <button className="btn primary start-research" onClick={openGpt} aria-describedby={locked?"launch-unlock":undefined} disabled={locked}>{hasReport?'接續本案調研':'前往 ChatGPT 開始調研'}</button>     <MapHandoff onPrepared={()=>setMapStartedFor(reportId+form.landNumber)} disabled={locked} key={reportId+form.landNumber} landNumber={form.landNumber} intake={intakeFor(form)}/></div>
     </div>
    </section>
    <section id="case-report" className="panel preview-panel">
     <div className="panel-header preview-header"><div><p className="eyebrow small">03 / 評估成果</p><h2>土地評估報告</h2><p className="muted">{hasReport?'閱讀報告，或下載檔案留存。':'調研完成並回傳後，報告會出現在這裡。'}</p></div>
-     <div className="toolbar export-toolbar" aria-label="報告輸出"><button aria-describedby={!hasReport||busy?"export-unlock":undefined} className="btn" onClick={printPdf} disabled={!hasReport||!!busy}>輸出 PDF</button><button aria-describedby={!hasReport||busy?"export-unlock":undefined} className="btn primary" onClick={downloadExcel} disabled={!hasReport||!!busy}>{busy==='excel'?'正在產生…':'下載 Excel 圖表'}</button>{(!hasReport||busy)&&<p id="export-unlock" className="muted">{busy?'請等目前的操作完成。':'載入本案評估報告後，即可輸出 PDF 或下載 Excel 簡表。'}</p>}</div>
+
     </div>
     <div className="report-controls no-print">
      {hasReport&&<div className="quality-note" role="status"><strong>{quality.label}</strong><p>{quality.missing_core_fields.length?`尚待確認：${quality.missing_core_fields.join('、')}`:'內容已檢查；來源仍依主代理實際查閱核對。'}</p></div>}
@@ -152,6 +154,7 @@ export default function Page(){
      {hasReport&&<div className="report-tabs"><button className={viewMode==='card'?'active':''} onClick={()=>setViewMode('card')}>業主閱讀版</button><button className={viewMode==='raw'?'active':''} onClick={()=>setViewMode('raw')}>原文版</button><button onClick={copyReport}>複製全文</button></div>}
     </div>
     {hasReport?(viewMode==='card'?<Report text={form.reportText} form={form}/>:<article className="report-paper raw-paper"><div className="report-brand-row"><div className="report-brand-title">丸獸品牌整合行銷｜原文版</div></div><pre className="text-report">{form.reportText}</pre></article>):<ReportSkeleton/>}
+     <div className="toolbar export-toolbar" aria-label="報告輸出"><button aria-describedby={!hasReport||busy?"export-unlock":undefined} className="btn" onClick={printPdf} disabled={!hasReport||!!busy}>輸出 PDF</button><button aria-describedby={!hasReport||busy?"export-unlock":undefined} className="btn primary" onClick={downloadExcel} disabled={!hasReport||!!busy}>{busy==='excel'?'正在產生…':'下載 Excel 圖表'}</button>{(!hasReport||busy)&&<p id="export-unlock" className="muted">{busy?'請等目前的操作完成。':'載入本案評估報告後，即可輸出 PDF 或下載 Excel 簡表。'}</p>}</div>
    </section>
   </section>
   <footer className="designer-credit"><span>設計</span><strong>DAI YI SYUAN</strong></footer>
