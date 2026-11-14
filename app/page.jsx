@@ -1,4 +1,5 @@
 'use client';
+import MapHandoff from './components/MapHandoff.jsx';
 import { intakePrompt, intakeUrls } from '../lib/researchIntake.mjs';
 import ResearchIntake from './components/ResearchIntake.jsx';
 import {RESEARCH_RECOVERY_POLICY} from '../lib/researchRecoveryPolicy.mjs';
@@ -115,6 +116,7 @@ export default function Page(){
      <ParcelObservation key={reportId} payload={checkpointPayload(form,reportId)} onRecorded={p=>setForm(old=>({...old,researchEvidence:p.research_evidence,reportText:p.report_text,summary:{...(p.summary||{}),_research_evidence:p.research_evidence}}))}/>
      <ResearchIntake value={intakeFor(form)} disabled={!!busy} onChange={value=>setField('researchIntake',{...value,land:form.landNumber.trim()})}/>
      <button className="btn primary start-research" onClick={openGpt} disabled={!canOpen||!!busy}>{hasReport?'接續本案調研':'前往 ChatGPT 開始調研'}</button>
+     <MapHandoff key={reportId+form.landNumber} landNumber={form.landNumber} intake={intakeFor(form)}/>
      <a href={`/research-workbench?case=${encodeURIComponent(reportId)}&land=${encodeURIComponent(form.landNumber)}`}>調研工作台與檢查點</a><p className="muted launch-help">開啟 ChatGPT 後，選取「{LAND_MCP_APP_NAME}」並送出。完成後回到本頁查看。</p>
      <div className="sync-box" role="status" aria-live="polite"><strong>回傳狀態</strong><p>{syncMessage}</p>{lastLink&&<a className="fallback-link" href={lastLink} target="_blank" rel="noreferrer">重新開啟本案 ChatGPT 對話</a>}<button className="btn" onClick={()=>checkReturnedReport(false)} disabled={!!busy}>檢查 / 載入回傳</button></div>
      <details className="utility-details"><summary>備援提示詞</summary><p className="muted">新對話未帶入指令時，複製下方內容貼上。</p><button className="btn" onClick={copyPrompt}>{copied?'提示詞已複製':'複製完整提示詞'}</button><label className="field"><span>完整送件指令</span><textarea rows={8} readOnly value={prompt}/></label></details>
