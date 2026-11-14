@@ -37,6 +37,7 @@ body:has(.land-workspace) .shared-header nav{order:2;margin-left:auto;gap:16px;f
 .land-workspace .home-original-check input{margin-right:8px}
 .land-workspace .home-actions,.land-workspace .export-toolbar{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px 16px;width:100%;margin:16px 0 0}
 .land-workspace .home-actions>div{min-width:0}
+.land-workspace .export-toolbar .btn{flex:none}
 .land-workspace .export-toolbar p{text-align:right}
 .land-workspace .btn,.land-workspace .report-tabs button,.home-header-actions .btn{display:inline-flex;min-height:40px;align-items:center;justify-content:center;padding:0 16px;border:1px solid var(--home-ink);border-radius:6px;background:white;color:var(--home-ink);font-size:14px;line-height:1.25;font-weight:650;box-shadow:none;width:auto;margin:0;box-sizing:border-box}
 .land-workspace .btn.primary{background:var(--home-ink);color:white}
