@@ -1,4 +1,5 @@
 'use client';
+import ReportSkeleton from './components/ReportSkeleton.jsx';
 import MapHandoff from './components/MapHandoff.jsx';
 import { intakePrompt, intakeUrls } from '../lib/researchIntake.mjs';
 import ResearchIntake from './components/ResearchIntake.jsx';
@@ -99,21 +100,26 @@ export default function Page(){
  async function copyReport(){if(hasReport){await navigator.clipboard.writeText(form.reportText);alert('已複製完整報告。')}}
  async function downloadExcel(){if(!hasReport||busy)return;const saved=prepareExport();if(!saved)return;setBusy('excel');try{setSyncMessage('正在產生 Excel 簡表。');const response=await fetch(`/api/reports/${encodeURIComponent(saved.report_id)}/excel`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(saved),signal:AbortSignal.timeout(65000)});const blob=await checkedArtifact(response,'xlsx');offerDownload(blob,'xlsx',`${fileName({...form,client:saved.client,landNumber:saved.land_number,researchDate:saved.research_date})}_土地評估簡表.xlsx`);setSyncMessage('Excel 已產生並送交瀏覽器下載；若未取得檔案，請點下方下載連結。')}catch(error){setSyncMessage('Excel輸出失敗：'+error.message)}finally{setBusy('')}}
  const quality=hasReport?assessReportQuality({report_text:form.reportText,summary:form.summary,land_number:form.landNumber,research_date:form.researchDate},{sourceChecks:form.summary?._source_checks||[]}):null;
+ const [mapStartedFor,setMapStartedFor]=useState(null);
+ const started=Boolean(waiting||lastLink||hasReport||mapStartedFor===reportId+form.landNumber);
+ const statusLabels=['未開始','進行中','已完成'];
+ const steps=[['案件資料','case-intake',canOpen?2:form.client.trim()||form.landNumber.trim()?1:0],['調研與製圖','case-actions',hasReport?2:started?1:0],['評估成果','case-report',hasReport?2:waiting?1:0]];
+ const unlock=busy?'請等目前的操作完成。':'填完配合業主與標的地號後即可開始調研或製圖。';
  return <main className="app-shell streamlined-app land-workspace">
   <div className="print-fixed-footer"><span>DESIGN BY DAI YI SYUAN</span><strong>丸獸品牌整合行銷</strong></div>
   <header className="hero-panel">
-   <div className="hero-topbar"><div className="brand-lockup"><div className="brand-mark company-logo-card"><img src="/company-logo.jpg" alt="丸獸品牌 Logo" className="company-logo" /></div><div className="brand-copy"><div className="brand-copy-top">丸獸品牌整合行銷</div><div className="brand-copy-bottom">土地評估系統</div></div></div><button className="btn ghost" onClick={reset} disabled={!!busy}>新增評估</button></div>
-   <div className="workspace-intro"><div><p className="workspace-kicker">LAND EVALUATION</p><h1 className="app-title">土地評估工作區</h1><p className="app-subtitle">建立案件、調研與製圖，集中在同一個工作區。</p></div><p className="workspace-status" role="status">{storageState}</p></div>
+   <div className="hero-topbar"><button className="btn" onClick={reset} disabled={!!busy}>新增評估</button>{busy&&<small>目前的操作完成後即可新增。</small>}</div>
+   <div className="workspace-intro"><div><h1 className="app-title">土地評估工作區</h1><p className="app-subtitle">建立案件、調研與製圖，集中在同一個工作區。</p></div><p className="workspace-status" role="status">{storageState}</p></div>
    <svg className="parcel-motif" viewBox="0 0 420 220" aria-hidden="true"><g fill="none" stroke="currentColor"><path d="M-38 102 152-20 396 88 235 246M-10 149 175 25 429 140M47 226 249 76 309-5M130 243 415 29M86-12l279 235M-16 67l274 159"/><path d="m137 105 64-45 71 36-64 47z" fill="currentColor" fillOpacity=".17" strokeWidth="2"/></g></svg>
   </header>
-  <nav aria-label="工作區導覽" className="workspace-nav no-print"><a href="#case-intake"><span>01</span> 案件資料</a><a href="#case-actions"><span>02</span> 調研與製圖</a><a href="#case-report"><span>03</span> 評估成果</a></nav>
+  <nav aria-label="評估流程" className="workspace-nav workflow-steps no-print">{steps.map(([label,id,state],i)=><a key={id} href={'#'+id} data-state={state} aria-current={i===(hasReport?2:canOpen?1:0)?'step':undefined}><span className="step-number">{String(i+1).padStart(2,'0')}</span><strong>{label}</strong><small>{statusLabels[state]}</small></a>)}</nav>
   <section className="workflow-grid">
    <section id="case-intake" className="panel input-panel">
-    <div className="panel-header compact"><p className="eyebrow small">01 / 案件資料</p><h2>建立土地評估</h2><p className="muted">先填業主、日期與地號；基地現況和競案可稍後補上。</p></div>
+    <div className="panel-header compact"><p className="eyebrow small">01 / 案件資料</p><h2>案件基本資料</h2><p className="muted">先填業主、日期與地號；基地現況和競案可稍後補上。</p></div>
     <div className="panel-body simple-form">
      <div className="case-fields"><label className="field"><span>配合業主</span><input value={form.client} onChange={e=>setField('client',e.target.value)} placeholder="例如：弘峻建設"/></label>
-     <label className="field"><span>調研日期</span><input type="date" value={form.researchDate} onChange={e=>setField('researchDate',e.target.value)}/></label>
-     <label className="field"><span>目標地號</span><textarea rows={3} value={form.landNumber} onChange={e=>setField('landNumber',e.target.value)} placeholder="例如：桃園市中壢區中運段162、163地號"/></label></div>
+     <label className="field"><span>調研日期</span><input type="date" aria-describedby="date-format" value={form.researchDate} onChange={e=>setField('researchDate',e.target.value)}/><small id="date-format">{form.researchDate || "請選擇日期（年-月-日）"}</small></label>
+     <label className="field"><span>標的地號</span><textarea rows={3} value={form.landNumber} onChange={e=>setField('landNumber',e.target.value)} placeholder="例如：桃園市中壢區中運段162、163地號"/></label></div>
      <ParcelLocation landNumber={form.landNumber} onResolved={lookup=>setForm(old=>old.landNumber.trim()===lookup.input?{...old,parcelLookup:lookup}:old)}/>
      <ParcelObservation key={reportId} payload={checkpointPayload(form,reportId)} onRecorded={p=>setForm(old=>({...old,researchEvidence:p.research_evidence,reportText:p.report_text,summary:{...(p.summary||{}),_research_evidence:p.research_evidence}}))}/>
      <ResearchIntake value={intakeFor(form)} disabled={!!busy} onChange={value=>setField('researchIntake',{...value,land:form.landNumber.trim()})}/>
@@ -123,9 +129,9 @@ export default function Page(){
     <div className="panel-header compact"><p className="eyebrow small">02 / 調研與製圖</p><h2>開始工作</h2><p className="muted">兩項工作可分開啟動，共用本案資料。</p></div>
     <div className="panel-body simple-form">
      <div className="launch-card"><h3>土地調研</h3><p className="muted">查核基地與競案，完成後回傳報告。</p>
-     <button className="btn primary start-research" onClick={openGpt} disabled={!canOpen||!!busy}>{hasReport?'接續本案調研':'前往 ChatGPT 開始調研'}</button>
-     </div><div className="launch-card"><h3>地圖製作</h3><p className="muted">另開 ChatGPT 對話，成果留在製圖對話。</p>
-     <MapHandoff key={reportId+form.landNumber} landNumber={form.landNumber} intake={intakeFor(form)}/></div>
+     <button className="btn primary start-research" onClick={openGpt} aria-describedby={!canOpen||busy?"launch-unlock":undefined} disabled={!canOpen||!!busy}>{hasReport?'接續本案調研':'前往 ChatGPT 開始調研'}</button>
+     {(!canOpen||busy)&&<p className="muted" id="launch-unlock">{unlock}</p>}</div><div className="launch-card"><h3>地圖製作</h3><p className="muted">另開 ChatGPT 對話，成果留在製圖對話。</p>
+     <MapHandoff onPrepared={()=>setMapStartedFor(reportId+form.landNumber)} disabled={!canOpen||!!busy} disabledReason={unlock} key={reportId+form.landNumber} landNumber={form.landNumber} intake={intakeFor(form)}/></div>
      <a href={`/research-workbench?case=${encodeURIComponent(reportId)}&land=${encodeURIComponent(form.landNumber)}`}>調研工作台與檢查點</a><p className="muted launch-help">開啟 ChatGPT 後，選取「{LAND_MCP_APP_NAME}」並送出。完成後回到本頁查看。</p>
      <div className="sync-box" role="status" aria-live="polite"><strong>回傳狀態</strong><p>{syncMessage}</p>{lastLink&&<a className="fallback-link" href={lastLink} target="_blank" rel="noreferrer">重新開啟本案 ChatGPT 對話</a>}<button className="btn" onClick={()=>checkReturnedReport(false)} disabled={!!busy}>檢查 / 載入回傳</button></div>
      <details className="utility-details"><summary>備援提示詞</summary><p className="muted">新對話未帶入指令時，複製下方內容貼上。</p><button className="btn" onClick={copyPrompt}>{copied?'提示詞已複製':'複製完整提示詞'}</button><label className="field"><span>完整送件指令</span><textarea rows={8} readOnly value={prompt}/></label></details>
@@ -133,19 +139,19 @@ export default function Page(){
    </section>
    <section id="case-report" className="panel preview-panel">
     <div className="panel-header preview-header"><div><p className="eyebrow small">03 / 評估成果</p><h2>土地評估報告</h2><p className="muted">{hasReport?'閱讀報告，或下載檔案留存。':'調研完成並回傳後，報告會出現在這裡。'}</p></div>
-     <div className="toolbar export-toolbar" aria-label="報告輸出"><button className="btn primary" onClick={printPdf} disabled={!hasReport||!!busy}>輸出 PDF</button><button className="btn" onClick={downloadExcel} disabled={!hasReport||!!busy}>{busy==='excel'?'正在產生…':'下載 Excel 簡表'}</button></div>
+     <div className="toolbar export-toolbar" aria-label="報告輸出"><button aria-describedby={!hasReport||busy?"export-unlock":undefined} className="btn" onClick={printPdf} disabled={!hasReport||!!busy}>輸出 PDF</button><button aria-describedby={!hasReport||busy?"export-unlock":undefined} className="btn primary" onClick={downloadExcel} disabled={!hasReport||!!busy}>{busy==='excel'?'正在產生…':'下載 Excel 簡表'}</button>{(!hasReport||busy)&&<p id="export-unlock" className="muted">{busy?'請等目前的操作完成。':'載入本案評估報告後，即可輸出 PDF 或下載 Excel 簡表。'}</p>}</div>
     </div>
     <div className="report-controls no-print">
      {hasReport&&<div className="quality-note" role="status"><strong>{quality.label}</strong><p>{quality.missing_core_fields.length?`尚待確認：${quality.missing_core_fields.join('、')}`:'內容已檢查；來源仍依主代理實際查閱核對。'}</p></div>}
      <div aria-label="已產生的檔案">{Object.entries(exportFiles).map(([kind,file])=><p key={kind}><a href={file.url} download={file.name}>重新下載 {kind==='pdf'?'PDF':'Excel 簡表'}</a><span>（本頁有效；修改報告後請重新產生）</span></p>)}</div>
-     <details className="utility-details" open={manualOpen} onToggle={e=>setManualOpen(e.currentTarget.open)}><summary>手動貼回或修改報告</summary><div className="paste-area"><label className="field"><span>完整報告或回傳資料</span><textarea rows={8} value={form.reportText} onChange={e=>setField('reportText',e.target.value)} placeholder="貼上從 01｜案件摘要 到 12｜結論的完整報告，或完整回傳 JSON。"/></label><button className="btn" onClick={savePastedReturn} disabled={!hasReport||!!busy}>儲存並載入報告</button></div></details>
+     <details className="utility-details" open={manualOpen} onToggle={e=>setManualOpen(e.currentTarget.open)}><summary>手動貼回或修改報告</summary><div className="paste-area"><label className="field"><span>完整報告或回傳資料</span><textarea rows={8} value={form.reportText} onChange={e=>setField('reportText',e.target.value)} placeholder="貼上從 01｜案件摘要 到 12｜結論的完整報告，或完整回傳 JSON。"/></label><button className="btn" onClick={savePastedReturn} disabled={!hasReport||!!busy}>儲存並載入報告</button>{(!hasReport||busy)&&<p className="muted">{busy?"請等目前的操作完成。":"貼上完整報告或回傳資料後，即可儲存。"}</p>}</div></details>
      {hasReport&&<ReportAdjustments key={reportId} text={form.reportText} onApply={text=>{setForm(old=>({...old,reportText:text,summary:null}));setSyncMessage('調整已套用；請重新核實修改項目後再正式送件。');}}/>}
      {hasReport&&<div className="report-tabs"><button className={viewMode==='card'?'active':''} onClick={()=>setViewMode('card')}>業主閱讀版</button><button className={viewMode==='raw'?'active':''} onClick={()=>setViewMode('raw')}>原文版</button><button onClick={copyReport}>複製全文</button></div>}
     </div>
-    {hasReport?(viewMode==='card'?<Report text={form.reportText} form={form}/>:<article className="report-paper raw-paper"><div className="report-brand-row"><div className="report-brand-title">丸獸品牌整合行銷｜原文版</div></div><pre className="text-report">{form.reportText}</pre></article>):<div className="report-empty"><span className="empty-symbol" aria-hidden="true">丸</span><h3>等待本案調研成果</h3><p>先填寫案件資料，前往 ChatGPT 調研並送回結果。<br/>已完成調研但未顯示時，請檢查回傳或手動貼回。</p><button className="btn" onClick={()=>setManualOpen(true)}>手動貼回報告</button></div>}
+    {hasReport?(viewMode==='card'?<Report text={form.reportText} form={form}/>:<article className="report-paper raw-paper"><div className="report-brand-row"><div className="report-brand-title">丸獸品牌整合行銷｜原文版</div></div><pre className="text-report">{form.reportText}</pre></article>):<ReportSkeleton/>}
    </section>
   </section>
-  <footer className="designer-credit"><span>Designed by</span><strong>DAI YI SYUAN</strong></footer>
+  <footer className="designer-credit"><span>設計</span><strong>DAI YI SYUAN</strong></footer>
  </main>
 }
 
