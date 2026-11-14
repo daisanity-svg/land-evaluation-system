@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import vm from 'node:vm';
+import {intakeUrls} from '../lib/researchIntake.mjs';
 
 const page = readFileSync('app/page.jsx', 'utf8');
 const functions = ['copyPrompt', 'openGpt', 'checkReturnedReport'].map(name => page.split('\n').find(line => line.trim().startsWith(`async function ${name}(`))).join('\n');
-function context({ popup = true, clipboard = true, blocked = false } = {}) {
+function context({ popup = true, clipboard = true, blocked = false, urls = "" } = {}) {
   const events = [];
   const ctx = vm.createContext({busy:"",setBusy:()=>{},
-    events, AbortSignal, authorizeCase:async input=>input, buildPrompt: () => 'full', canOpen: true, form: { reportText: '' }, reportId: 'case-1', prompt: 'full', shortPrompt: 'short',
+    events, AbortSignal, intakeUrls, intakeFor:()=>({urls}), authorizeCase:async input=>input, buildPrompt: () => 'full', canOpen: true, form: { reportText: '' }, reportId: 'case-1', prompt: 'full', shortPrompt: 'short',
     LAND_PLUGIN_NAME: 'assistant', LAND_MCP_APP_NAME: 'mcp',
     approvedResearchState: () => ({ state: blocked ? 'blocked' : 'none', reason: 'case mismatch' }),
     queryInFlight: { current: false }, activeReportId: { current: 'case-1' },
@@ -34,6 +35,10 @@ ctx = context({ blocked: true });
 await ctx.openGpt();
 assert.equal(ctx.events.length, 0);
 assert.equal(ctx.message, 'case mismatch');
+ctx = context({urls:'https://example.com/'});
+await ctx.openGpt();
+assert.equal(ctx.events.length,0);
+assert.match(ctx.message,/實價登錄網址/);
 console.log('Popup timing, clipboard fallback and case guard passed.');
 const workflow = (await import('../lib/researchWorkflow.mjs')).RESEARCH_WORKFLOW;
 const lines=page.split('\n');
