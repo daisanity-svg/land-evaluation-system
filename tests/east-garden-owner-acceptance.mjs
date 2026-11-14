@@ -34,6 +34,10 @@ for(const [row,name] of [[19,'日勝好日子'],[20,'臻璞'],[21,'立鴻晶硯'
 assert.equal(new Set([19,20,21].map(n=>sheet.getCell('J'+n).note.split('｜')[1])).size,3);
 for(const [cell,num] of [['D23',30],['H23',36],['H24',180]])assert.match(sheet.getCell(cell).text,new RegExp(num+'.*人工工作值'));
 assert.match(sheet.getCell('B7').text,/大園國小.*人工工作值/s);
+assert.equal(sheet.pageSetup.fitToPage,true);
+assert.equal(sheet.pageSetup.fitToHeight,1);
+assert.match(sheet.getCell('A34').text,/未附本案位置圖/);
+assert.ok(Array.from({length:13},(_,i)=>sheet.getRow(i+34).height).reduce((a,b)=>a+b,0)<60);
 const pdf=await buildLandEvaluationPdfBuffer(output);
 assert.ok((await PDFDocument.load(pdf)).getPageCount()>1);
 await mkdir(out,{recursive:true});
