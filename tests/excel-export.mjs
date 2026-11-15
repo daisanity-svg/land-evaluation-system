@@ -34,7 +34,7 @@ function competitor(index, name, builder, parking, count, age = '預售，2025�
 參考價值：有效比較案例。`;
 }
 
-const reportText = `01｜案件摘要
+const fiveCaseText = `01｜案件摘要
 配合業主：佳峻建設
 調研日期：2026-05-29
 目標地號：新北市泰山區貴仁段318、337、338地號
@@ -76,6 +76,8 @@ ${competitor('五', '武泰臻愛', '武泰建設', 220, 2)}
 二、生活機能仍在成熟
 三、計畫道路進度待確認`;
 
+const reportText=fiveCaseText.replace(/\n競案五｜[\s\S]*?(?=市場行情總結：)/,'\n');
+
 async function load(report) {
   const workbook = new ExcelJS.Workbook();
   await workbook.xlsx.load(await buildLandEvaluationExcelBuffer(report));
@@ -93,10 +95,10 @@ assert.ok(sheet.getCell('F2').value instanceof Date, 'research date must be stor
 assert.equal(sheet.getCell('F2').numFmt, 'yyyy-mm-dd');
 assert.deepEqual(['B19', 'B20', 'B21', 'B22'].map((cell) => sheet.getCell(cell).value), ['偉築建設', '義泰建設', '丞石建築', '茂德建設']);
 assert.deepEqual(['C19', 'C20', 'C21', 'C22'].map((cell) => sheet.getCell(cell).value), ['百達莊園', '義泰信', '閱讀台灣', '明志書苑']);
-assert.deepEqual(['D19', 'D20', 'D21', 'D22'].map((cell) => sheet.getCell(cell).value), ['預售', '預售', '即將交屋', '新成屋']);
-assert.deepEqual(['H19', 'H20', 'H21', 'H22'].map((cell) => sheet.getCell(cell).value), ['210萬/位', '245萬/位', '250萬/位', '280萬/位']);
+assert.deepEqual(['D19', 'D20', 'D21', 'D22'].map((cell) => sheet.getCell(cell).value), ['預售\n114.11開案', '預售\n114.11開案', '即將交屋\n111.07開案', '新成屋\n111.11開案']);
+assert.deepEqual(['H19', 'H20', 'H21', 'H22'].map((cell) => sheet.getCell(cell).value), Array(4).fill('未取得同型車位統計'));
 assert.deepEqual(['I19', 'I20', 'I21', 'I22'].map((cell) => sheet.getCell(cell).value), ['實價登錄', '實價登錄', '實價登錄', '實價登錄']);
-assert.equal(sheet.getCell('J19').value, '114.11開案；近一年成交167筆');
+assert.match(sheet.getCell('J19').value, /^期間筆數待複核/);
 assert.equal(sheet.getCell('B26').value, '1. 重劃區成長題材');
 assert.equal(sheet.getCell('B30').value, '1. 新案供給集中');
 assert.equal(sheet.getCell('D23').value, '58 萬/坪');
@@ -149,7 +151,7 @@ assert.equal(narrativeSheet.getCell('B15').value, '待複核');
 assert.match(narrativeSheet.getCell('B16').value, /31～35/);
 assert.match(narrativeSheet.getCell('B17').value, /2房/);
 assert.equal(narrativeSheet.getCell('D19').value, '2026年完工');
-assert.equal(narrativeSheet.getCell('J19').value, '近一年成交38筆');
+assert.match(narrativeSheet.getCell('J19').value, /^期間筆數待複核/);
 
 const fixedTemplateReport = narrativeReport.replace(
   `10｜產品建議\n2房：25～28坪，鎖定首購與在地就業客。\n3房：35～38坪，鎖定換屋家庭。`,
@@ -173,7 +175,7 @@ const noSource=await load({report_text:reportText.replaceAll('資訊來源：實
 assert.equal(noSource.getCell('I19').value,'待複核','numbers must never imply a verified original source');
 const detailed=await load({report_text:reportText.replace('案子規劃：偉築建設','房型：2-3房\n坪數：29-42坪\n全案有效成交筆數：167筆\n近半年有效成交筆數：30筆（2026年4月至9月）\n銷售率：待複核；可售戶數未確認\n月均成交量：5筆\n案子規劃：偉築建設')});
 assert.equal(detailed.getCell('I19').value,'實價登錄');
-assert.match(detailed.getCell('J19').value,/近半年成交：30筆/);
+assert.match(detailed.getCell('J19').value,/期間筆數待複核/);
 assert.match(detailed.getCell('J19').value,/銷售率：待複核/);
 console.log('Reference layout, missing-price preservation and explicit source checks passed.');
 
@@ -185,10 +187,10 @@ assert.equal(linkedWorkbook.worksheets[0].pageSetup.printArea,'A1:J46');
 
 const periodReport=reportText.replace('成交價格：住宅約60萬／坪；坡道平面車位約210萬元','成交價格：均價60萬／坪').replace('資訊來源：實價登錄','車位價格：均價210萬／位\n來源網址：https://market.591.com.tw/example\n統計備註：2026年4月至10月（截至10月6日），住宅成交12筆，均價60萬／坪；坡道平面車位12位，均價210萬元／位。\n資訊來源：591實價登錄');
 const periodSheet=await load({report_text:periodReport});
-assert.match(periodSheet.getCell('J19').value,/2026年4月至10月/);
-assert.match(periodSheet.getCell('J19').value,/住宅成交12筆，均價60/);
+assert.match(periodSheet.getCell('J19').note,/2026年4月至10月/);
+assert.match(periodSheet.getCell('J19').note,/住宅成交12筆，均價60/);
 assert.match(String(periodSheet.getCell('I19').note),/https:\/\/market.591.com.tw/);
-assert.equal(periodSheet.getCell('G19').value,'60萬/坪');
+assert.equal(periodSheet.getCell('G19').value,'未取得期間均價');
 assert.equal(periodSheet.getCell('A34').value,null);
 console.log('Explicit period statistics and traceable source notes passed.');
 
@@ -248,7 +250,7 @@ console.log('Live-test regression: fourth SWOT point, complete conclusion and ex
 const mixedAreaBook=new ExcelJS.Workbook();await mixedAreaBook.xlsx.load(await buildLandEvaluationExcelBuffer({report_text:`08｜競案分級與市場行情\n競案一｜合成面積測試\n案子規劃：基地約2124.15坪，規劃兩房18／25坪、三房33／35坪、四房39坪。\n車位價格：220.14萬／位（近半年73位）；近一年219.64萬／位。\n競案二｜合成未列房型坪數\n案子規劃：基地面積2124.16坪，規劃住宅大樓。`}));
 assert.equal(mixedAreaBook.worksheets[0].getCell('F19').value,'18-39坪');
 assert.equal(mixedAreaBook.worksheets[0].getCell('F20').value,'待複核');
-assert.match(mixedAreaBook.worksheets[0].getCell('H19').value,/220.14萬\/位/);
+assert.equal(mixedAreaBook.worksheets[0].getCell('H19').value,'未取得同型車位統計');
 console.log('Parcel acceptance regression: site area cannot become apartment size; parking brief keeps the adopted period mean.');
 
 // Owner-visible regression: the third table column used to disappear on export.
@@ -266,9 +268,10 @@ assert.match(directionsSheet.getCell('C9').value,/交通噪音/);
 assert.match(directionsSheet.getCell('C10').value,/門廳與車道/);
 assert.match(directionsSheet.getCell('C11').value,/採光隱私/);
 assert.match(directionsSheet.getCell('C12').value,/改變視野/);
-const overflowBook=new ExcelJS.Workbook();await overflowBook.xlsx.load(await buildLandEvaluationExcelBuffer({report_text:reportText}));
+const overflowBook=new ExcelJS.Workbook();await overflowBook.xlsx.load(await buildLandEvaluationExcelBuffer({report_text:fiveCaseText}));
 assert.ok(overflowBook.getWorksheet('成交統計').getSheetValues().flat().includes('武泰臻愛'),'fifth comparable must survive in complete statistics');
-assert.equal(overflowBook.worksheets[0].getCell('D23').value,'58 萬/坪','overflow competitors must not overwrite fixed price cells');
+assert.equal(overflowBook.worksheets[0].getCell('C23').value,'武泰臻愛');
+assert.equal(overflowBook.worksheets[0].getCell('D24').value,'58 萬/坪','overflow competitors must not overwrite fixed price cells');
 console.log('Four-side sales impacts, complete road conditions and overflow comparable statistics passed.');
 
 // Reproduced from the actual Huanhan return: public facilities followed the region field inline.
@@ -300,3 +303,16 @@ assert.equal(fallbackSchool.getCell('F7').value,'摘要里');
 assert.equal(fallbackSchool.getCell('B7').value,'大園國小（入學資格待確認）\n摘要國中');
 const nearby=await load({report_text:'05｜生活圈與市場定位\n公共建設：基地鄰近大園國小。'});
 assert.equal(nearby.getCell('B7').value,'待複核');
+
+const project='百達莊園';
+const annual={case_name:project,market_scope:{project_id:project,market_type:'presale',use:'住宅',date_from:'2026-01-01',date_to:'2026-05-29',population_complete:true,total_count:3},
+ transactions:[1700,1820,1940].map((total,i)=>({id:'case-'+i,project_id:project,market_type:'presale',use:'住宅',date:'2026-05-02',status:'valid',special:false,floor:3,total_price_wan:total,building_area_m2:40/.3025,parking_area_m2:10/.3025,parking_price_wan:[180,185,240][i],parking_spaces:1,parking_type:'坡道平面',url:'https://lvr.land.moi.gov.tw/a'}))};
+const verifiedInput={research_date:'2026-05-29',report_text:reportText,research_evidence:{comparables:[annual]}};
+const verifiedSheet=await load(verifiedInput);
+assert.equal(verifiedSheet.getCell('G19').value,'53.9444萬/坪');
+assert.equal(verifiedSheet.getCell('H19').value,'210萬／位');
+assert.match(verifiedSheet.getCell('J19').value,/^115年成交3筆/);
+assert.equal(verifiedSheet.getCell('G20').value,'未取得期間均價');
+const {reportForOutput}=await import('../lib/reportData.mjs');
+assert.match(reportForOutput(verifiedInput).report_text,/成交價格：53.9444萬／坪/);
+assert.doesNotMatch(reportForOutput(verifiedInput).report_text,/成交價格：住宅約60萬/);

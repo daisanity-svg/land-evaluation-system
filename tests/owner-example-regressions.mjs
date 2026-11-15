@@ -29,7 +29,7 @@ for(const [input,expected] of [
  ['60萬','60萬/坪'],
  ['2026年成交20筆','待複核'],
  ['車位220萬元／位；住宅均價60萬元／坪','60萬/坪'],
-]) assert.equal(await cell(report(input),'G19'),expected,input);
+]) assert.equal(await cell(report(input),'G19'),'未取得期間均價',input);
 const x=report('60萬／坪');
 assert.equal(await cell(x,'D23'),'60 萬/坪（初估）');
 assert.equal(await cell(x,'H23'),'68 萬/坪（初估）');

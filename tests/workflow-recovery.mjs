@@ -27,8 +27,8 @@ const body=`08｜競案分級與市場行情
 const book=new ExcelJS.Workbook();await book.xlsx.load(await buildLandEvaluationExcelBuffer({report_text:body}));
 const sheet=book.worksheets[0];
 assert.equal(sheet.getCell('E19').value,'2+1房、3房');
-assert.match(sheet.getCell('G19').value,/12筆樣本/);
-assert.match(sheet.getCell('J19').value,/2026-04-01/);
+assert.equal(sheet.getCell('G19').value,'未取得期間均價');
+assert.match(sheet.getCell('J19').note,/2026-04-01/);
 const full=book.getWorksheet('成交統計');assert.ok(full);
 assert.ok(full.getSheetValues().flat().some(v=>typeof v==='string'&&v.includes('2026-04-01至2026-10-21')));
 assert.ok(full.getSheetValues().flat().some(v=>typeof v==='string'&&v.includes('非全期完整行情')));
