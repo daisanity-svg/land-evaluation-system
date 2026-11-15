@@ -16,9 +16,9 @@ const cards=priceCards(p.report_text.split('09｜價格預判')[1].split('10｜�
 const buffer=await buildLandEvaluationExcelBuffer(fixture),book=new ExcelJS.Workbook();await book.xlsx.load(buffer);const s=book.worksheets[0];
 assert.equal(s.getCell('F4').value,'待複核');
 for(const cell of ['J19','J20']){assert.match(s.getCell(cell).value,/筆數待複核/);assert.doesNotMatch(s.getCell(cell).value,/591筆|23筆/);}
-assert.equal(s.getCell('H19').value,'待複核');
-assert.match(s.getCell('G20').value,/25.02萬\/坪\n一年指標/);
-const full=book.getWorksheet('評估全文').getSheetValues().flat().join('\n');assert.match(full,/尚無法判斷開發可行性/);assert.match(full,/全歷史23筆/);
+assert.equal(s.getCell('H19').value,'未取得同型車位統計');
+assert.equal(s.getCell('G20').value,'未取得期間均價');
+const full=book.getWorksheet('評估全文').getSheetValues().flat().join('\n');assert.match(full,/尚無法判斷開發可行性/);assert.match(book.getWorksheet('成交統計').getSheetValues().flat().join(' '),/全歷史23筆/);
 const db=new Map(),storage={getItem:k=>db.get(k)||null,setItem:(k,v)=>db.set(k,v)};
 const checkpoint=checkpointPayload({landNumber:fixture.land_number,researchDate:fixture.research_date,client:'驗收',reportText:fixture.report_text,returnToken:'secret'},'test-fulin192');
 saveCheckpoint(storage,{...checkpoint,return_token:'secret'});assert.ok(![...db.values()].join('').includes('secret'));assert.equal(loadCheckpoint(storage,'test-fulin192','另一段192地號'),null);assert.equal(loadCheckpoint(storage,'test-fulin192',fixture.land_number).payload.report_text,fixture.report_text);
