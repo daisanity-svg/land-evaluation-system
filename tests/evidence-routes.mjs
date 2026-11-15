@@ -10,6 +10,20 @@ try{
  const check=await (await mcp(request({jsonrpc:'2.0',id:2,method:'tools/call',params:{name:'verifyResearch',arguments:{research_evidence:{version:1,land_number:'測試段1地號',research_date:'2026-10-06',claims:[]}}}}))).json();assert.equal(check.result.structuredContent.review_record_complete,false);assert.equal(check.result.structuredContent.source_verification_complete,false);assert.equal(calls,0);
  assert.equal(check.result.structuredContent.workflow.version,'2.0');assert.equal(check.result.structuredContent.workflow.stages.length,7);assert.equal(check.result.structuredContent.workflow.eligible_for_owner_review,false);assert.equal(check.result.structuredContent.workflow.database_written,false);
  const invalid=await verify(request({research_evidence:{version:1,land_number:'測試段1地號',research_date:'2026-02-30',claims:[]}}));assert.equal(invalid.status,422);assert.equal((await invalid.json()).database_written,false);
+ const args={land_number:'測試段183、184地號',research_date:'2026-10-06',research_evidence:{version:1,land_number:'測試段183.184地號',research_date:'2026-10-06',claims:[]}};
+ const http=await verify(request(args));
+ const rpc=await (await mcp(request({jsonrpc:'2.0',id:3,method:'tools/call',params:{name:'verifyResearch',arguments:args}}))).json();
+ const {success,...httpAudit}=await http.json();
+ assert.equal(success,true);
+ assert.deepEqual(httpAudit,rpc.result.structuredContent);
+ assert.equal(httpAudit.verification_status,'needs_followup');
+ assert.equal(httpAudit.workflow.next_stage,'base');
+ assert.equal(httpAudit.database_written,false);
+ const other={...args,research_evidence:{...args.research_evidence,land_number:'另一段183、184地號',claims:[{field:'location',value:'測試位置',sources:[{url:'https://www.gov.tw/test',subject:'另一段183、184地號',raw_value:'另一段183、184地號的測試位置'}]}]}};
+ const mismatch=await verify(request(other));
+ assert.equal(mismatch.status,422);
+ assert.equal((await mismatch.json()).verification_status,'invalid_input');
+ assert.equal(calls,0);
  const page=readFileSync('app/page.jsx','utf8'),layout=readFileSync('app/layout.jsx','utf8');assert.equal((page.match(/onClick=\{printPdf\}/g)||[]).length,1);assert.equal((page.match(/onClick=\{downloadExcel\}/g)||[]).length,1);assert.doesNotMatch(layout,/excel-download\.js|hiyes-price-adjust\.js|hiyes-site-adjust\.js/);assert.match(page,/手動貼回或修改報告/);assert.match(page,/summary:null/);
 }finally{globalThis.fetch=original;}
 console.log('Read-only tools do not write; evidence failures and single export entry regression passed.');
