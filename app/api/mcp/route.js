@@ -1,10 +1,7 @@
-import { assessReportQuality } from '../../../lib/reportQuality.mjs';
-import { assessResearchProgress } from '../../../lib/researchProgress.mjs';
+import { verifyResearchRequest } from '../../../lib/verifyResearchRequest.mjs';
 import { resolveLandParcels } from '../../../lib/landParcel.js';
-import { auditResearchEvidence } from '../../../lib/researchEvidence.mjs';
 import { POST as submitReport } from '../reports/route.js';
 
-import { verifySourcePages } from '../../../lib/sourceVerifier.mjs';
 export const runtime = 'nodejs';
 export const maxDuration=60;
 
@@ -80,7 +77,10 @@ export async function POST(request) {
   if (body.method === 'tools/list') return rpc(body.id, { tools: [submitTool,verifyTool,parcelTool] });
   if (body.method !== 'tools/call') return rpcError(body.id, -32601, 'Method not found.');
   if(body.params?.name===parcelTool.name){try{const payload=await resolveLandParcels(body.params.arguments?.land_number);return rpc(body.id,{content:[{type:'text',text:JSON.stringify(payload)}],structuredContent:payload,isError:false});}catch(error){const payload={success:false,error:error.code||'lookup_failed',message:error.message};return rpc(body.id,{content:[{type:'text',text:JSON.stringify(payload)}],structuredContent:payload,isError:true});}}
-  if(body.params?.name===verifyTool.name){const args=body.params.arguments||{};const sourceChecks=await verifySourcePages(args.research_evidence);const audit=auditResearchEvidence(args.research_evidence,args,{sourceChecks});if(args.report_text)audit.report_quality=assessReportQuality(args,{sourceChecks});audit.workflow=assessResearchProgress(args,audit);return rpc(body.id,{content:[{type:'text',text:JSON.stringify(audit)}],structuredContent:audit,isError:!audit.present||audit.errors.length>0});}
+  if(body.params?.name===verifyTool.name){
+    const audit=await verifyResearchRequest(body.params.arguments);
+    return rpc(body.id,{content:[{type:'text',text:JSON.stringify(audit)}],structuredContent:audit,isError:audit.verification_status==='invalid_input'});
+  }
   if (body.params?.name !== submitTool.name) return rpcError(body.id, -32602, 'Unknown tool.');
 
   const requestUrl = new URL('/api/reports', request.url);
